@@ -1,0 +1,52 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Login</title>
+    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-firestore.js"></script>
+
+    <link rel="stylesheet" href="{% static 'css/auth.css' %} ?v={{ timestamp }}">
+
+    <!-- <script src="{% static 'js/login.js' %} ?v={{ timestamp }}" defer></script> -->
+    <script src="{% static 'js/firebase-config.js' %} ?v={{ timestamp }}" defer></script>
+    <script src="{% static 'js/auth.js' %} ?v={{ timestamp }}" defer></script>
+</head>
+
+<body>
+    <div class="auth-container">
+        <div class="auth-header">
+            <h1>Welcome Back</h1>
+            <p>Please sign in to continue</p>
+        </div>
+
+        <div class="error-message" id="errorMessage"></div>
+        <div class="success-message" id="successMessage"></div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email" class="form-label">Email Address</label>
+                <input type="email" id="email" class="form-input" placeholder="Enter your email" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password" class="form-label">Password</label>
+                <input type="password" id="password" class="form-input" placeholder="Enter your password" required>
+            </div>
+
+            <button type="submit" class="auth-button">
+                <span class="button-text">Sign In</span>
+                <div class="spinner"></div>
+            </button>
+        </form>
+
+        <div class="auth-links">
+            <a href="/signup">Don't have an account? Sign Up</a>
+        </div>
+    </div>
+</body>
+
+</html>

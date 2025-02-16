@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "thrift-shop-a1808",
+  "private_key_id": "5b4bdfe113094475345be1e85b5419d594030f83",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQChh4tNdkwIYmvw\nTc6lV9Pg9LSQVztddGnKiF6opXlo6GX5PjfXSIS+qcC/urcxwCSPHbW4MYm0QD5R\nHJ5HXpJWSBqAdNCIShZ/97Y3lEfcyTW8T4oKU+AWvHPgQdJyeTwTrqdSWxUGcySf\n6Z706MDIJTqCxSiMG1pCqepeToWASOqcwjVmnsRdFGdPTLq6xe13PHE338sKYsDd\nWJL5nUXeIFnSvwwVURk5e5xDuCW+bvcREuEg9qNsTaag4Cd6m/eip4Bph7LL0k/d\n7i4jhu/F9X5n/Fy68uxtildIgsjd8lxhkX+J85nHbNCxt55HX2AhLJosGh7zOMPv\nWXBppl5BAgMBAAECggEAI/id3n26F+HnHKgPHUYOQpnr/frXFww+JOKyhcb33xNl\n5hfjcpdNLHJ8IJZRhow99/sLRT4O5uuplQGVA9q9Jua+tB2PdNJe6Vd+JiloyXOr\nekiSOpOMIzQLcAToeyKhbNann1D2QS3yGYR6qBqPF+MmgQmr6muK8a6KKT8+Pp9j\nZ18thZsfQ2F0E5/zfP8WyBbLpReXuuymGfdK9Y2xviqTYyZnXFVZHYisLBsq9GA4\nuQd6p7jCOPlQhAiwG+RiOI+6if2pom7jXj3y9JhKjMNf9wHBeIx6tYz8gSHTn2bI\n7C08mU6NrLK42kj3rOAyi4YzSD1KpLxd0mYaeTSZkwKBgQDeID078pP054el1lgy\n3h1Qdr6M6NxuZ4uRbiv93lgUYMavRnaiu0yShnu6kX/43TNHZZ3I1PMhUMtKSBKn\nd3f4Kf2QSauztXOTTbdUQDV+tVHS9T5QUCbTDsCdTurohBcfHJJ3cyiV1MdJ6FJn\nw7BDO0n4YVqMuWnyyP/8ySFA4wKBgQC6KaDx95Zb5CZe2z6xA4Kh6QVP2EZhO0OR\n3N4kHGzf0mZ4V5OFcqrtqoWyeuX8kBGK5lRpvo6XNHybhd7Rstj0x/nF/wlxTY/c\n/D4phc2y0x/4D1oeX6jhnbrcEESNhyGHU+K3QFF+Ig10hsu/q0jlGvxk5mQz87bm\nJnt3My/BiwKBgHxsBqDbwnD+eAc2x3TG4hi+SwJXNZJKQe2WjuHHeAMCKojnqXCC\nBeRVnFznP43BKgYmL3ndfsr8nMLhGEHiM7s4miYGfj1NuI2cjMKOrOhq3IiUgvEt\n1HGI4++50u+nfeQZdxmd0fALng4SKoahIMyoG0kcD0KgYW5zlKCecRgNAoGBAJrQ\nZbTzxgnTGQnHYEJK/gbxxuYYoKbZZx7VQ7NaJDyaN3catWbD7lvJdHfx9nLryHrv\ngwGRY/lgv8OCN8PB7OTbrN64cjzUWLBY4MUdLevp4WskMTiTKtm9lxjNOoVL/FkT\nLLZieaLgZLokIyrZIbzNjVnHs0r1AYQyOnjti2hzAoGAf1ytxH1k8jUK5jHzWdn+\nc+chD/M2kXJbbnxtoxx+CVD5e7sUYjzh9UkjnHmqDTt4THMW5alcTmsbiuBx2j0B\n7VLaiI3at/5q1/KN1s9HGCDJEGBs01nPWrQPqSyWZPGw1lIbfU/wBkqk5D4AdAIt\nfs9uUchrqmKmRCgILwYq0Bw=\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-fbsvc@thrift-shop-a1808.iam.gserviceaccount.com",
+  "client_id": "109304373847900012834",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40thrift-shop-a1808.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

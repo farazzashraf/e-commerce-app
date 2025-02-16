@@ -1,0 +1,89 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Landing Page</title>
+    <link rel="stylesheet" href="{% static 'css/header.css' %} ?v={{ timestamp }}">
+    <script src="{% static 'js/header.js' %} ?v={{ timestamp }}" defer></script>
+    <script src="{% static 'js/cart.js' %} ?v={{ timestamp }}" defer></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+        rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <!-- Header Section -->
+    <header>
+        <div class="header-container">
+            <div class="hamburger" id="menuToggle">
+                <i class="fas fa-bars"></i>
+            </div>
+
+            <div class="logo">
+                <a href="/">
+                    <img src="{% static 'images/logo.jpg' %} ?v={{ timestamp }}" alt="MyStore Logo">
+                </a>
+            </div>
+
+            <div class="header-right-icons">
+                <div class="search-container">
+                    <i class="fas fa-search search-icon" id="searchToggle"></i>
+                    <div class="search-bar" id="searchBar">
+                        <input type="text" class="search-input" id="searchInput" placeholder="Search products...">
+                        <i class="fas fa-times close-search" id="closeSearch"></i>
+                    </div>
+
+                    <div class="search-results" id="searchResults"></div>
+                </div>
+
+                <a href="/cart" class="cart">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="cart-count">0</span>
+                </a>
+
+                {% if request.session.user %}
+                <a href="/profile" class="user-profile">
+                    <i class="fas fa-user"></i>
+                </a>
+                <a href="#" id="logoutBtn" class="logout-button">Logout</a>
+                {% else %}
+                <a href="{% url 'login' %}" class="user-profile">
+                    <i class="fas fa-user"></i>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <!-- Sidebar Menu -->
+    <div class="sidebar" id="sidebar">
+        <i class="fas fa-times sidebar-close" id="sidebarClose"></i>
+        <ul>
+            <li><a href="/category/casual">Casual</a></li>
+            <li><a href="/category/formal">Formal</a></li>
+            <li><a href="/category/wedding">Wedding</a></li>
+            <li><a href="/category/sale">Sale</a></li>
+        </ul>
+    </div>
+
+    <!-- Overlay -->
+    <div class="overlay" id="overlay"></div>
+
+    <!-- Landing Page Content
+    <section class="hero">
+        <h1>Welcome to Our Dress Shop</h1>
+        <p>Your one-stop shop for all things fashionable!</p>
+        <button><a href="/shop">Shop Now</a></button>
+    </section> -->
+</body>
+
+</html>
