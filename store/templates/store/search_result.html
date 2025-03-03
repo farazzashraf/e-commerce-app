@@ -1,0 +1,18 @@
+<!-- store/templates/store/search_results.html -->
+<form method="get" action="{% url 'search' %}">
+    <input type="text" name="query" value="{{ query }}" placeholder="Search...">
+    <button type="submit">Search</button>
+</form>
+
+{% if query %}
+    <h2>Search results for "{{ query }}"</h2>
+    <ul>
+        {% for product in results %}
+            <li>
+                <a href="{% url 'product_detail' product.id %}">{{ product.name }}</a> - {{ product.price }} Rs
+            </li>
+        {% empty %}
+            <p>No results found.</p>
+        {% endfor %}
+    </ul>
+{% endif %}

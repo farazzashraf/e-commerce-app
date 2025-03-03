@@ -7,9 +7,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Landing Page</title>
-    <link rel="stylesheet" href="{% static 'css/header.css' %} ?v={{ timestamp }}">
-    <script src="{% static 'js/header.js' %} ?v={{ timestamp }}" defer></script>
-    <script src="{% static 'js/cart.js' %} ?v={{ timestamp }}" defer></script>
+    <link rel="stylesheet" href="{% static 'css/header.css' %}?v={{ timestamp }}">
+    <script src="{% static 'js/header.js' %}?v={{ timestamp }}" defer></script>
+    <script src="{% static 'js/cart.js' %}?v={{ timestamp }}" defer></script>
+
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -30,7 +31,7 @@
 
             <div class="logo">
                 <a href="/">
-                    <img src="{% static 'images/logo.jpg' %} ?v={{ timestamp }}" alt="MyStore Logo">
+                    <img src="{% static 'images/logo1.jpg' %} ?v={{ timestamp }}" alt="MyStore Logo">
                 </a>
             </div>
 
@@ -45,21 +46,31 @@
                     <div class="search-results" id="searchResults"></div>
                 </div>
 
-                <a href="/cart" class="cart">
+                <a href="/cart_view" class="cart">
                     <i class="fas fa-shopping-cart"></i>
                     <span class="cart-count">0</span>
                 </a>
 
-                {% if request.session.user %}
-                <a href="/profile" class="user-profile">
+                {% if request.session.uid %}
+                <!-- User is logged in, show Logout option -->
+                <div class="user-profile">
                     <i class="fas fa-user"></i>
-                </a>
-                <a href="#" id="logoutBtn" class="logout-button">Logout</a>
+                    <span>Welcome, {{ user_name|title }}</span> <!-- Display the user's name -->
+                    <!-- <span>Welcome</span> -->
+                    <a href="{% url 'logout' %}" class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </div>
                 {% else %}
+                <!-- Show login link if user is not logged in -->
                 <a href="{% url 'login' %}" class="user-profile">
                     <i class="fas fa-user"></i>
                 </a>
                 {% endif %}
+
+                <!-- <a href="{% url 'login' %}" class="user-profile">
+                    <i class="fas fa-user"></i>
+                </a> -->
             </div>
         </div>
     </header>
@@ -68,15 +79,29 @@
     <div class="sidebar" id="sidebar">
         <i class="fas fa-times sidebar-close" id="sidebarClose"></i>
         <ul>
-            <li><a href="/category/casual">Casual</a></li>
-            <li><a href="/category/formal">Formal</a></li>
-            <li><a href="/category/wedding">Wedding</a></li>
+            <li><a href="/category/jackets">Jackets</a></li>
+            <li><a href="/category/pants">Pants</a></li>
             <li><a href="/category/sale">Sale</a></li>
         </ul>
+        <div class="auth-links-mobile">
+            {% if request.session.uid %}
+            <a href="{% url 'logout' %}" class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+            {% else %}
+            <a href="{% url 'login' %}" class="login-btn">
+                <i class="fas fa-sign-in-alt"></i> Login
+            </a>
+            <a href="{% url 'signup' %}" class="signup-btn">
+                <i class="fas fa-user-plus"></i> Signup
+            </a>
+            {% endif %}
+        </div>
     </div>
 
     <!-- Overlay -->
     <div class="overlay" id="overlay"></div>
+
 
     <!-- Landing Page Content
     <section class="hero">

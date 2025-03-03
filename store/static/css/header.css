@@ -34,7 +34,7 @@ header {
     z-index: 1001;
 }
 
-/* Logo */
+/* Logo
 .logo {
     text-align: center;
     z-index: 1001;
@@ -44,7 +44,22 @@ header {
     height: 40px;
     width: auto;
     display: block;
+} */
+
+/* Logo */
+.logo {
+    text-align: center;
+    z-index: 1001;
 }
+
+.logo img {
+    height: 40px;
+    width: 40px; /* Ensure width and height are equal */
+    border-radius: 50%; /* Make the logo circular */
+    display: block;
+    object-fit: cover; /* This will help maintain the aspect ratio if the image isn't square */
+}
+
 
 /* Right Icons Group */
 .header-right-icons {
@@ -92,6 +107,7 @@ header {
     opacity: 1;
     transform: translateY(0);
     top: 0;
+    cursor: pointer;
 }
 
 .search-input {
@@ -104,6 +120,7 @@ header {
     font-size: 16px;
     outline: none;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
 }
 
 .close-search {
@@ -116,6 +133,34 @@ header {
     color: #333;
     z-index: 1002;
     padding: 10px;
+}
+
+.cart {
+    position: relative;
+    /* Add this */
+    font-size: 20px;
+    color: #333;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.cart-count {
+    position: absolute;
+    /* Add this */
+    top: -10px;
+    /* Adjust this value as needed */
+    right: -10px;
+    /* Adjust this value as needed */
+    background-color: red;
+    /* Optional: add background color for visibility */
+    color: white;
+    /* Optional: color of the text */
+    border-radius: 50%;
+    /* Optional: to make it a circle */
+    padding: 2px 6px;
+    /* Optional: adjust padding */
+    font-size: 14px;
+    /* Adjust font size as needed */
 }
 
 .auth-links {
@@ -158,22 +203,35 @@ header {
     font-size: 1.2rem;
 }
 
+.user-profile span {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #333;
+}
+
+/* Logout Button */
 .logout-btn {
-    background: none;
-    border: none;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    background-color: #ff4444;
+    color: #fff;
+    border-radius: 20px;
+    text-decoration: none;
+    font-size: 0.9rem;
     cursor: pointer;
-    padding: 0.5rem;
-    color: inherit;
-    transition: color 0.3s ease;
+    transition: background-color 0.3s ease;
 }
 
 .logout-btn:hover {
-    color: #ff4444;
+    background-color: #ff3333;
 }
 
-.loading-spinner {
-    padding: 0.5rem;
+.logout-btn i {
+    font-size: 1rem;
 }
+
 
 /* Mobile Styles */
 @media screen and (max-width: 768px) {
@@ -204,10 +262,59 @@ header {
     }
 
     /* Center the logo */
+    /* .logo {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+    } */
+
+    /* Center the logo */
     .logo {
         position: absolute;
         left: 50%;
         transform: translateX(-50%);
+    }
+
+    /* .user-profile {
+        flex-direction: column;
+        align-items: center;
+    } */
+
+    /* Adjust existing mobile styles */
+    .user-profile {
+        display: none;
+    }
+
+    /* .logout-btn {
+        margin-top: 5px;
+    } */
+
+    /* Hide desktop logout button */
+    .auth-links .logout-btn {
+        display: none;
+    }
+
+    /* Show mobile logout button in sidebar */
+    .sidebar .logout-mobile {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 20px;
+        background-color: #ff4444;
+        color: #fff;
+        border-radius: 25px;
+        text-decoration: none;
+        margin: 20px 15px 0;
+        justify-content: center;
+        transition: background-color 0.3s ease;
+    }
+
+    .sidebar .logout-mobile:hover {
+        background-color: #ff3333;
+    }
+
+    .sidebar .logout-mobile i {
+        font-size: 18px;
     }
 }
 
@@ -234,6 +341,122 @@ header {
         padding: 10px 15px;
         font-size: 14px;
     }
+
+    /* .logout-btn {
+        margin-top: 5px;
+    } */
+
+    .user-info {
+        display: none;
+        /* Hide by default, show with JS */
+        flex-direction: column;
+        height: 100%;
+    }
+
+    .user-profile-mobile {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 12px;
+        margin-bottom: 25px;
+    }
+
+    .user-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        overflow: hidden;
+    }
+
+    .user-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .user-details h3 {
+        font-size: 1.1rem;
+        margin-bottom: 3px;
+        color: #333;
+    }
+
+    .user-details p {
+        font-size: 0.85rem;
+        color: #666;
+    }
+
+    /* Mobile Menu Links */
+    .mobile-menu ul {
+        list-style: none;
+        margin-bottom: auto;
+    }
+
+    .mobile-menu li a {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 15px 20px;
+        color: #444;
+        text-decoration: none;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .mobile-menu li a:hover {
+        background: #f8f9fa;
+        transform: translateX(5px);
+    }
+
+    .mobile-menu li a i {
+        width: 25px;
+        text-align: center;
+    }
+
+    .auth-links-mobile {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 20px;
+    }
+
+    .auth-links-mobile a {
+        display: block;
+        text-decoration: none;
+        color: white;
+        padding: 10px;
+        width: 100%;
+        text-align: center;
+        border-radius: 5px;
+        transition: background 0.3s;
+    }
+
+    .auth-links-mobile a:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Mobile Responsive Adjustments */
+    @media (max-width: 768px) {
+        .sidebar {
+            padding: 40px 20px 20px;
+        }
+
+        .user-profile-mobile {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .mobile-menu li a {
+            font-size: 0.95rem;
+        }
+
+        .auth-promo h3 {
+            font-size: 1.3rem;
+        }
+    }
+
+
 }
 
 /* Menu Sidebar */
@@ -301,4 +524,3 @@ header {
     opacity: 1;
     visibility: visible;
 }
-

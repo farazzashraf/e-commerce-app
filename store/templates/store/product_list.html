@@ -6,110 +6,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Products - Thrift Shop</title>
-    <!-- <link rel="stylesheet" href="{% static 'styles.css' %}"> -->
-    <!-- <script src="{% static 'script.js' %}" defer></script> -->
-    <link rel="stylesheet" href="{% static 'css/product_list.css' %} ?v={{ timestamp }}">    
+    <link rel="stylesheet" href="{% static 'css/product_list.css' %}?v={{ timestamp }}">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    
-    <script src="{% static 'js/product_list.js' %} ?v={{ timestamp }}" defer></script>
-    <script src="{% static 'js/cart.js' %} ?v={{ timestamp }}" defer></script>
 
+    <script src="{% static 'js/product_list.js' %}?v={{ timestamp }}" defer></script>
+    <script src="{% static 'js/cart.js' %}?v={{ timestamp }}" defer></script>
 </head>
 
 <body>
-
-    <!-- Product Listing -->
     <section class="products">
         <h2>Our Collection</h2>
+        {% if products %}
         <div class="product-grid">
-
-            <!-- Product 1 -->
-            <div class="product-card" data-product-id="1">
-                <img src="{% static 'images/product1.jpg' %}" alt="Product 1">
-                <h3>Elegant Red Dress</h3>
-                <p class="item-size">Size: M</p>
-                <p class="price">₹1,499</p>
+            {% for product in products %}
+            <div class="product-card" data-product-id="{{ product.id }}">
+                <img src="{{ product.image_url }}" alt="{{ product.name }}">
+                <h3>{{ product.name }}</h3>
+                <p class="category">{{ product.category }}</p>  <!-- ✅ Added Category -->
+                <p class="description">{{ product.description }}</p>
+                <p class="price">₹{{ product.price }}</p>
                 <div class="quantity">
                     <button class="decrease">-</button>
-                    <span class="qty-display">1</span> <!-- Display quantity instead of an input box -->
+                    <span class="qty-display">1</span>
                     <button class="increase">+</button>
                 </div>
                 <button class="add-to-cart">Add to Cart</button>
             </div>
-
-            <div class="product-card" data-product-id="2">
-                <img src="{% static 'images/product2.jpg' %}" alt="Product 2">
-                <h3>Pant</h3>
-                <p class="item-size">Size: M</p>
-                <p class="price">₹1,499</p>
-                <div class="quantity">
-                    <button class="decrease">-</button>
-                    <span class="qty-display">1</span> <!-- Display quantity instead of an input box -->
-                    <button class="increase">+</button>
-                </div>
-                <button class="add-to-cart">Add to Cart</button>
-            </div>
-
-            <div class="product-card" data-product-id="3">
-                <img src="{% static 'images/product1.jpg' %}" alt="Product 3">
-                <h3>jacket</h3>
-                <p class="item-size">Size: M</p>
-                <p class="price">₹1,499</p>
-                <div class="quantity">
-                    <button class="decrease">-</button>
-                    <span class="qty-display">1</span> <!-- Display quantity instead of an input box -->
-                    <button class="increase">+</button>
-                </div>
-                <button class="add-to-cart">Add to Cart</button>
-            </div>
-
-            <div class="product-card" data-product-id="4">
-                <img src="{% static 'images/product2.jpg' %}" alt="Product 1">
-                <h3>Elegant Red Dress</h3>
-                <p class="item-size">Size: M</p>
-                <p class="price">₹1,499</p>
-                <div class="quantity">
-                    <button class="decrease">-</button>
-                    <span class="qty-display">1</span> <!-- Display quantity instead of an input box -->
-                    <button class="increase">+</button>
-                </div>
-                <button class="add-to-cart">Add to Cart</button>
-            </div>
-
-            <div class="product-card" data-product-id="5">
-                <img src="{% static 'images/product1.jpg' %}" alt="Product 1">
-                <h3>Elegant Red Dress</h3>
-                <p class="item-size">Size: M</p>
-                <p class="price">₹1,499</p>
-                <div class="quantity">
-                    <button class="decrease">-</button>
-                    <span class="qty-display">1</span> <!-- Display quantity instead of an input box -->
-                    <button class="increase">+</button>
-                </div>
-                <button class="add-to-cart">Add to Cart</button>
-            </div>
-
-            <div class="product-card" data-product-id="6">
-                <img src="{% static 'images/product2.jpg' %}" alt="Product 1">
-                <h3>Elegant Red Dress</h3>
-                <p class="item-size">Size: M</p>
-                <p class="price">₹1,499</p>
-                <div class="quantity">
-                    <button class="decrease">-</button>
-                    <span class="qty-display">1</span> <!-- Display quantity instead of an input box -->
-                    <button class="increase">+</button>
-                </div>
-                <button class="add-to-cart">Add to Cart</button>
-            </div>
-
-            
-
-            
-
-            <!-- Add more products as needed -->
-
+            {% endfor %}
         </div>
+        {% else %}
+        <p>No products available at the moment.</p>
+        {% endif %}
     </section>
+
+
 
 </body>
 

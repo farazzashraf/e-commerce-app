@@ -5,15 +5,15 @@
 
 <head>
     <title>Login</title>
-    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-firestore.js"></script>
 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="{% static 'css/auth.css' %} ?v={{ timestamp }}">
 
+
     <!-- <script src="{% static 'js/login.js' %} ?v={{ timestamp }}" defer></script> -->
-    <script src="{% static 'js/firebase-config.js' %} ?v={{ timestamp }}" defer></script>
-    <script src="{% static 'js/auth.js' %} ?v={{ timestamp }}" defer></script>
+    <script type="module" src="{% static 'js/firebase-config.js' %}" defer></script>
+    <script type="module" src="{% static 'js/login.js' %}" defer></script>
 </head>
 
 <body>
@@ -24,9 +24,14 @@
         </div>
 
         <div class="error-message" id="errorMessage"></div>
+        <div class="not-registered-message" id="notRegisteredMessage"
+            style="display: none; color: red; text-align: center;">
+            User not found. <a href="/signup">Sign up here</a>.
+        </div>
         <div class="success-message" id="successMessage"></div>
 
-        <form id="loginForm">
+        <form id="loginForm" method="POST">
+            {% csrf_token %}
             <div class="form-group">
                 <label for="email" class="form-label">Email Address</label>
                 <input type="email" id="email" class="form-input" placeholder="Enter your email" required>
@@ -34,7 +39,13 @@
 
             <div class="form-group">
                 <label for="password" class="form-label">Password</label>
-                <input type="password" id="password" class="form-input" placeholder="Enter your password" required>
+                <!-- <input type="password" id="password" class="form-input" placeholder="Enter your password" required> -->
+                <div class="password-container">
+                    <input type="password" id="password" class="form-input" placeholder="Enter your password" required>
+                    <button type="button" class="toggle-password">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
             </div>
 
             <button type="submit" class="auth-button">
@@ -48,5 +59,6 @@
         </div>
     </div>
 </body>
+
 
 </html>

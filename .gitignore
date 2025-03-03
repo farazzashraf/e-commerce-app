@@ -1,0 +1,50 @@
+# Ignore Python bytecode and cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+venv/
+env/
+
+# Django secret keys and settings
+.env
+*.enc
+
+# Database files
+*.sqlite3
+db.sqlite3
+*.db
+
+# Django and Supabase logs
+logs/
+*.log
+
+# Ignore static and media files (optional, if not using version control)
+staticfiles/
+media/
+
+# Ignore Firebase SDK and credentials
+firebase/firebase-admin-sdk.json
+
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+# Ignore compiled files
+*.egg-info/
+*.dist-info/
+
+# Ignore migrations (optional, if you want fresh migrations on different systems)
+**/migrations/*
+
+# Ignore node_modules (if you use Node.js for frontend assets)
+node_modules/
+
+# Ignore VS Code and JetBrains IDE config files
+.vscode/
+.idea/
+
+# Ignore cache
+*.cache

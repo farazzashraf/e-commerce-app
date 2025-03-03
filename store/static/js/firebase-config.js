@@ -1,21 +1,24 @@
-import { initializeApp } from 'firebase/app';
+// Import Firebase modules
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-app.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-auth.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-analytics.js";
 
-// Ensure Firebase SDK is loaded before initializing
-if (typeof firebase === "undefined") {
-    console.error("❌ Firebase SDK is not loaded before firebase-config.js!");
-} else {
-    // Firebase project configuration
-    const firebaseConfig = {
-        apiKey: "AIzaSyAkHqN2udZ4XZB6Wyir3I3_EMKkLYT5khc",
-        authDomain: "thrift-shop-a1808.firebaseapp.com",
-        projectId: "thrift-shop-a1808",
-        storageBucket: "thrift-shop-a1808.firebasestorage.app",
-        messagingSenderId: "82249712532",
-        appId: "1:82249712532:web:eb27d4c3591b156ab64581",
-        measurementId: "G-PK06Y5WW3M"
-    };
+// Firebase configuration
+const firebaseConfig = {
+    apiKey: "AIzaSyAc3PJiGzPKpNDhZmuneE6Dcx8C5cd-hPQ",
+    authDomain: "ecommerce-307ec.firebaseapp.com",
+    projectId: "ecommerce-307ec",
+    // storageBucket: "ecommerce-307ec.appspot.com",
+    storageBucket: "ecommerce-307ec.firebasestorage.app",
+    messagingSenderId: "500663795876",
+    appId: "1:500663795876:web:4b2288690d988e74362631",
+    measurementId: "G-1TPH0K5V3B"
+};
 
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const analytics = getAnalytics(app);
 
-}
+// Export Firebase Auth so other files can use it
+export { auth };

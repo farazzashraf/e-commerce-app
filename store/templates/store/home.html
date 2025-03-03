@@ -1,9 +1,13 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <script src="{% static 'js/home.js' %}" defer></script>
+
     <title>Home - Thrift Shop</title>
     <!-- <link rel="stylesheet" href="{% static 'css/header.css' %}"> -->
     <!-- <link rel="stylesheet" href="{% static 'css/product_list.css' %}">
@@ -16,15 +20,16 @@
     <script src="{% static 'js/cart.js' %}" defer></script> -->
 
 </head>
+
 <body>
 
     <!-- Include Header -->
     {% include 'store/header.html' %}
 
-    <!-- Main Content -->
-    <main>
-        {% include 'store/product_list.html' %}
-    </main>
+    {% include "store/product_list.html" with products=products %}
+
+    {% include "store/footer.html" %}
 
 </body>
+
 </html>

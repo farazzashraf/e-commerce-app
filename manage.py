@@ -3,6 +3,10 @@
 import os
 import sys
 
+# Ignore SIGPIPE error on Unix, but skip on Windows
+if os.name != "nt":  # "nt" means Windows, "posix" means Linux/macOS
+    import signal
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 def main():
     """Run administrative tasks."""

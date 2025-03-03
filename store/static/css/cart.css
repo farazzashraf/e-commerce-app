@@ -215,6 +215,92 @@
     background: #e0e0e0;
 }
 
+/* Promo Code Input and Buttons */
+.promo-code {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.promo-code input {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.promo-code button {
+    padding: 8px 12px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    border-radius: 5px;
+}
+
+.promo-code button:hover {
+    opacity: 0.8;
+}
+
+/* Apply Button */
+.promo-code button:first-child {
+    background: #28a745;
+    color: white;
+}
+
+/* Cancel Button */
+.cancel-promo {
+    background: #dc3545;
+    color: white;
+    display: none; /* Hidden by default */
+}
+
+/* Notification Styles */
+.promo-notification {
+    position: fixed;
+    top: 20px;
+    right: 45%;
+    background: #28a745;
+    color: white;
+    padding: 12px 20px;
+    font-size: 16px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    transition: opacity 0.5s ease-in-out;
+    z-index: 1000;
+}
+
+.promo-notification.error {
+    background: #dc3545;
+}
+
+.promo-notification i {
+    font-size: 18px;
+}
+
+.promo-notification.fade-out {
+    opacity: 0;
+}
+
+/* Cancel Button */
+#cancel-promo {
+    background: #dc3545;
+    color: white;
+    padding: 8px 12px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    border-radius: 5px;
+    display: none;
+}
+
+#cancel-promo:hover {
+    background: #c82333;
+}
+
+
 @media (max-width: 768px) {
     .cart-content {
         grid-template-columns: 1fr;

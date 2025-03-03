@@ -10,13 +10,28 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
+from firebase_admin import credentials, auth
 from pathlib import Path
 import os
 import firebase_admin
 from firebase_admin import credentials
+import environ
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Initialize environment variables
+env = environ.Env()
+env.read_env(os.path.join(Path(__file__).resolve().parent.parent, ".env"))  # Ensure .env is in the root directory
+
+# Load Supabase credentials
+SUPABASE_URL = env("SUPABASE_URL", default=None)
+SUPABASE_ANON_KEY = env("SUPABASE_ANON_KEY", default=None)
+
+# Debugging
+print("Loaded SUPABASE_URL:", SUPABASE_URL)
+print("Loaded SUPABASE_ANON_KEY:", SUPABASE_ANON_KEY)
+
 
 # BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -43,22 +58,29 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "store",
     'django',
-    'rest_framework'
+    'rest_framework',
 ]
+
+# Redis for real-time communication
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",  # Use Redis for production
+    },
+}
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",  # ✅ Required
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "corsheaders.middleware.CorsMiddleware",
-    'firebase.firebase_middleware.FirebaseAuthMiddleware',
 ]
 
-CORS_ORIGIN_ALLOW_ALL = True # For development only
+
+CORS_ORIGIN_ALLOW_ALL = True  # For development only
 
 ROOT_URLCONF = "ecommerce.urls"
 
@@ -84,12 +106,20 @@ WSGI_APPLICATION = "ecommerce.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.sqlite3",
-#         "NAME": BASE_DIR / "db.sqlite3",
-#     }
-# }
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
+    }
+}
+
+SESSION_ENGINE = "django.contrib.sessions.backends.db"
+
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 365
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False 
+
+# # Session settings
+# SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -108,7 +138,7 @@ AUTH_PASSWORD_VALIDATORS = [
         "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
-    
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
@@ -133,13 +163,33 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, 'store/static')]
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# Construct the path to the firebase-admin-sdk.json file
-firebase_json_path = os.path.join(BASE_DIR, "firebase", "firebase-admin-sdk.json")
 
-print("BASE_DIR:", BASE_DIR)
-print("Firebase JSON Path:", firebase_json_path)
-print("File exists:", os.path.exists(firebase_json_path))
+FIREBASE_CONFIG_PATH = "firebase/firebase-admin-sdk.json"
 
-# Initialize Firebase with the credentials
-cred = credentials.Certificate(firebase_json_path)
+cred = credentials.Certificate(FIREBASE_CONFIG_PATH)
 firebase_admin.initialize_app(cred)
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+        'file': {
+            'class': 'logging.FileHandler',
+            'filename': 'django.log',
+        },
+    },
+    'root': {
+        'handlers': ['console', 'file'],
+        'level': 'INFO',
+    },
+}
+
+# settings.py
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
+
+ALLOWED_HOSTS = ["192.168.1.9", "localhost", "127.0.0.1"]
+CSRF_TRUSTED_ORIGINS = ["http://192.168.1.9"]

@@ -1,0 +1,76 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Product</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/admin.css' %}">
+
+    <script src="{% static 'js/admin-update-product.js' %}" defer></script>
+
+
+
+</head>
+
+<body>
+    <div class="container mx-auto px-4 py-8">
+        <h2 class="text-2xl font-bold mb-4">Update Product</h2>
+        <form id="updateProductForm" method="POST" action="{% url 'admin_update' product.id %}" enctype="multipart/form-data" class="bg-white p-6 rounded shadow-md">
+
+            {% csrf_token %}
+            <label class="block mb-2">Name:</label>
+            <input type="text" name="name" value="{{ product.name }}" class="w-full p-2 border rounded mb-4">
+
+            <div class="mb-4">
+                <label for="category" class="block text-gray-700">Category:</label>
+                <select id="category" name="category" required class="border border-gray-300 p-2 w-full">
+                    <option value="" disabled>Select a category</option>
+                    <option value="Jackets" {% if product.category == "Jackets" %}selected{% endif %}>Jackets</option>
+                    <option value="Pants" {% if product.category == "Pants" %}selected{% endif %}>Pants</option>
+                </select>
+            </div>
+            
+
+            <label class="block mb-2">Price:</label>
+            <input type="text" name="price" value="{{ product.price }}" class="w-full p-2 border rounded mb-4">
+
+            <label class="block mb-2">Description:</label>
+            <textarea name="description" class="w-full p-2 border rounded mb-4">{{ product.description }}</textarea>
+
+            <!-- <label class="block mb-2">Image:</label>
+            <input type="file" name="image" class="w-full p-2 border rounded mb-4"> -->
+
+            <!-- ✅ Show Current Image -->
+            <label class="block mb-2">Current Image:</label>
+            {% if product.image_url %}
+            <img src="{{ product.image_url }}" alt="{{ product.name }}" class="w-32 h-32 object-cover mb-4">
+            {% else %}
+            <p>No image available</p>
+            {% endif %}
+            <!-- ✅ Allow Image Upload -->
+            <label class="block mb-2">Upload New Image:</label>
+            <input type="file" name="image" class="w-full p-2 border rounded mb-4">
+
+
+            <!-- Error container for client-side validation -->
+            <div id="errorContainer" class="text-red-600 mt-2" style="display: none;"></div>
+
+            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Update</button>
+            <a href="{% url 'admin_dashboard' %}" class="ml-4 text-gray-600">Cancel</a>
+        </form>
+    </div>
+    <!-- Loading Spinner Overlay -->
+    <div id="loadingOverlay" class="overlay">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Success Message -->
+    <div id="successMessage" class="success-message">
+        Product updated successfully!
+    </div>
+</body>
+
+</html>

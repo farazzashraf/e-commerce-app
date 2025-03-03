@@ -152,6 +152,24 @@ body {
     margin: 0 auto;
 }
 
+.spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid white;
+    border-top: 2px solid transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+
 @keyframes spin {
     0% {
         transform: rotate(0deg);
@@ -217,4 +235,40 @@ body {
     .success-message {
         background: #1c4532;
     }
+}
+
+.password-container {
+    position: relative;
+    width: 100%;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #555;
+    /* Ensure it's visible */
+    cursor: pointer;
+    font-size: 18px;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+}
+
+.toggle-password i {
+    color: #777;
+    /* Darker color for visibility */
+    font-size: 18px;
+}
+
+.toggle-password:hover i {
+    color: var(--primary-color);
+}
+
+/* Ensure input has space for the icon */
+.form-input {
+    padding-right: 40px !important;
 }
