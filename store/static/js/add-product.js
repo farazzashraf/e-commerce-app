@@ -25,10 +25,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const name = formData.get('name').trim();
         const category = formData.get('category'); // Get category value
         const price = formData.get('price').trim();
+        const originalPrice = formData.get('originalprice').trim();
         const description = formData.get('description').trim();
         const image = formData.get('image');
 
-        if (!name || !category || !price || !description || !image) {
+        if (!name || !category || !price || !originalPrice || !description || !image) {
             errorContainer.textContent = 'All fields are required.';
             errorContainer.style.display = 'block';
             loadingOverlay.style.display = 'none';
@@ -95,4 +96,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         return cookieValue;
     }
+});
+
+document.addEventListener('DOMContentLoaded', function () {
+    const addMoreBtn = document.getElementById('addMoreImages');
+    const additionalImagesContainer = document.getElementById('additionalImagesContainer');
+
+    addMoreBtn.addEventListener('click', function () {
+        // Count existing additional image file inputs
+        const currentInputs = additionalImagesContainer.querySelectorAll('input[name="additional_images"]').length;
+        if (currentInputs >= 3) {
+            alert("You can only add up to 3 additional images.");
+            return;
+        }
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.name = 'additional_images'; // In your backend, you can use request.FILES.getlist('additional_images')
+        input.accept = 'image/*';
+        input.className = 'border border-gray-300 p-2 w-full mb-2';
+        additionalImagesContainer.appendChild(input);
+    });
 });

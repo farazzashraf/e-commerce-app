@@ -1,82 +1,126 @@
- /* Reset & Global Styles */
- * {
-     margin: 0;
-     padding: 0;
-     box-sizing: border-box;
- }
+/* styles.css */
+:root {
+    --primary-color: #4a90e2;
+    --secondary-color: #2c3e50;
+    --success-color: #2ecc71;
+    --error-color: #e74c3c;
+    --background-color: #f5f6fa;
+    --text-color: #2c3e50;
+    --box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
 
- body {
-     font-family: Arial, sans-serif;
-     background: #f4f4f4;
-     display: flex;
-     align-items: center;
-     justify-content: center;
-     min-height: 100vh;
- }
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
 
- .container {
-     background: #fff;
-     padding: 30px;
-     border-radius: 8px;
-     width: 90%;
-     max-width: 400px;
-     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
- }
+body {
+    background: var(--background-color);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 15px;
+}
 
- h2 {
-     text-align: center;
-     margin-bottom: 20px;
-     color: #333;
- }
+.auth-container {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: var(--box-shadow);
+    width: 100%;
+    max-width: 360px;
+    max-height: 90vh;
+    overflow-y: auto;
+    margin: auto;
+}
 
- form label {
-     display: block;
-     margin-bottom: 5px;
-     font-weight: bold;
-     color: #555;
- }
+.auth-header {
+    text-align: center;
+    margin-bottom: 1.2rem;
+}
 
- form input[type="email"],
- form input[type="password"] {
-     width: 100%;
-     padding: 10px;
-     margin-bottom: 15px;
-     border: 1px solid #ccc;
-     border-radius: 4px;
- }
+.auth-header h1 {
+    color: var(--secondary-color);
+    font-size: 1.5rem;
+    margin-bottom: 0.4rem;
+}
 
- form button {
-     width: 100%;
-     padding: 10px;
-     background: #007bff;
-     color: #fff;
-     border: none;
-     border-radius: 4px;
-     cursor: pointer;
-     font-size: 16px;
- }
+.auth-header p {
+    font-size: 0.8rem;
+    margin-bottom: 0.8rem;
+}
 
- form button:hover {
-     background: #0069d9;
- }
+.form-group {
+    margin-bottom: 1rem;
+}
 
- .login-link {
-     text-align: center;
-     margin-top: 15px;
- }
+.form-label {
+    font-size: 0.8rem;
+    margin-bottom: 0.4rem;
+}
 
- .login-link a {
-     color: #28a745;
-     text-decoration: none;
- }
+.form-input {
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    border-radius: 6px;
+}
 
- .login-link a:hover {
-     text-decoration: underline;
- }
+.auth-button {
+    padding: 10px;
+    font-size: 0.9rem;
+    margin: 1rem 0 0.8rem;
+}
 
- /* Mobile responsiveness */
- @media (max-width: 480px) {
-     .container {
-         padding: 20px;
-     }
- }
+.brand-logo {
+    width: 70px;
+    height: 70px;
+    margin-bottom: 0.8rem;
+}
+
+.password-container {
+    position: relative;
+}
+
+.toggle-password {
+    right: 8px;
+    padding: 3px;
+    font-size: 16px;
+}
+
+.form-input {
+    padding-right: 35px !important;
+}
+
+.auth-links {
+    font-size: 0.8rem;
+    margin-top: 1rem;
+}
+
+.spinner {
+    width: 14px;
+    height: 14px;
+    border-width: 2px;
+}
+
+@media (max-width: 480px) {
+    .auth-container {
+        padding: 1rem;
+        max-width: 300px;
+    }
+    
+    .auth-header h1 {
+        font-size: 1.3rem;
+    }
+    
+    .form-input {
+        padding: 6px 10px;
+        font-size: 0.85rem;
+    }
+    
+    .brand-logo {
+        width: 60px;
+        height: 60px;
+    }
+}

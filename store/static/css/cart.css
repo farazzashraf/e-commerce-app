@@ -215,90 +215,43 @@
     background: #e0e0e0;
 }
 
-/* Promo Code Input and Buttons */
-.promo-code {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-}
-
-.promo-code input {
-    flex: 1;
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-}
-
-.promo-code button {
-    padding: 8px 12px;
-    border: none;
-    cursor: pointer;
-    font-size: 14px;
-    border-radius: 5px;
-}
-
-.promo-code button:hover {
-    opacity: 0.8;
-}
-
-/* Apply Button */
-.promo-code button:first-child {
-    background: #28a745;
-    color: white;
-}
-
-/* Cancel Button */
-.cancel-promo {
-    background: #dc3545;
-    color: white;
-    display: none; /* Hidden by default */
-}
-
-/* Notification Styles */
-.promo-notification {
+.modal-overlay {
     position: fixed;
-    top: 20px;
-    right: 45%;
-    background: #28a745;
-    color: white;
-    padding: 12px 20px;
-    font-size: 16px;
-    border-radius: 8px;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
     display: flex;
+    justify-content: center;
     align-items: center;
-    gap: 10px;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-    transition: opacity 0.5s ease-in-out;
-    z-index: 1000;
 }
 
-.promo-notification.error {
-    background: #dc3545;
+.modal-content {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
 }
 
-.promo-notification i {
-    font-size: 18px;
-}
-
-.promo-notification.fade-out {
-    opacity: 0;
-}
-
-/* Cancel Button */
-#cancel-promo {
-    background: #dc3545;
-    color: white;
-    padding: 8px 12px;
+.modal-content button {
+    margin: 10px;
+    padding: 10px 20px;
     border: none;
     cursor: pointer;
-    font-size: 14px;
     border-radius: 5px;
-    display: none;
 }
 
-#cancel-promo:hover {
-    background: #c82333;
+.modal-content button:first-child {
+    background: #007bff;
+    color: white;
 }
+
+.modal-content button:last-child {
+    background: #ccc;
+}
+
 
 
 @media (max-width: 768px) {
@@ -322,4 +275,19 @@
     .quantity-controls {
         justify-content: center;
     }
+}
+
+.toast-message {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #333;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    display: none;
+    z-index: 1000;
+    font-size: 16px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
 }

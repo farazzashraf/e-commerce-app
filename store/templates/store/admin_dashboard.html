@@ -7,8 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/admin.css' %}">
+    <script src="{% static 'js/admin-dashboard.js' %}" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 </head>
 
@@ -31,8 +30,7 @@
                         class="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-lg py-2 z-50 md:hidden">
                         <a href="{% url 'add_product_view' %}"
                             class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Add Product</a>
-                        <a href="{% url 'admin_logout' %}"
-                            class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Logout</a>
+                        <a href="{% url 'logout' %}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Logout</a>
                     </div>
                     <div class="hidden md:flex items-center space-x-4">
                         <a href="{% url 'add_product_view' %}"
@@ -43,7 +41,15 @@
                             </svg>
                             Add Product
                         </a>
-                        <a href="{% url 'admin_logout' %}"
+                        <a href="{% url 'admin_orders' %}"
+                            class="flex items-center bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg transition-all">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 10h11M9 21V3m11 6h-8m8 5h-8m8 5h-8" />
+                            </svg>
+                            Orders
+                        </a>
+                        <a href="{% url 'logout' %}"
                             class="flex items-center bg-rose-500 hover:bg-rose-600 text-white px-4 py-2 rounded-lg transition-all">
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -54,6 +60,7 @@
                     </div>
                 </div>
             </div>
+        </div>
     </nav>
 
     <!-- Main Content -->
@@ -84,10 +91,12 @@
                 <table class="w-full">
                     <thead class="bg-gray-50">
                         <tr class="text-left text-sm font-semibold text-gray-600">
+                            <th class="px-6 py-4">ProductId</th>
                             <th class="px-6 py-4">Image</th>
                             <th class="px-6 py-4">Product</th>
                             <th class="px-6 py-4 hidden md:table-cell">Category</th>
                             <th class="px-6 py-4">Price</th>
+                            <th class="px-6 py-4">Original Price</th>
                             <th class="px-6 py-4 hidden lg:table-cell">Description</th>
                             <th class="px-6 py-4">Actions</th>
                         </tr>
@@ -95,9 +104,21 @@
                     <tbody class="divide-y divide-gray-200 text-gray-700">
                         {% for product in products %}
                         <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-6 py-4 font-medium">{{ product.id }}</td>
+
                             <td class="px-6 py-4">
-                                <img src="{{ product.image_url }}" alt="{{ product.name }}"
-                                    class="w-14 h-14 object-cover rounded-lg shadow-sm border border-gray-200">
+                                <div class="flex flex-col items-center">
+
+                                    <img src="{{ product.image_url }}" alt="{{ product.name }}"
+                                        class="w-14 h-14 object-cover rounded-lg shadow-sm border border-gray-200">
+                                    <button data-product-id="{{ product.id }}" data-image-urls="{{ product.image_url }}
+                                            {% if product.image_url2 %},{{ product.image_url2 }}{% endif %}
+                                            {% if product.image_url3 %},{{ product.image_url3 }}{% endif %}
+                                            {% if product.image_url4 %},{{ product.image_url4 }}{% endif %}"
+                                        onclick="showImagesModal(this)" class="text-blue-600 text-sm mt-2">
+                                        View Images
+                                    </button>
+                                </div>
                             </td>
                             <td class="px-6 py-4 font-medium">{{ product.name }}</td>
                             <td class="px-6 py-4 hidden md:table-cell">
@@ -106,7 +127,9 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 font-medium">₹{{ product.price }}</td>
-                            <td class="px-6 py-4 hidden lg:table-cell text-gray-600 max-w-xs truncate">{{ product.description }}</td>
+                            <td class="px-6 py-4 font-medium">₹{{ product.original_price }}</td>
+                            <td class="px-6 py-4 hidden lg:table-cell text-gray-600 max-w-xs truncate">
+                                {{ product.description }}</td>
                             <td class="px-6 py-4">
                                 <div class="flex space-x-3">
                                     <a href="{% url 'admin_update' product.id %}"
@@ -148,30 +171,44 @@
         </div>
     </main>
 
-    <!-- Delete Modal -->
-    <div id="deleteModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 backdrop-blur-sm">
+    <!-- Images Modal -->
+    <div id="imagesModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-lg p-4 relative">
+            <button onclick="closeImagesModal()" class="absolute top-2 right-2 text-gray-600 hover:text-gray-800">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                    </path>
+                </svg>
+            </button>
+            <div id="imagesModalContent" class="flex flex-wrap justify-center"></div>
+        </div>
+    </div>
+
+    <!-- Delete Modal (existing code) -->
+    <div id="deleteModal"
+        class="fixed inset-0 bg-black/50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-xl shadow-2xl max-w-md w-full transform transition-all">
             <div class="p-6">
                 <div class="flex items-center space-x-3 mb-4">
-                    <div class="p-2 bg-rose-100 rounded-lg">
-                        <svg class="w-6 h-6 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="p-2 bg-blue-100 rounded-lg">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                         </svg>
                     </div>
-                    <h3 class="text-lg font-semibold">Confirm Deletion</h3>
+                    <h3 class="text-lg font-semibold text-blue-700">Confirm Deletion</h3>
                 </div>
                 <p class="text-gray-600 mb-6">This action cannot be undone. Are you sure you want to permanently delete
                     this product?</p>
                 <div class="flex justify-end space-x-3">
                     <button onclick="closeDeleteModal()"
-                        class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                        class="px-4 py-2 text-gray-600 hover:bg-gray-200 rounded-lg transition-colors">
                         Cancel
                     </button>
                     <form id="deleteForm" method="POST">
                         {% csrf_token %}
                         <button type="submit"
-                            class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg transition-colors flex items-center">
+                            class="block px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

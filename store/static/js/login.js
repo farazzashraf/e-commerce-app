@@ -1,6 +1,5 @@
-import { auth } from "./firebase-config.js";
+import { auth, googleProvider } from "./firebase-config.js";
 import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-auth.js";
-
 // Function to get the CSRF token from the cookie
 function getCsrfToken() {
     const csrfToken = document.cookie.match(/csrftoken=([\w-]+)/);
@@ -69,10 +68,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
             if (data.success) {
                 console.log("✅ Authentication successful!");
-                console.log("🚀 Redirecting to home page...");
-
-                // ✅ Set cookie via Django, not JavaScript
-                window.location.replace("/home/");
+                // Check if a redirect URL is provided (for admin users)
+                if (data.redirect) {
+                    console.log("🚀 Redirecting to admin dashboard...");
+                    window.location.replace(data.redirect);
+                } else {
+                    console.log("🚀 Redirecting to home page...");
+                    window.location.replace("/");
+                }
             } else {
                 console.error("❌ Backend authentication failed:", data.error);
                 errorMessageDiv.innerText = `Authentication failed: ${data.error}`;

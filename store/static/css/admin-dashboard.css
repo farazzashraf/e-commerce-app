@@ -1,0 +1,94 @@
+body {
+    font-family: 'Inter', sans-serif;
+}
+
+.btn-primary {
+    background: #4f46e5;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    transition: 0.2s;
+}
+
+.btn-primary:hover {
+    background: #4338ca;
+}
+
+.btn-danger {
+    background: #e11d48;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    transition: 0.2s;
+}
+
+.btn-danger:hover {
+    background: #be123c;
+}
+
+.btn-secondary {
+    background: #d1d5db;
+    color: #374151;
+    padding: 8px 16px;
+    border-radius: 8px;
+}
+
+.alert {
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+.alert-success {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.alert-error {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.product-img {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.category-badge {
+    padding: 4px 8px;
+    background: #c7d2fe;
+    color: #4338ca;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.icon-btn {
+    padding: 8px;
+    border-radius: 8px;
+    transition: 0.2s;
+}
+
+.edit-btn {
+    color: #4f46e5;
+}
+
+.delete-btn {
+    color: #e11d48;
+}
+
+.modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: white;
+    padding: 24px;
+    border-radius: 8px;
+}

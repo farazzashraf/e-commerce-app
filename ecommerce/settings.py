@@ -16,6 +16,11 @@ import os
 import firebase_admin
 from firebase_admin import credentials
 import environ
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -58,7 +63,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "store",
     'django',
-    'rest_framework',
+    'rest_framework'
 ]
 
 # Redis for real-time communication
@@ -188,8 +193,23 @@ LOGGING = {
 }
 
 # settings.py
+
+# Email settings
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = os.getenv('EMAIL_HOST')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))  # Default to 587 if not found
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS') == 'True'
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
+
+LOGIN_REDIRECT_URL = "/store-admin/orders/"
+
+
+# settings.py
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 
 ALLOWED_HOSTS = ["192.168.1.9", "localhost", "127.0.0.1"]
 CSRF_TRUSTED_ORIGINS = ["http://192.168.1.9"]
+

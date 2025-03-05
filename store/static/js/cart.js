@@ -114,7 +114,7 @@ function loadCart() {
             document.querySelector('.subtotal').textContent = `₹${subtotal.toFixed(2)}`;
 
             let shipping = 99;
-            let discount = localStorage.getItem("discount") || 0;
+            let discount = sessionStorage.getItem("discount") || 0;
             let total = subtotal + shipping - discount;
             document.querySelector('.summary-item.discount span:last-child').textContent = `-₹${discount}`;
             document.querySelector('.total span:last-child').textContent = `₹${total.toFixed(2)}`;
@@ -143,22 +143,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 removeFromCart(productId);
             }
         });
-
-        const applyPromoButton = document.getElementById("apply-promo");
-        const cancelPromoButton = document.getElementById("cancel-promo");
-
-        if (applyPromoButton && cancelPromoButton) {
-            applyPromoButton.addEventListener("click", applyPromoCode);
-            cancelPromoButton.addEventListener("click", removePromoCode);
-
-            const savedPromo = localStorage.getItem("promoCode");
-            if (savedPromo) {
-                document.getElementById("promo-input").value = savedPromo;
-                document.getElementById("promo-input").disabled = true;
-                applyPromoButton.style.display = "none";
-                cancelPromoButton.style.display = "inline-block";
-            }
-        }
     } else {
         console.log("Not on cart page, skipping cart event listeners.");
     }
@@ -227,3 +211,167 @@ function getCSRFToken() {
     return document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1] || '';
 }
 
+function showToast(message) {
+    const toast = document.getElementById("toast-message");
+    toast.textContent = message;
+    toast.style.display = "block";
+
+    setTimeout(() => {
+        toast.style.display = "none";
+    }, 3000); // Hide after 3 seconds
+}
+
+
+function applyPromoCode() {
+    const promoCode = document.getElementById("promo-code").value.trim();
+
+    if (!promoCode) {
+        showToast("Please enter a promo code.");
+        return;
+    }
+
+    fetch("/apply_promo/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCSRFToken(),
+        },
+        body: JSON.stringify({ promo_code: promoCode }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            sessionStorage.setItem("discount", data.discount);
+            document.querySelector(".summary-item.discount span:last-child").textContent = `-₹${data.discount}`;
+            
+            // ✅ Show Cancel Button
+            document.getElementById("cancel-promo-btn").style.display = "inline-block";
+
+            // ✅ Show Success Message
+            showToast("Promo code applied successfully!");
+
+            loadCart();
+        } else {
+            showToast(data.error);
+        }
+    })
+    .catch(error => console.error("Error:", error));
+}
+
+
+
+document.addEventListener("DOMContentLoaded", function () {
+    const promoInput = document.getElementById("promo-code");
+    const applyButton = document.getElementById("apply-promo-btn");
+    const cancelButton = document.getElementById("cancel-promo-btn");
+
+    if (applyButton) {
+        applyButton.addEventListener("click", applyPromoCode);
+    }
+
+    if (cancelButton) {
+        cancelButton.addEventListener("click", cancelPromoCode);
+    }
+
+    // ✅ Trigger applyPromoCode() when Enter key is pressed inside promo code input
+    if (promoInput) {
+        promoInput.addEventListener("keydown", function (event) {
+            if (event.key === "Enter") {
+                event.preventDefault(); // Prevent form submission (if any)
+                applyPromoCode();
+            }
+        });
+    }
+
+    // ✅ Check if promo code is already applied (on page load)
+    const savedDiscount = sessionStorage.getItem("discount");
+    const savedPromoCode = sessionStorage.getItem("appliedPromoCode"); // Store applied promo code
+
+    if (savedDiscount && savedDiscount !== "0") {
+        document.querySelector(".summary-item.discount span:last-child").textContent = `-₹${savedDiscount}`;
+        promoInput.value = savedPromoCode; // ✅ Restore the applied promo code
+        cancelButton.style.display = "block"; // ✅ Ensure cancel button is visible
+    }
+});
+
+
+function cancelPromoCode() {
+    sessionStorage.removeItem("discount");
+    document.querySelector('.summary-item.discount span:last-child').textContent = "-₹0";
+    
+    // ✅ Hide Cancel Button
+    document.getElementById("cancel-promo-btn").style.display = "none";
+
+    // ✅ Clear Promo Code Input Field
+    document.getElementById("promo-code").value = "";
+
+    // ✅ Show Message
+    showToast("Promo code removed.");
+
+    loadCart();
+}
+
+
+document.addEventListener("DOMContentLoaded", function () {
+    // Safe promo code application
+    const applyPromoBtn = document.querySelector('#apply-promo-btn');
+    const cancelPromoBtn = document.querySelector('#cancel-promo-btn');
+
+    if (applyPromoBtn) {
+        applyPromoBtn.addEventListener('click', function(event) {
+            event.preventDefault();
+            try {
+                applyPromoCode();
+            } catch (error) {
+                console.error('Error applying promo code:', error);
+            }
+        });
+    }
+
+    if (cancelPromoBtn) {
+        cancelPromoBtn.addEventListener('click', function(event) {
+            event.preventDefault();
+            try {
+                cancelPromoCode();
+            } catch (error) {
+                console.error('Error canceling promo code:', error);
+            }
+        });
+    }
+
+    const checkoutButton = document.querySelector('.checkout-btn');
+
+    if (checkoutButton) {
+        checkoutButton.addEventListener('click', function (event) {
+            event.preventDefault(); // Prevent default action
+    
+            // Check if cart has items
+            const cartItems = document.querySelectorAll('.cart-item');
+    
+            if (cartItems.length === 0) {
+                alert('Your cart is empty. Please add items before checkout.');
+                return;
+            }
+    
+            let discount = sessionStorage.getItem("discount") || 0;
+            let shipping = 99;
+    
+            // Redirect to checkout with discount and shipping applied
+            window.location.href = `/checkout/?discount=${discount}&shipping=${shipping}`;
+        });
+    }
+});
+
+window.addEventListener("pageshow", function (event) {
+    if (event.persisted) {
+        // Clear promo code and discount when navigating back to cart
+        localStorage.removeItem("discount");
+        localStorage.removeItem("appliedPromoCode");
+    }
+});
+
+window.addEventListener("beforeunload", function () {
+    // Clear promo code when user leaves the page
+    localStorage.removeItem("discount");
+    localStorage.removeItem("appliedPromoCode");
+});

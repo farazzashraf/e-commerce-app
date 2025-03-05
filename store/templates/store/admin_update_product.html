@@ -10,15 +10,13 @@
     <link rel="stylesheet" href="{% static 'css/admin.css' %}">
 
     <script src="{% static 'js/admin-update-product.js' %}" defer></script>
-
-
-
 </head>
 
 <body>
     <div class="container mx-auto px-4 py-8">
         <h2 class="text-2xl font-bold mb-4">Update Product</h2>
-        <form id="updateProductForm" method="POST" action="{% url 'admin_update' product.id %}" enctype="multipart/form-data" class="bg-white p-6 rounded shadow-md">
+        <form id="updateProductForm" method="POST" action="{% url 'admin_update' product.id %}"
+            enctype="multipart/form-data" class="bg-white p-6 rounded shadow-md">
 
             {% csrf_token %}
             <label class="block mb-2">Name:</label>
@@ -30,30 +28,47 @@
                     <option value="" disabled>Select a category</option>
                     <option value="Jackets" {% if product.category == "Jackets" %}selected{% endif %}>Jackets</option>
                     <option value="Pants" {% if product.category == "Pants" %}selected{% endif %}>Pants</option>
+
                 </select>
             </div>
-            
 
             <label class="block mb-2">Price:</label>
             <input type="text" name="price" value="{{ product.price }}" class="w-full p-2 border rounded mb-4">
 
+            <label class="block mb-2">Original Price:</label>
+            <input type="text" name="originalprice" value="{{ product.original_price }}"
+                class="w-full p-2 border rounded mb-4">
+
             <label class="block mb-2">Description:</label>
             <textarea name="description" class="w-full p-2 border rounded mb-4">{{ product.description }}</textarea>
 
-            <!-- <label class="block mb-2">Image:</label>
-            <input type="file" name="image" class="w-full p-2 border rounded mb-4"> -->
-
-            <!-- ✅ Show Current Image -->
-            <label class="block mb-2">Current Image:</label>
+            <!-- ✅ Show Current Main Image -->
+            <label class="block mb-2">Current Main Image:</label>
             {% if product.image_url %}
             <img src="{{ product.image_url }}" alt="{{ product.name }}" class="w-32 h-32 object-cover mb-4">
             {% else %}
             <p>No image available</p>
             {% endif %}
-            <!-- ✅ Allow Image Upload -->
-            <label class="block mb-2">Upload New Image:</label>
+
+            <!-- ✅ Upload New Main Image -->
+            <label class="block mb-2">Upload New Main Image:</label>
             <input type="file" name="image" class="w-full p-2 border rounded mb-4">
 
+            <!-- ✅ Show Current Additional Images -->
+            <label class="block mb-2">Current Additional Images:</label>
+            <div class="flex gap-2 mb-4">
+                {% if product.additional_images %}
+                {% for img_url in product.additional_images %}
+                <div class="relative">
+                    <img src="{{ img_url }}" alt="Additional Image" class="w-20 h-20 object-cover border rounded">
+
+                    <input type="file" name="additional_image_{{ forloop.counter }}" class="text-sm">
+                </div>
+                {% endfor %}
+                {% else %}
+                <p>No additional images available</p>
+                {% endif %}
+            </div>
 
             <!-- Error container for client-side validation -->
             <div id="errorContainer" class="text-red-600 mt-2" style="display: none;"></div>
@@ -62,6 +77,7 @@
             <a href="{% url 'admin_dashboard' %}" class="ml-4 text-gray-600">Cancel</a>
         </form>
     </div>
+
     <!-- Loading Spinner Overlay -->
     <div id="loadingOverlay" class="overlay">
         <div class="spinner"></div>

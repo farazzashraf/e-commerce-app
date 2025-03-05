@@ -1,5 +1,5 @@
 import { auth } from "./firebase-config.js";
-import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-auth.js";
+import { createUserWithEmailAndPassword, sendEmailVerification } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-auth.js";
 
 document.addEventListener("DOMContentLoaded", function () {
     const signupButton = document.getElementById("signupButton");
@@ -15,22 +15,30 @@ document.addEventListener("DOMContentLoaded", function () {
         return;
     }
 
-    // Initially hide spinner
-    if (spinner) spinner.style.display = "none";
+    if (spinner) spinner.style.display = "none"; // Hide spinner initially
 
     function isValidEmail(email) {
         const emailRegex = /^[a-zA-Z0-9._+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/;
         return emailRegex.test(email);
     }
 
+    function checkPasswordStrength(password) {
+        let strength = 0;
+        if (password.length >= 8) strength++; // ✅ 8+ characters
+        if (/[A-Z]/.test(password)) strength++; // ✅ Uppercase
+        if (/[a-z]/.test(password)) strength++; // ✅ Lowercase
+        if (/\d/.test(password)) strength++; // ✅ Number
+        if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) strength++; // ✅ Special character
+        return strength;
+    }
+
+    function isStrongPassword(password) {
+        return checkPasswordStrength(password) === 5;
+    }
+
     togglePassword.addEventListener("click", function () {
-        if (passwordInput.type === "password") {
-            passwordInput.type = "text";
-            togglePassword.innerHTML = '<i class="fas fa-eye-slash"></i>';
-        } else {
-            passwordInput.type = "password";
-            togglePassword.innerHTML = '<i class="fas fa-eye"></i>';
-        }
+        passwordInput.type = passwordInput.type === "password" ? "text" : "password";
+        togglePassword.innerHTML = passwordInput.type === "password" ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
     });
 
     signupButton.addEventListener("click", async (event) => {
@@ -42,7 +50,6 @@ document.addEventListener("DOMContentLoaded", function () {
         const password = passwordInput.value.trim();
         const confirmPassword = confirmPasswordInput.value.trim();
 
-        // Clear previous errors
         errorMessage.style.display = "none";
         errorMessage.innerText = "";
 
@@ -58,26 +65,31 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
+        if (!isStrongPassword(password)) {
+            errorMessage.innerText = "Password must be at least 8 characters long and include uppercase, lowercase, number, and special character.";
+            errorMessage.style.display = "block";
+            return;
+        }
+
         if (!isValidEmail(email)) {
             errorMessage.innerText = "Invalid email format!";
             errorMessage.style.display = "block";
             return;
         }
 
-        // Show loading spinner
         signupButton.disabled = true;
         signupButton.querySelector(".button-text").innerText = "Signing up...";
         if (spinner) spinner.style.display = "inline-block";
 
         try {
-            // 🔹 Check if email is already registered (via Django)
+            // 🔹 Check if email is already registered in Django
             const response = await fetch('/check-email/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
                 },
-                body: JSON.stringify({ email: email })
+                body: JSON.stringify({ email })
             });
 
             const result = await response.json();
@@ -89,47 +101,56 @@ document.addEventListener("DOMContentLoaded", function () {
 
             // 🔹 Register user in Firebase
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            console.log("✅ User signed up:", userCredential.user);
-
             const user = userCredential.user;
-            console.log("✅ UID:", user.uid);
+            console.log("✅ Firebase signup successful:", user.uid);
 
-            // 🔹 Send user details to Django backend
-            const userData = { uid: user.uid, name, phone, email };
-            console.log("🚀 Sending user data to backend:", userData);
+            await sendEmailVerification(user);
+            console.log("📧 Verification email sent!");
 
-            const backendResponse = await fetch('/signup/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
-                },
-                body: JSON.stringify(userData)
+            successMessage.innerText = "Verification email sent! Please verify before logging in.";
+            successMessage.style.display = "block";
+
+            // 🔹 Wait for email verification
+            const checkVerification = async () => {
+                while (!user.emailVerified) {
+                    await new Promise(resolve => setTimeout(resolve, 3000));
+                    await user.reload();
+                }
+
+                console.log("✅ Email verified! Proceeding with backend registration...");
+
+                // 🔹 Register user in Supabase via Django
+                const backendResponse = await fetch('/signup/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+                    },
+                    body: JSON.stringify({ uid: user.uid, name, phone, email })
+                });
+
+                const backendResult = await backendResponse.json();
+                if (backendResult.success) {
+                    successMessage.innerText = "Account verified and created successfully! Redirecting...";
+                    setTimeout(() => window.location.href = "/login", 1500);
+                } else {
+                    errorMessage.innerText = backendResult.error;
+                    errorMessage.style.display = "block";
+                }
+            };
+
+            // Wait until the user verifies their email
+            auth.onAuthStateChanged(async (user) => {
+                if (user) {
+                    await checkVerification();
+                }
             });
-
-            const backendResult = await backendResponse.json();
-            console.log("Backend Response:", backendResult);
-
-            if (!backendResult.success) {
-                errorMessage.innerText = backendResult.error;
-                errorMessage.style.display = "block";
-                return;
-            }
-
-            // ✅ Success! Show message & redirect
-            successMessage.innerText = "Account created successfully! Redirecting...";
-            errorMessage.style.display = "none";
-
-            setTimeout(() => {
-                window.location.href = "/login";
-            }, 2000);
 
         } catch (error) {
             console.error("❌ Error:", error.message);
             errorMessage.innerText = error.message;
             errorMessage.style.display = "block";
         } finally {
-            // Hide spinner & reset button
             signupButton.disabled = false;
             signupButton.querySelector(".button-text").innerText = "Sign Up";
             if (spinner) spinner.style.display = "none";

@@ -1,33 +1,32 @@
 {% load static %}
-
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-    <title>Login</title>
-    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-firestore.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Thrift Shop</title>
 
+    <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'css/auth.css' %} ?v={{ timestamp }}">
+    <link rel="stylesheet" href="{% static 'css/auth.css' %}?v={{ timestamp }}">
 
-
-    <!-- <script src="{% static 'js/login.js' %} ?v={{ timestamp }}" defer></script> -->
     <script type="module" src="{% static 'js/firebase-config.js' %}" defer></script>
     <script type="module" src="{% static 'js/login.js' %}" defer></script>
+
+    <!-- Load Alpine.js -->
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 </head>
 
 <body>
     <div class="auth-container">
         <div class="auth-header">
+            <img src="{% static 'images/logo1.jpg' %}" alt="Thrift Shop Logo" class="brand-logo">
             <h1>Welcome Back</h1>
             <p>Please sign in to continue</p>
         </div>
 
         <div class="error-message" id="errorMessage"></div>
-        <div class="not-registered-message" id="notRegisteredMessage"
-            style="display: none; color: red; text-align: center;">
-            User not found. <a href="/signup">Sign up here</a>.
-        </div>
         <div class="success-message" id="successMessage"></div>
 
         <form id="loginForm" method="POST">
@@ -39,7 +38,6 @@
 
             <div class="form-group">
                 <label for="password" class="form-label">Password</label>
-                <!-- <input type="password" id="password" class="form-input" placeholder="Enter your password" required> -->
                 <div class="password-container">
                     <input type="password" id="password" class="form-input" placeholder="Enter your password" required>
                     <button type="button" class="toggle-password">
@@ -52,6 +50,7 @@
                 <span class="button-text">Sign In</span>
                 <div class="spinner"></div>
             </button>
+            
         </form>
 
         <div class="auth-links">
@@ -59,6 +58,5 @@
         </div>
     </div>
 </body>
-
 
 </html>

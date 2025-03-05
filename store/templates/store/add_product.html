@@ -35,6 +35,8 @@
                     <option value="" disabled selected>Select a category</option>
                     <option value="Jackets">Jackets</option>
                     <option value="Pants">Pants</option>
+                    <option value="Shirts">Shirts</option>
+                    <option value="T-Shirts">T-Shirts</option>
                 </select>
             </div>
             <div class="mb-4">
@@ -43,14 +45,26 @@
                     step="0.01">
             </div>
             <div class="mb-4">
+                <label for="originalprice" class="block text-gray-700">Original Price:</label>
+                <input type="number" id="originalprice" name="originalprice" required
+                    class="border border-gray-300 p-2 w-full" step="0.01">
+            </div>
+            <div class="mb-4">
                 <label for="description" class="block text-gray-700">Description:</label>
                 <textarea id="description" name="description" required
                     class="border border-gray-300 p-2 w-full"></textarea>
             </div>
+            <!-- Main image upload -->
             <div class="mb-4">
-                <label for="image" class="block text-gray-700">Image:</label>
+                <label for="image" class="block text-gray-700">Main Image:</label>
                 <input type="file" id="image" name="image" accept="image/*" required
                     class="border border-gray-300 p-2 w-full">
+            </div>
+            <!-- Additional image uploads with limit -->
+            <div class="mb-4">
+                <label class="block text-gray-700">Additional Images:</label>
+                <div id="additionalImagesContainer"></div>
+                <button type="button" id="addMoreImages" class="mt-2 text-blue-600">Add Another Image</button>
             </div>
             <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded">Add Product</button>
             <div id="errorContainer" class="mt-4 text-red-600" style="display:none;"></div>
@@ -66,6 +80,7 @@
     <div id="successMessage" class="success-message">
         Product added successfully!
     </div>
+
 </body>
 
 </html>

@@ -6,7 +6,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thrift Shop - Footer Example</title>
+    <title>Thrift Shop - Enhanced Footer</title>
     <link rel="stylesheet" href="{% static 'css/footer.css' %}">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
@@ -14,35 +14,61 @@
 <body>
     <!-- Your main content goes here -->
 
-    <!-- Footer Section -->
-    <footer>
-        <div class="footer-container">
-            <div class="footer-logo">
-                <a href="/">
-                    <img src="{% static 'images/logo1.jpg' %}" alt="Thrift Shop Logo" class="footer-logo-img">
+    <!-- Enhanced Footer Section -->
+    <footer class="footer-enhanced">
+        <div class="footer-content">
+            <div class="footer-section logo-section">
+                <a href="/" class="footer-logo">
+                    <img src="{% static 'images/logo1.jpg' %}" alt="Thrift Shop Logo">
                 </a>
+                <p class="footer-tagline">Sustainable Fashion, Unique Finds</p>
             </div>
 
-            <div class="footer-links">
+            <div class="footer-section quick-links">
+                <h4>Quick Links</h4>
                 <ul>
-                    <li><a href="/about">About Us</a></li>
+                    <li><a href="/about_us">About Us</a></li>
+                    <li><a href="/shop">Shop</a></li>
+                    <li><a href="/sell">Sell with Us</a></li>
                     <li><a href="/contact">Contact</a></li>
                     <li><a href="/faq">FAQ</a></li>
-                    <li><a href="/terms">Terms & Conditions</a></li>
-                    <li><a href="/privacy">Privacy Policy</a></li>
                 </ul>
             </div>
 
-            <div class="footer-socials">
-                <a href="https://facebook.com" target="_blank"><i class="fab fa-facebook-f"></i></a>
-                <a href="https://instagram.com" target="_blank"><i class="fab fa-instagram"></i></a>
-                <a href="https://twitter.com" target="_blank"><i class="fab fa-twitter"></i></a>
-                <a href="https://linkedin.com" target="_blank"><i class="fab fa-linkedin-in"></i></a>
+            <div class="footer-section legal-links">
+                <h4>Legal</h4>
+                <ul>
+                    <li><a href="/terms">Terms & Conditions</a></li>
+                    <li><a href="/privacy">Privacy Policy</a></li>
+                    <li><a href="/returns">Return Policy</a></li>
+                    <li><a href="/shipping">Shipping Info</a></li>
+                </ul>
             </div>
 
-            <div class="footer-copy">
-                <p>&copy; 2025 Thrift Shop. All Rights Reserved.</p>
+            <div class="footer-section contact-info">
+                <h4>Contact Us</h4>
+                <p><i class="fas fa-map-marker-alt"></i> 123 Thrift Street, Fashion City</p>
+                <p><i class="fas fa-phone"></i> (555) 123-4567</p>
+                <p><i class="fas fa-envelope"></i> support@thriftshop.com</p>
             </div>
+
+            <div class="footer-section newsletter">
+                <h4>Stay Connected</h4>
+                <form class="newsletter-form">
+                    <input type="email" placeholder="Enter your email" required>
+                    <button type="submit">Subscribe</button>
+                </form>
+                <div class="social-icons">
+                    <a href="https://facebook.com" target="_blank"><i class="fab fa-facebook-f"></i></a>
+                    <a href="https://instagram.com" target="_blank"><i class="fab fa-instagram"></i></a>
+                    <a href="https://twitter.com" target="_blank"><i class="fab fa-twitter"></i></a>
+                    <a href="https://linkedin.com" target="_blank"><i class="fab fa-linkedin-in"></i></a>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>&copy; 2025 Thrift Shop. All Rights Reserved. | Sustainable Fashion Marketplace</p>
         </div>
     </footer>
 </body>

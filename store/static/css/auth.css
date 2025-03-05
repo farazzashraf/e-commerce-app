@@ -164,6 +164,15 @@ body {
     vertical-align: middle;
 }
 
+.loader {
+    width: 16px;
+    height: 16px;
+    border: 3px solid transparent;
+    border-top-color: #4285F4;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
@@ -271,4 +280,19 @@ body {
 /* Ensure input has space for the icon */
 .form-input {
     padding-right: 40px !important;
+}
+
+.brand-logo {
+    display: block;
+    margin: 0 auto 1rem; /* Centering and spacing below */
+    width: 100px; /* Adjust size as needed */
+    height: 100px; /* Keep it proportional */
+    object-fit: cover; /* Ensures the image fills the circle without distortion */
+    border-radius: 50%; /* Makes it a perfect circle */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* Adds a soft shadow */
+    transition: transform 0.3s ease-in-out;
+}
+
+.brand-logo:hover {
+    transform: scale(1.05); /* Slight zoom effect on hover */
 }

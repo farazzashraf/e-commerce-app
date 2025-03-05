@@ -14,6 +14,7 @@
 </head>
 
 <body>
+    <div id="toast-message" class="toast-message"></div>
     <div class="cart-container">
         <div class="cart-header">
             <h1>Shopping Cart</h1>
@@ -69,16 +70,16 @@
                     <span>-₹0</span>
                 </div>
                 <div class="promo-code">
-                    <input type="text" id="promo-input" placeholder="Enter promo code">
-                    <button id="apply-promo">Apply</button>
-                    <button id="cancel-promo" style="display: none;">Cancel</button> <!-- ✅ Cancel Button -->
-                </div>                
+                    <input type="text" id="promo-code" placeholder="Enter promo code">
+                    <button id="apply-promo-btn">Apply</button>
+                    <button id="cancel-promo-btn" style="display: none;">Cancel</button> <!-- ✅ Cancel Button -->
+                </div>                  
                 <div class="total">
                     <span>Total</span>
                     <span>₹99</span>
                 </div>
                 <button class="checkout-btn">Proceed to Checkout</button>
-                <a href="/home" class="continue-shopping">Continue Shopping</a>
+                <a href="/" class="continue-shopping">Continue Shopping</a>
             </div>
         </div>
     </div>
