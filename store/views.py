@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 import json
 from firebase_admin import auth, credentials
@@ -12,37 +12,36 @@ import dns.resolver
 import supabase
 import os
 from dotenv import load_dotenv
-from django.contrib.auth.decorators import login_required
+from decimal import Decimal
 import datetime
 from django.contrib import messages
 from functools import wraps
 import logging
 from django.urls import reverse
 from .services.supabase_client import supabase
+from django.http import HttpResponseRedirect
 from django.utils.http import urlsafe_base64_encode
-# Make sure to create a ProductForm for your form handling
-from .services.supabase_client import (
-    # User-related  
-    create_user, fetch_user_by_uid, get_user_email,
-    
-    # Product-related  
-    upload_image, add_product as supabase_add_product,  
-    fetch_all_products, delete_product, fetch_product_details,  
-    update_product, get_products_by_ids,  
-    
-    # Order-related  
-    create_order, create_order_items,  
-    delete_purchased_products, delete_order, get_order_by_id, update_order_status, get_order_items, get_all_orders,
-    
-    # Promo codes  
-    get_promo_code_details, get_promo_discount  
-)
 from supabase import create_client
 from django.core.mail import send_mail
 from django.conf import settings
-from .services.supabase_client import CartService
-import traceback
+from .services.orm_queries import CartService
+import difflib
+from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required, user_passes_test
 
+import traceback
+# Ensure your Order model is correctly imported
+from store.models import Order, Product, User, Cart, OrderItem, AdminStore
+from store.services.orm_queries import (create_user, get_user_by_uid, get_all_products, orm_add_product, fetch_all_products,
+                                        delete_product, orm_update_product, fetch_product_details_orm, get_promo_code_details,
+                                        get_products_by_ids, create_order, create_order_items,
+                                        delete_purchased_products, delete_order, get_user_email, get_order_by_id,
+                                        update_order_status, get_order_items, get_all_orders, get_order_items_with_details, extract_customer_name,
+                                        get_all_orders_for_admin, get_user_orders, create_admin_store_record, get_public_logo_url)
+from django.db.models import Q
+from django.template.loader import render_to_string
+from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, login
 
 # Load environment variables from .env file
 # load_dotenv()
@@ -66,6 +65,23 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 ADMIN_EMAIL = os.getenv("ADMIN_EMAIL")
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD")
 ADMIN_UID = os.getenv("ADMIN_UID")
+
+def seller_approved_required(view_func):
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        try:
+            # Look up the seller record based on the logged-in user's email.
+            seller = AdminStore.objects.get(email=request.user.email)
+            if not seller.is_approved:
+                # Render a page that informs the seller their account is pending approval.
+                return render(request, "store/admin/pending_approval.html", {
+                    "message": "Your seller account is pending approval. Please wait for an admin to approve your account."
+                })
+        except AdminStore.DoesNotExist:
+            messages.error(request, "Seller account not found. Please sign up as a seller.")
+            return redirect("seller_signup")
+        return view_func(request, *args, **kwargs)
+    return _wrapped_view
 
 
 def check_login_status(request):
@@ -136,6 +152,7 @@ def check_email(request):
             return JsonResponse({"success": False, "error": str(e)}, status=500)
     return JsonResponse({"success": False, "error": "Method not allowed"}, status=405)
 
+
 @csrf_exempt
 def firebase_auth(request):
     if request.method != "POST":
@@ -150,26 +167,37 @@ def firebase_auth(request):
         # --- MERGE CART LOGIC ---
         session_cart = request.session.get('cart', {})
         if session_cart:
-            supabase_cart = supabase.table('carts').select(
-                '*').eq('user_id', uid).execute().data
-            supabase_cart = {item['product_id']
-                : item for item in supabase_cart}
+            # Fetch the User instance using the uid
+            # Ensure we have a valid User instance
+            user = get_object_or_404(User, id=uid)
+
+            # Fetch existing cart items for the user
+            supabase_cart = Cart.objects.filter(user_id=user)
+            # Use product_id.id to compare properly
+            supabase_cart_dict = {
+                item.product_id.id: item for item in supabase_cart}
 
             for product_id, item in session_cart.items():
-                if product_id in supabase_cart:
-                    new_quantity = supabase_cart[product_id]['quantity'] + \
-                        item['quantity']
-                    supabase.table('carts').update({'quantity': new_quantity}).eq(
-                        'user_id', uid).eq('product_id', product_id).execute()
+                product = get_object_or_404(
+                    Product, id=product_id)  # Ensure product exists
+
+                if product.id in supabase_cart_dict:
+                    # Update quantity if product already exists in the cart
+                    cart_item = supabase_cart_dict[product.id]
+                    cart_item.quantity += item['quantity']
+                    cart_item.save()
                 else:
-                    supabase.table('carts').insert({
-                        'user_id': uid,
-                        'product_id': product_id,
-                        'name': item['name'],
-                        'price': item['price'],
-                        'image_url': item['image_url'],
-                        'quantity': item['quantity']
-                    }).execute()
+                    # Create a new cart entry if product is not in the cart
+                    Cart.objects.create(
+                        user_id=user,  # Pass the User instance
+                        product_id=product,  # Pass the Product instance
+                        name=item['name'],
+                        price=item['price'],
+                        image_url=item['image_url'],
+                        quantity=item['quantity']
+                    )
+
+            # Clear session cart after merging
             del request.session['cart']
         # --- END MERGE CART LOGIC ---
 
@@ -192,19 +220,81 @@ def firebase_auth(request):
         logger.error(f"Error in firebase_auth: {str(e)}")
         return JsonResponse({"success": False, "error": str(e)}, status=500)
 
+def fuzzy_search(query, text, threshold=0.5):
+    """
+    Returns True if the query approximately matches any word in text.
+    First, it checks for an exact substring match. Otherwise, it splits the text
+    into words and returns True if any word has a similarity ratio above the threshold.
+    """
+    if query in text:
+        return True
+    for word in text.split():
+        if difflib.SequenceMatcher(None, query, word).ratio() >= threshold:
+            return True
+    return False
 
 def home(request):
     """Home Page - Allow all users to browse, require login only on interaction"""
     uid = request.session.get("uid")
     logger.info(f"User ID: {uid}")
 
-    # Fetch user details only if logged in
-    user_name = fetch_user_by_uid(uid) if uid else None
+    # Fetch user details
+    user = get_user_by_uid(uid) if uid else None
+    user_name = user.name if user else None
+    user_email = user.email if user else None
+    
+    
+    # Fetch all products
+    products = get_all_products()
+    
+    """Display products based on category or search query"""
+    category = request.GET.get("category", "").strip().lower()
 
-    # Fetch products from Supabase
-    products = fetch_all_products()
+    
+    if category:  # Only filter if a category is explicitly selected
+        products = [p for p in products if p.get("category", "").lower() == category]
+        
+    # Search query across all relevant fields with fuzzy matching
+    query = request.GET.get("q", "").strip()
+    if query:
+        query = query.lower()
+        products = [
+            p for p in products if any(
+                fuzzy_search(query, str(p[field]).lower())
+                for field in [
+                    "name", "category", "description", "price", "original_price", "created_at",
+                    "image_url", "image_url2", "image_url3", "image_url4"
+                ] if p.get(field)
+            )
+        ]
+        
+     # Retrieve sort option from the query parameters, default to 'featured'
+    sort_option = request.GET.get("sort", "featured")
+    
+    # Sort the products list based on the sort_option
+    if sort_option == "price-low":
+        products.sort(key=lambda p: p.get("price", 0))
+    elif sort_option == "price-high":
+        products.sort(key=lambda p: p.get("price", 0), reverse=True)
+    elif sort_option == "newest":
+        # Assuming 'created_at' is in a sortable format (e.g., ISO date string or datetime object)
+        products.sort(key=lambda p: p.get("created_at", ""), reverse=True)
+    # Otherwise, 'featured' or any other default ordering can be handled here
+        
 
-    return render(request, "store/home.html", {"products": products, "user_name": user_name})
+    return render(
+        request,
+        "store/home.html",
+        {
+            "products": products,
+            "user_name": user_name,
+            "user_email": user_email,
+            "selected_category": category,
+            "query": query,
+            'sort_option': sort_option  
+        }
+    )
+
 
 
 def api_products(request):
@@ -245,23 +335,20 @@ def signup_view(request):
             print(
                 f"Received signup data: UID={uid}, Name={name}, Phone={phone}, Email={email}")
 
-            # 🔹 Verify Firebase UID before inserting into Supabase
+            # 🔹 Verify Firebase UID before inserting into the database
             try:
                 user_record = auth.get_user(uid)
                 is_verified = user_record.email_verified  # ✅ Get verification status
-                # if not user_record.email_verified:
-                #     return JsonResponse({"success": False, "error": "Email not verified. Please verify your email first."}, status=400)
             except firebase_admin.auth.AuthError:
                 return JsonResponse({"success": False, "error": "Invalid Firebase user."}, status=400)
 
-            # 🔹 Insert into Supabase
-            supabase_response = create_user(
-                uid, name, phone, email, is_verified)
-            if not supabase_response:
-                print("Supabase insert failed.")
-                return JsonResponse({"success": False, "error": "Error storing user data in Supabase."}, status=500)
+            # 🔹 Store user in Django ORM (which will save to Supabase via PostgreSQL)
+            user = create_user(uid, name, phone, email, is_verified)
 
-            print("User successfully inserted into Supabase!")
+            if user is None:
+                return JsonResponse({"success": False, "error": "User already exists."}, status=400)
+
+            print("User successfully inserted into the database!")
             return JsonResponse({"success": True, "message": "Account created successfully!"})
 
         except json.JSONDecodeError:
@@ -365,30 +452,26 @@ def add_to_cart(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            product_id = str(data.get('product_id'))
+            product_id = int(data.get('product_id'))  # Convert to integer
             uid = request.session.get("uid")
-
-            # Extract only the image path before storing
             image_path = data.get("image_url", "")
 
-            # Session cart handling for anonymous users
-            # if not uid:
-            #     cart = request.session.get('cart', {})
-            #     cart_item = cart.get(product_id, {
-            #         'name': data.get('name'),
-            #         'category': data.get('category'),
-            #         'price': float(data.get('price')),
-            #         'image_url': image_path,
-            #         'quantity': 0
-            #     })
-            #     cart_item['quantity'] += int(data.get('quantity', 1))
-            #     cart[product_id] = cart_item
-            #     request.session['cart'] = cart
-            #     request.session.modified = True
-            #     return JsonResponse({'success': True})
-
             if not uid:
-                return JsonResponse({'success': False, 'login_required': True})
+                # Convert product_id to string for session consistency
+                str_pid = str(product_id)
+                cart = request.session.get('cart', {})
+                cart_item = cart.get(str_pid, {
+                    'name': data.get('name'),
+                    'category': data.get('category'),
+                    'price': float(data.get('price')),
+                    'image_url': image_path,
+                    'quantity': 0
+                })
+                cart_item['quantity'] += int(data.get('quantity', 1))
+                cart[str_pid] = cart_item
+                request.session['cart'] = cart
+                request.session.modified = True
+                return JsonResponse({'success': True})
 
             # Authenticated users
             CartService.add_to_cart(
@@ -398,81 +481,18 @@ def add_to_cart(request):
                     'name': data.get('name'),
                     'price': float(data.get('price')),
                     'category': data.get('category'),
-                    # 'image_url': data.get('image_url'),
                     'image_url': image_path,
                     'quantity': int(data.get('quantity', 1))
                 }
             )
             return JsonResponse({'success': True})
 
-        except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)})
-
-    return JsonResponse({'success': False, 'error': 'Invalid request method'})
-
-
-def remove_from_cart(request):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            product_id = str(data.get('product_id'))
-            uid = request.session.get("uid")
-
-            if uid:
-                CartService.remove_from_cart(uid, product_id)
-            else:
-                cart = request.session.get('cart', {})
-                if product_id in cart:
-                    del cart[product_id]
-                    request.session['cart'] = cart
-                    request.session.modified = True
-
-            return JsonResponse({'success': True})
-
-        except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)})
-
-    return JsonResponse({'success': False, 'error': 'Invalid request method'})
-
-
-def update_cart(request):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            product_id = str(data.get('product_id'))
-            action = data.get('action')
-            uid = request.session.get("uid")
-
-            if uid:
-                # Get current quantity from Supabase
-                items = CartService.get_cart_items(uid)
-                current = next(
-                    (item for item in items if item['product_id'] == product_id), None)
-                if not current:
-                    return JsonResponse({'success': False, 'error': 'Item not found'})
-
-                new_quantity = current['quantity'] + \
-                    (1 if action == 'increase' else -1)
-                if new_quantity <= 0:
-                    CartService.remove_from_cart(uid, product_id)
-                else:
-                    CartService.update_cart_quantity(
-                        uid, product_id, new_quantity)
-            else:
-                # Session handling
-                cart = request.session.get('cart', {})
-                if product_id in cart:
-                    if action == 'increase':
-                        cart[product_id]['quantity'] += 1
-                    elif action == 'decrease':
-                        cart[product_id]['quantity'] -= 1
-                        if cart[product_id]['quantity'] <= 0:
-                            del cart[product_id]
-                    request.session['cart'] = cart
-                    request.session.modified = True
-
-            return JsonResponse({'success': True})
-
+        except ValueError as ve:
+            # Handle stock errors without "Invalid ID" prefix
+            error_msg = str(ve)
+            if "available" in error_msg or "add" in error_msg:
+                return JsonResponse({'success': False, 'error': error_msg})
+            return JsonResponse({'success': False, 'error': f"Invalid ID: {error_msg}"})
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
 
@@ -484,9 +504,18 @@ def cart_view(request):
 
     try:
         if uid:
-            # Get cart items and convert to {product_id: item} format
             items = CartService.get_cart_items(uid)
-            cart_data = {item['product_id']: item for item in items}
+            # Convert to same format as session cart
+            cart_data = {
+                str(item['product_id__id']): {  # Convert to string
+                    'name': item['name'],
+                    'category': item['category'],
+                    'price': float(item['price']),
+                    'image_url': item['image_url'],
+                    'quantity': item['quantity']
+                }
+                for item in items
+            }
         else:
             cart_data = request.session.get('cart', {})
 
@@ -495,14 +524,94 @@ def cart_view(request):
         return render(request, "store/cart.html", {"cart": cart_data})
 
     except Exception as e:
+        print(f"Cart view error: {str(e)}")  # Add logging
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+def remove_from_cart(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            product_id = int(data.get('product_id'))  # Convert to integer
+            uid = request.session.get("uid")
+
+            if uid:
+                user = User.objects.get(id=uid)
+                product = Product.objects.get(id=product_id)
+                Cart.objects.filter(user_id=user, product_id=product).delete()
+            else:
+                str_pid = str(product_id)
+                cart = request.session.get('cart', {})
+                if str_pid in cart:
+                    del cart[str_pid]
+                    request.session['cart'] = cart
+                    request.session.modified = True
+
+            return JsonResponse({'success': True})
+
+        except (User.DoesNotExist, Product.DoesNotExist):
+            return JsonResponse({'success': False, 'error': 'Invalid ID'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+
+def update_cart(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            product_id = int(data.get('product_id'))  # Convert to integer
+            action = data.get('action')
+            uid = request.session.get("uid")
+
+            if uid:
+                items = CartService.get_cart_items(uid)
+                # Use product_id__id from the ORM response
+                current = next(
+                    (item for item in items if item['product_id__id'] == product_id), None)
+                if not current:
+                    return JsonResponse({'success': False, 'error': 'Item not found'})
+
+                new_quantity = current['quantity'] + \
+                    (1 if action == 'increase' else -1)
+                if new_quantity <= 0:
+                    CartService.remove_from_cart(uid, product_id)
+                else:
+                    CartService.update_cart_quantity(
+                        uid, product_id, new_quantity)
+            else:
+                # Convert to string for session consistency
+                str_pid = str(product_id)
+                cart = request.session.get('cart', {})
+                if str_pid in cart:
+                    if action == 'increase':
+                        cart[str_pid]['quantity'] += 1
+                    elif action == 'decrease':
+                        cart[str_pid]['quantity'] -= 1
+                        if cart[str_pid]['quantity'] <= 0:
+                            del cart[str_pid]
+                    request.session['cart'] = cart
+                    request.session.modified = True
+
+            return JsonResponse({'success': True})
+
+        except ValueError as ve:
+            return JsonResponse({'success': False, 'error': f'Invalid product ID: {str(ve)}'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
 
 
 def cart_count(request):
     try:
         uid = request.session.get("uid")
-        count = CartService.get_cart_count(uid) if uid else sum(
-            item['quantity'] for item in request.session.get('cart', {}).values())
+        if uid:
+            count = CartService.get_cart_count(uid) or 0
+        else:
+            count = sum(item['quantity']
+                        for item in request.session.get('cart', {}).values())
         return JsonResponse({'cart_count': count})
     except Exception as e:
         return JsonResponse({'cart_count': 0})
@@ -516,11 +625,10 @@ def admin_required(view_func):
         return view_func(request, *args, **kwargs)
     return wrapper
 
-
 @csrf_exempt
 def admin_login(request):
     if request.method == "GET":
-        return render(request, "store/admin_login.html")
+        return render(request, "store/admin/admin_login.html")
 
     if request.method != "POST":
         return JsonResponse({"error": "Method not allowed"}, status=405)
@@ -533,8 +641,6 @@ def admin_login(request):
             logger.warning("❌ No token provided in request")
             return JsonResponse({"error": "No token provided"}, status=400)
 
-        # Log the token for debugging (remove in production!)
-        # Log only first 50 chars
         logger.info(f"🔑 Received Firebase ID Token: {id_token[:50]}...")
 
         # Verify Firebase ID token
@@ -542,9 +648,7 @@ def admin_login(request):
             decoded_token = auth.verify_id_token(id_token)
             uid = decoded_token.get("uid")
             email = decoded_token.get("email")
-
-            logger.info(
-                f"✅ Firebase authentication successful: {email} ({uid})")
+            logger.info(f"✅ Firebase authentication successful: {email} ({uid})")
         except auth.InvalidIdTokenError:
             logger.error("❌ Invalid Firebase ID token")
             return JsonResponse({"error": "Invalid token"}, status=401)
@@ -555,14 +659,23 @@ def admin_login(request):
             logger.error(f"❌ Firebase Auth error: {str(e)}")
             return JsonResponse({"error": "Authentication failed"}, status=401)
 
-        # Ensure the authenticated user is the admin
-        if uid == ADMIN_UID:
-            request.session["admin_authenticated"] = True
-            request.session["admin_uid"] = uid
-            return JsonResponse({"success": True, "redirect": "/store-admin/dashboard/"})
-        else:
-            logger.warning(f"❌ Unauthorized login attempt by {email} ({uid})")
+        # Look up the admin user by email from your AdminStore model
+        try:
+            admin_user = AdminStore.objects.get(email=email)
+        except AdminStore.DoesNotExist:
+            logger.warning(f"❌ No admin account found for {email}")
             return JsonResponse({"error": "Unauthorized access"}, status=403)
+
+        # # Check if the seller's account is approved
+        # if not admin_user.is_approved:
+        #     logger.warning(f"❌ Admin account for {email} is pending approval")
+        #     return JsonResponse({"error": "Your account is pending approval. Please wait for an admin to approve your account."}, status=403)
+
+        # If approved, set the session and allow access
+        request.session["admin_authenticated"] = True
+        request.session["admin_uid"] = uid
+        request.session["admin_email"] = email
+        return JsonResponse({"success": True, "redirect": "/store-admin/dashboard/"})
 
     except json.JSONDecodeError:
         logger.error("❌ Invalid JSON format in request body")
@@ -571,11 +684,13 @@ def admin_login(request):
         logger.error(f"❌ Unexpected error in admin_login: {str(e)}")
         return JsonResponse({"error": "Internal server error"}, status=500)
 
+
+
 @admin_required
 @csrf_exempt
 def add_product_view(request):
     if request.method == 'GET':
-        return render(request, 'store/add_product.html')
+        return render(request, 'store/admin/add_product.html')
 
     if request.method == 'POST':
         name = request.POST.get('name')
@@ -595,12 +710,12 @@ def add_product_view(request):
             return JsonResponse({"error": "Admin ID is missing."}, status=400)
 
         try:
-            # Call the updated add_product function with additional images
-            product = supabase_add_product(
+            # Use the Django ORM function to add the product
+            product = orm_add_product(
                 name, category, price, originalPrice, description,
                 image, additional_images, admin_id
             )
-            print(f"🔹 Supabase Insert Response: {product}")
+            print(f"🔹 ORM Inserted Product: {product}")
             if product:
                 messages.success(request, "Product added successfully!")
                 return JsonResponse({"success": True}, status=200)
@@ -614,14 +729,14 @@ def add_product_view(request):
 
 
 def update_product_view(request, product_id):
-    """Render update product form with existing product details and handle form submission."""
-    product = fetch_product_details(product_id)
-
-    if "error" in product:
-        messages.error(request, "Failed to fetch product details.")
-        return JsonResponse({"error": "Failed to fetch product details."}, status=400)
+    # Retrieve product details using the ORM-based helper function
+    product_details = fetch_product_details_orm(product_id)
+    if "error" in product_details:
+        messages.error(request, product_details["error"])
+        return JsonResponse({"error": product_details["error"]}, status=404)
 
     if request.method == "POST":
+        # ... handle the update logic as before ...
         name = request.POST.get("name")
         category = request.POST.get("category")
         price = request.POST.get("price")
@@ -629,22 +744,25 @@ def update_product_view(request, product_id):
         description = request.POST.get("description")
         image_file = request.FILES.get("image")
 
-        # Retrieve additional images by filtering keys that start with "additional_image_"
-        # Sorting by the numeric suffix ensures the order matches the HTML (e.g. additional_image_1, additional_image_2, etc.)
-        additional_images = [
-            file for key, file in sorted(
-                request.FILES.items(), key=lambda kv: int(kv[0].split('_')[-1])
-            ) if key.startswith("additional_image_")
-        ]
+        # Safer approach to handle additional image files
+        additional_images_files = []
+        for key, file in request.FILES.items():
+            if key.startswith("additional_image_"):
+                # Try to extract a numeric index for sorting, if possible
+                try:
+                    index_part = key.split('_')[-1]
+                    # Only add the file if the index is numeric (otherwise ignore it)
+                    if index_part.isdigit():
+                        additional_images_files.append((int(index_part), file))
+                except (ValueError, IndexError):
+                    # If there's an error parsing the index, just ignore this file
+                    continue
 
-        logger.info("🔥 Received POST request for product update.")
-        logger.debug("📌 Form Data: %s", request.POST)
-        logger.debug("📂 Files received: %s", request.FILES)
+        # Sort the files by their numeric index and extract just the file objects
+        additional_images_files = [file for _,
+                                   file in sorted(additional_images_files)]
 
-        logger.info("🛠 Updating Product ID: %s - %s, %s, ₹%s",
-                    product_id, name, category, price)
-
-        update_response = update_product(
+        update_response = orm_update_product(
             product_id,
             name=name,
             category=category,
@@ -652,10 +770,8 @@ def update_product_view(request, product_id):
             original_price=originalPrice,
             description=description,
             image_file=image_file,
-            additional_images=additional_images
+            additional_images=additional_images_files
         )
-
-        logger.debug("🔄 Update Response: %s", update_response)
 
         if "error" in update_response:
             messages.error(request, update_response["error"])
@@ -664,17 +780,145 @@ def update_product_view(request, product_id):
             messages.success(request, "Product updated successfully!")
             return JsonResponse({"success": "Product updated successfully!"}, status=200)
 
-    return render(request, "store/admin_update_product.html", {"product": product})
+    return render(request, "store/admin/admin_update_product.html", {"product": product_details})
+
 
 
 @admin_required
 def admin_dashboard(request):
+    email = request.session.get("admin_email")
+    if not email:
+        messages.error(request, "No email found for your account. Please sign up as a seller.")
+        return redirect("admin_signup")
+    
     try:
-        products_list = fetch_all_products()
-        return render(request, 'store/admin_dashboard.html', {'products': products_list})
+        seller = AdminStore.objects.get(email=email)
+        print("Seller approval status:", seller.is_approved)
+    except AdminStore.DoesNotExist:
+        messages.error(request, "Seller account not found. Please sign up as a seller.")
+        return redirect("admin_signup")
+    
+    # Build a basic context that always includes the seller.
+    context = {'seller': seller}
+    
+    if not seller.is_approved:
+        context = {"message": "Your account is pending approval. Please wait for an admin to approve your account."}
+        return render(request, "store/admin/admin_dashboard.html", context)
+    
+    # If seller is approved, check for an approval message in the session.
+    approval_message = request.session.get("approval_message")
+    if approval_message:
+        context["approval_message"] = approval_message
+        # Remove the message so it only shows once.
+        del request.session["approval_message"]
+        
+    try:
+        query = request.GET.get('q', '').strip()
+        category = request.GET.get('category', '')
+        min_price = request.GET.get('min_price', '')
+        max_price = request.GET.get('max_price', '')
+        status = request.GET.get('status', '')
+        stock_status = request.GET.get('stock_status', '')
+        
+        products = fetch_all_products()  # Fetch all products from Supabase
+        
+        if query:
+            query = query.lower()
+            products = [
+                p for p in products if any(
+                    fuzzy_search(query, str(p[field]).lower())
+                    for field in ["id", "name", "category", "description"] if p.get(field)
+                )
+            ]
+        
+        # Filter by category
+        if category:
+            products = [p for p in products if p.get('category') == category]
+            
+        # Filter by price range
+        if min_price and min_price.isdigit():
+            products = [p for p in products if float(p.get('price', 0)) >= float(min_price)]
+            
+        if max_price and max_price.isdigit():
+            products = [p for p in products if float(p.get('price', 0)) <= float(max_price)]
+            
+        # Filter by availability status
+        if status:
+            if status == 'available':
+                products = [p for p in products if p.get('is_active', False)]
+            elif status == 'sold':
+                products = [p for p in products if not p.get('is_active', True)]
+                
+        # Filter by stock level
+        if stock_status:
+            if stock_status == 'low':
+                products = [p for p in products if int(p.get('stock', 0)) <= 10]
+            elif stock_status == 'out':
+                products = [p for p in products if int(p.get('stock', 0)) == 0]
+            elif stock_status == 'in':
+                products = [p for p in products if int(p.get('stock', 0)) > 10]
+            
+        # Get unique categories for filter dropdown
+        all_categories = sorted(set(p.get('category') for p in fetch_all_products() if p.get('category')))
+        
+        # Existing filter code...
+        sort_by = request.GET.get('sort_by', 'id_asc')
+        
+        # Apply sorting after all filters
+        if sort_by:
+            if sort_by == 'id_asc':
+                products = sorted(products, key=lambda p: int(p.get('id', 0)))
+            elif sort_by == 'id_desc':
+                products = sorted(products, key=lambda p: int(p.get('id', 0)), reverse=True)
+            elif sort_by == 'price_asc':
+                products = sorted(products, key=lambda p: float(p.get('price', 0)))
+            elif sort_by == 'price_desc':
+                products = sorted(products, key=lambda p: float(p.get('price', 0)), reverse=True)
+            elif sort_by == 'stock_asc':
+                products = sorted(products, key=lambda p: int(p.get('stock', 0)))
+            elif sort_by == 'stock_desc':
+                products = sorted(products, key=lambda p: int(p.get('stock', 0)), reverse=True)
+            
+        # ✅ If AJAX request, return both `#productListDesktop` and `#productListMobile` content
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            html_desktop = render_to_string("store/admin_partials/admin_product_list_desktop.html", {"products": products, "is_mobile": False}, request)
+            html_mobile = render_to_string("store/admin_partials/admin_product_list_mobile.html", {"products": products, "is_mobile": True}, request)
+
+            print(f"DEBUG: AJAX Response - Desktop HTML: {len(html_desktop)} chars, Mobile HTML: {len(html_mobile)} chars")
+
+            return JsonResponse({"html_desktop": html_desktop, "html_mobile": html_mobile})
+        
+        # Add additional keys to the context for approved sellers
+        context.update({
+            'products': products, 
+            'query': query,
+            'categories': all_categories,
+            'selected_filters': {
+                'category': category,
+                'min_price': min_price,
+                'max_price': max_price,
+                'status': status,
+                'stock_status': stock_status,
+                'sort_by': sort_by
+            }
+        })
+        
+        print("Dashboard context:", context)
+
+        return render(request, 'store/admin/admin_dashboard.html', context)
+
     except Exception as e:
-        messages.error(request, f'Error fetching products: {str(e)}')
-        return render(request, 'store/admin_dashboard.html', {'products': []})
+        error_message = f"Error fetching products: {str(e)}"
+        traceback.print_exc()  # Print full error in console
+
+        # ✅ Return JSON response if it's an AJAX request
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return JsonResponse({"error": error_message}, status=500)
+
+        # Otherwise, render the HTML page with an error message
+        messages.error(request, error_message)
+        return render(request, 'store/admin/admin_dashboard.html', {'products': [], 'query': query})
+
 
 
 def delete_product_view(request, product_id):
@@ -709,61 +953,51 @@ def apply_promo(request):
 @login_required
 def checkout(request):
     """Checkout logic to validate cart and fetch product details"""
-    user_id = request.session.get(
-        "uid")  # Firebase authentication uses session
+    user_id = request.session.get("uid")
 
-    # Fetch cart items from Supabase
     cart_items = CartService.get_cart_summary(user_id)
-
-    print("Cart items fetched from Supabase:", cart_items)  # Debugging
 
     if not cart_items:
         messages.warning(request, 'Your cart is empty')
-        return redirect('/')  # Redirect to home page
+        return redirect('/')
 
-    # Fetch product details for the items in the cart
     product_ids = [item['product_id'] for item in cart_items]
-    products = get_products_by_ids(product_ids)  # Implement this function
+    products = get_products_by_ids(product_ids)
 
-    # Build validated cart with quantity
     validated_cart = {
         str(item['product_id']): {
             'name': product['name'],
-            'price': product['price'],
-            'image_url': product['image_url'],  # Public image URL
-            'quantity': item['quantity'],  # Fetch quantity from cart
-            # Multiply price by quantity
-            'total_price': product['price'] * item['quantity'],
+            'price': float(product['price']),  # Convert to float
+            'image_url': product['image_url'],
+            'quantity': item['quantity'],
+            # Convert to float
+            'total_price': float(product['price'] * item['quantity']),
         }
         for item, product in zip(cart_items, products)
     }
 
-    # Store validated cart in session
     request.session['cart'] = validated_cart
 
-    print("Validated Cart Stored in Session:", validated_cart)  # Debugging
-    
-    # Calculate subtotal
     subtotal = sum(item['total_price'] for item in validated_cart.values())
-    
-    # Fixed shipping fee
-    shipping = 99  
 
-    # Get discount from frontend (ensure it's passed correctly)
+    # Convert shipping and discount to floats
+    # Default to 99 if not provided
+    shipping = float(request.GET.get('shipping', 99))
+    # Default to 0 if not provided
     discount = float(request.GET.get('discount', 0))
 
-    # Final total
     total = subtotal + shipping - discount
 
-
-
-    return render(request, 'store/checkout.html', {
+    context = {
         'cart': validated_cart,
         'subtotal': subtotal,
         'shipping': shipping,
-        'discount': discount,  # Pass the percentage
+        'discount': discount,
         'final_total': total
-    })
+    }
+
+    return render(request, 'store/checkout.html', context)
+
 
 @login_required
 def place_order(request):
@@ -791,6 +1025,12 @@ def place_order(request):
 
             payment_method = data.get("payment_method")
 
+            # Extract shipping and discount values
+            shipping = data.get("shipping", 0)
+            discount = data.get("discount", 0)
+            subtotal = data.get("subtotal", 0)
+            total = data.get("total", 0)
+
             if not payment_method:
                 return JsonResponse({"error": "Payment method is required"}, status=400)
 
@@ -801,9 +1041,17 @@ def place_order(request):
             if not cart:
                 return JsonResponse({"error": "Cart is empty"}, status=400)
 
-            total_price = sum(
-                float(item["price"]) * int(item["quantity"]) for item in cart.values()
-            )
+            # total_price = sum(
+            #     float(item["price"]) * int(item["quantity"]) for item in cart.values()
+            # )
+
+            # Use the provided total, or calculate it from cart if not provided
+            if not total:
+                total_price = sum(
+                    float(item["price"]) * int(item["quantity"]) for item in cart.values()
+                )
+            else:
+                total_price = total
 
             address_data = {
                 "name": name,
@@ -817,7 +1065,8 @@ def place_order(request):
             }
 
             # Create order
-            order_id, error = create_order(user_id, total_price, payment_method, address_data)
+            order_id, error = create_order(
+                user_id, total_price, payment_method, address_data, shipping=shipping, discount=discount)
             if not order_id:
                 return JsonResponse({"error": "Order creation failed", "details": str(error)}, status=500)
 
@@ -832,13 +1081,16 @@ def place_order(request):
             # if error:
             #     delete_order(order_id)  # Rollback order and items
             #     return JsonResponse({"error": "Failed to remove products, order canceled"}, status=500)
-            
-            send_admin_notification_email(request, order_id, user_id, address_data, total_price)
+
+            send_admin_notification_email(
+                request, order_id, user_id, address_data, total_price)
 
             # Store last order and clear cart
             request.session["last_order"] = {
                 "cart": cart,
-                "total_price": total_price
+                "total_price": total_price,
+                "shipping": shipping,
+                "discount": discount
             }
             request.session["cart"] = {}
 
@@ -851,112 +1103,181 @@ def place_order(request):
 
     return JsonResponse({"error": "Invalid request"}, status=400)
 
+
 def send_confirmation_email(user_id, order_id, address, total_price):
     # Retrieve the user's email from Supabase
     user_email = get_user_email(user_id)
-    
+
     if not user_email:
         return None  # If email could not be fetched, return None
 
     # Generate the confirmation email content
     subject = f"Order Confirmation - Order #{order_id}"
     message = f"Dear {address.get('name')},\n\nThank you for your order #{order_id}. " \
-              f"Your order has been successfully confirmed and is being processed.\n\n" \
-              f"Order Summary:\n" \
-              f"Total Price: ₹{total_price}\n\n" \
-              f"Shipping Address:\n{address.get('house_no')} {address.get('street')}\n" \
-              f"{address.get('city')}, {address.get('state')}, {address.get('country')}, {address.get('pincode')}\n\n" \
-              f"Estimated Delivery: 5-7 business days\n\n" \
-              f"Contact Us for Support: support@yourstore.com"
-    
+        f"Your order has been successfully confirmed and is being processed.\n\n" \
+        f"Order Summary:\n" \
+        f"Total Price: ₹{total_price}\n\n" \
+        f"Shipping Address:\n{address.get('house_no')} {address.get('street')}\n" \
+        f"{address.get('city')}, {address.get('state')}, {address.get('country')}, {address.get('pincode')}\n\n" \
+        f"Estimated Delivery: 5-7 business days\n\n" \
+        f"Contact Us for Support: support@yourstore.com"
+
     # Send the email to the user's email address
     send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user_email])
 
+
 def send_rejection_email(user_id, order_id):
     user_email = get_user_email(user_id)
-    
+
     if not user_email:
         return None  # If email could not be fetched, return None
 
     subject = f"Order Rejected - Order #{order_id}"
     message = f"Dear Customer,\n\nWe regret to inform you that your order #{order_id} has been rejected by our admin. " \
-              f"Please feel free to contact us for further information.\n\n" \
-              f"Contact Us for Support: support@yourstore.com"
-    
+        f"Please feel free to contact us for further information.\n\n" \
+        f"Contact Us for Support: support@yourstore.com"
+
     send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user_email])
 
 
 def send_admin_notification_email(request, order_id, user_id, address, total_price):
-    # Retrieve admin's email
-    admin_email = "faraz@gmail.com"
-    
+    # Retrieve admin's email from settings or environment variables
+    # Make sure you define ADMIN_EMAIL in settings.py
+    admin_email = settings.ADMIN_EMAIL
+
+    # Generate action URLs
     approval_url = request.build_absolute_uri(
-        reverse('admin_approve_order', kwargs={'order_id': order_id, 'action': 'approve'})
+        reverse('admin_approve_order', kwargs={
+                'order_id': order_id, 'action': 'approve'})
     )
     rejection_url = request.build_absolute_uri(
-        reverse('admin_approve_order', kwargs={'order_id': order_id, 'action': 'reject'})
+        reverse('admin_approve_order', kwargs={
+                'order_id': order_id, 'action': 'reject'})
+    )
+    shipped_url = request.build_absolute_uri(
+        reverse('admin_approve_order', kwargs={
+                'order_id': order_id, 'action': 'shipped'})
     )
 
-
-    # Generate the admin notification email content
+    # Generate email content
     subject = f"New Order Pending Approval - Order #{order_id}"
-    message = f"An order has been placed and is awaiting approval.\n\n" \
-              f"Order ID: {order_id}\n" \
-              f"Total Price: ₹{total_price}\n\n" \
-              f"Shipping Address:\n{address.get('house_no')} {address.get('street')}\n" \
-              f"{address.get('city')}, {address.get('state')}, {address.get('country')}, {address.get('pincode')}\n\n" \
-              f"Click here to approve the order: {approval_url}\n" \
-              f"Or click here to reject the order: {rejection_url}\n\n" \
-              f"Please approve or reject the order in the admin panel."
+    message = f"""
+    An order has been placed and is awaiting approval.
 
-    # Send the email to the admin's email address
+    Order ID: {order_id}
+    Total Price: ₹{total_price}
+
+    Shipping Address:
+    {address.get('house_no')} {address.get('street')}
+    {address.get('city')}, {address.get('state')}, {
+        address.get('country')}, {address.get('pincode')}
+
+    Click here to approve the order: {approval_url}
+    Click here to reject the order: {rejection_url}
+
+    Once approved, mark the order as shipped: {shipped_url}
+
+    Please take action in the admin panel.
+    """
+
+    # Send email to the admin
     send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [admin_email])
-    
+
+
+def send_shipped_email(user_email, order_id, address, total_price):
+    subject = f"Order Shipped - Order #{order_id}"
+
+    message = f"Your order has been shipped!\n\n" \
+        f"Order ID: {order_id}\n" \
+        f"Total Price: ₹{total_price}\n\n" \
+        f"Shipping Address:\n{address.get('house_no')} {address.get('street')}\n" \
+        f"{address.get('city')}, {address.get('state')}, {address.get('country')}, {address.get('pincode')}\n\n" \
+        f"Your order is now on the way. Thank you for shopping with us!"
+
+    # Send the email to the user
+    send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user_email])
+
+
 def admin_orders(request):
-    orders = get_all_orders()  # Fetch all orders
-    return render(request, 'store/admin_orders.html', {'orders': orders})
+    # query = request.GET.get('q', '').strip()
+    orders = get_all_orders_for_admin()
+
+    return render(request, 'store/admin/admin_orders.html', {'orders': orders})
 
 
 @admin_required
 def admin_approve_order(request, order_id, action):
+    if request.method != "POST":
+        return HttpResponseRedirect(reverse('admin_orders'))
     try:
-        # Fetch the order from Supabase using the helper function
-        order_list = get_order_by_id(order_id)
-        order = order_list[0] if isinstance(order_list, list) and order_list else None
+        # Fetch the order instance
+        order = get_order_by_id(order_id)  # Returns an Order instance
+        print(f"DEBUG: Order fetched -> {order} (Type: {type(order)})")
 
         if not order:
             return JsonResponse({"error": "Order not found"}, status=404)
 
-        # Fetch order items to know which products were purchased
+        # Access address using attribute access.
+        # If order.address is already a dict, no need to json.loads; otherwise, convert it.
+        order_address = order.address if isinstance(
+            order.address, dict) else json.loads(order.address)
+
+        # Fetch order items (assuming get_order_items returns a list of product IDs)
         order_items = get_order_items(order_id)
+        print(
+            f"DEBUG: Order items -> {order_items} (Type: {type(order_items)})")
+
         if not order_items:
-            return JsonResponse({"error": "No items found for this order"}, status=404)
+            print(f"No items found for order ID {order_id}")
+            return JsonResponse({"error": f"No items found for order {order_id}"}, status=404)
 
         if action == "approve":
-            # Update order status to confirmed
-            if update_order_status(order_id, "confirmed"):
-                # Delete purchased products from the store
-                error = delete_purchased_products(order_items)
+            # Update order status to confirmed.
+            result = update_order_status(order_id, "confirmed")
+            if result:  # Assuming True means success.
+                # Delete purchased products
+                # Adjust if get_order_items returns objects instead of IDs.
+                product_ids = order_items
+                error = delete_purchased_products(product_ids)
                 if error:
                     return JsonResponse({"error": "Failed to remove purchased products."}, status=500)
 
-                # Send confirmation email to user
-                send_confirmation_email(order["user_id"], order_id, order["address"], order["total_price"])
-
-                return JsonResponse({"success": "Order confirmed, products removed, and email sent to user."})
+                # Send confirmation email to user.
+                send_confirmation_email(
+                    order.user_id.id, order_id, order_address, order.total_price)
+                return redirect('admin_orders')
             else:
                 return JsonResponse({"error": "Failed to update order status"}, status=500)
 
         elif action == "reject":
-            # Update order status to rejected
-            if update_order_status(order_id, "rejected"):
-                # Send rejection email to the user
-                send_rejection_email(order["user_id"], order_id)
-
-                return JsonResponse({"success": "Order rejected."})
+            result = update_order_status(order_id, "rejected")
+            if result:
+                send_rejection_email(order.user_id.id, order_id)
+                return redirect('admin_orders')
             else:
                 return JsonResponse({"error": "Failed to update order status"}, status=500)
 
+        elif action == "shipped":
+            result = update_order_status(order_id, "shipped")
+            if result:
+                print(f"🔍 Order User ID: {order.user_id.id}")
+                if not order.user_id:
+                    print("⚠️ No user ID found for this order. Skipping email sending.")
+                    return redirect('admin_orders')
+
+                user_email = get_user_email(order.user_id.id)
+                print(f"🛠️ Debug: get_user_email returned: {user_email}")
+
+                if not user_email:
+                    print(
+                        f"⚠️ Could not send shipping email: Invalid email for user {order.user_id.id}")
+                else:
+                    send_shipped_email(user_email, order_id,
+                                       order_address, order.total_price)
+
+                return redirect('admin_orders')
+            else:
+                return JsonResponse({"error": "Failed to update order status"}, status=500)
         else:
             return JsonResponse({"error": "Invalid action."}, status=400)
 
@@ -964,45 +1285,320 @@ def admin_approve_order(request, order_id, action):
         return JsonResponse({"error": f"Something went wrong: {str(e)}"}, status=500)
 
 
-
 @login_required
 def order_success(request):
     # Fetch the last order from the session
     last_order = request.session.get("last_order", {})
-    
+
     if not last_order:
-        # If no last order, redirect to home or orders page
         messages.error(request, "No recent order found.")
         return redirect("home")
-    
+
     try:
-        # Fetch the user's most recent order from the database
+        # Retrieve the user instance from session
         user_id = request.session.get("uid")
-        order = supabase.table("orders").select("*").eq("user_id", user_id).order("created_at", desc=True).limit(1).execute()
-        
-        if order.data:
-            recent_order = order.data[0]
-            
-            # Fetch order items for this specific order
-            order_items = supabase.table("order_items").select("*").eq("order_id", recent_order['id']).execute()
-            
+        user = User.objects.get(id=user_id)
+
+        # Fetch the user's most recent order from the database using ORM
+        order_obj = Order.objects.filter(
+            user_id=user).order_by("-created_at").first()
+
+        if order_obj:
+            # Build a dictionary for the order details
+            recent_order = {
+                "id": order_obj.id,
+                "user_id": order_obj.user_id.id,
+                "total_price": order_obj.total_price,
+                "status": order_obj.status,
+                "created_at": order_obj.created_at,
+                "shipping": order_obj.shipping_rate if order_obj.shipping_rate else last_order.get("shipping", 0),
+                "discount": order_obj.discount_rate if order_obj.discount_rate else last_order.get("discount", 0),
+                "address": order_obj.address,  # Already a dict if JSONField is used
+                "payment_method": order_obj.payment_method,
+            }
+
+            # Fetch order items for this specific order.
+            # Use values() to create a list of dicts.
+            order_items = list(order_obj.items.all().values(
+                "id", "quantity", "price", "total_price", "created_at", "name", "product_id"
+            ))
+
             context = {
                 "order": recent_order,
-                "order_items": order_items.data,
+                "order_items": order_items,
                 "cart": last_order.get("cart", {}),
-                "total_price": last_order.get("total_price", 0)
+                "total_price": recent_order.get("total_price", last_order.get("total_price", 0)),
             }
-            
+
             # Clear the last order from session
-            del request.session["last_order"]
-            request.session.modified = True
-            
+            if "last_order" in request.session:
+                del request.session["last_order"]
+                request.session.modified = True
+
             return render(request, "store/order_success.html", context)
         else:
             messages.error(request, "Unable to retrieve order details.")
             return redirect("home")
-    
+
     except Exception as e:
         print(f"Error fetching order details: {e}")
-        messages.error(request, "An error occurred while retrieving order details.")
+        messages.error(
+            request, "An error occurred while retrieving order details.")
         return redirect("home")
+
+
+def order_details(request, order_id):
+    try:
+        order = Order.objects.get(id=order_id)
+        items = OrderItem.objects.filter(order_id=order).select_related(
+            'product_id')  # Corrected filter
+        items_data = [
+            {
+                "product_id": item.product_id.id,  # Return the product's ID as a primitive value
+                "product_name": item.product_id.name,
+                "quantity": item.quantity,
+                "price": item.price,
+                "product_rate": item.product_id.price
+            }
+            for item in items
+        ]
+        # Example calculation
+        selling_price = sum(float(item.price) *
+                            item.quantity for item in items)
+        response_data = {
+            "items": items_data,
+            "discount_rate": order.discount_rate,
+            "shipping_rate": order.shipping_rate,
+            "order_total": order.total_price,
+            "selling_price": selling_price  # Add if using Option 1
+        }
+        return JsonResponse(response_data)
+    except Order.DoesNotExist:
+        logger.error(f"Order with ID {order_id} not found.")
+        return JsonResponse({"error": "Order not found"}, status=404)
+    except Exception as e:
+        logger.exception("Unexpected error in order_details view:")
+        return JsonResponse({"error": "Unexpected error"}, status=500)
+
+
+def admin_analysis(request):
+    return render(request, "store/admin/admin_analysis.html")
+
+
+@login_required
+def orders_view(request):
+    user_id = request.session.get('uid')
+
+    if not user_id:
+        return redirect('login')
+
+    orders_data = get_user_orders(user_id)  # Fetch orders using the service
+    total_orders = len(orders_data)
+    shipped_orders = sum(
+        1 for order in orders_data if order["status"].lower() == "shipped")
+    processing_orders = sum(
+        1 for order in orders_data if order["status"].lower() == "confirmed")
+    delivered_orders = sum(
+        1 for order in orders_data if order["status"].lower() == "delivered")
+    rejected_orders = sum(1 for order in orders_data if order["status"].lower() in [
+                          "rejected"])
+    cancelled_orders = sum(
+        1 for order in orders_data if order["status"].lower() == "canceled")
+
+    context = {
+        "orders": orders_data,
+        "total_orders": total_orders,
+        "shipped_orders": shipped_orders,
+        "processing_orders": processing_orders,
+        "delivered_orders": delivered_orders,
+        "rejected_orders": rejected_orders,
+        "cancelled_orders": cancelled_orders,
+    }
+    return render(request, "store/orders.html", context)
+
+
+@login_required
+def cancel_order(request, order_id):
+    # Retrieve the order ensuring it belongs to the logged-in user
+    order = get_object_or_404(
+        Order, id=order_id, user_id=request.session.get("uid"))
+
+    # Check if order is in a cancelable state: "confirmed" or "pending"
+    if order.status.lower() not in ["confirmed", "pending"]:
+        messages.error(
+            request, "This order cannot be cancelled at this stage.")
+        # Replace with the appropriate orders view name
+        return redirect("orders")
+
+    # Update the order status to "canceled"
+    order.status = "canceled"
+    order.save()
+
+    # Send cancellation emails to both the user and admin
+    send_cancellation_email(request.session.get("uid"), order.id)
+
+    messages.success(request, "Your order has been successfully cancelled.")
+    return redirect("orders")
+
+
+def send_cancellation_email(user_id, order_id):
+    # Your function to fetch the user's email
+    user_email = get_user_email(user_id)
+    # Ensure you have ADMIN_EMAIL in settings
+    admin_email = getattr(settings, "ADMIN_EMAIL", None)
+
+    if not user_email:
+        return None  # If user email is not available, do nothing
+
+    # Email to the customer
+    subject_user = f"Order Cancellation - Order #{order_id}"
+    message_user = (
+        f"Dear Customer,\n\n"
+        f"Your order #{order_id} has been cancelled as per your request. "
+        f"If you have any questions, please contact our support team at support@yourstore.com.\n\n"
+        f"Best Regards,\nYour Store Team"
+    )
+    send_mail(subject_user, message_user,
+              settings.DEFAULT_FROM_EMAIL, [user_email])
+
+    # Email to the admin (if available)
+    if admin_email:
+        subject_admin = f"Order Cancellation Notification - Order #{order_id}"
+        message_admin = (
+            f"Dear Admin,\n\n"
+            f"Order #{order_id} has been cancelled by the customer. "
+            f"Please review the order details and process any further actions if needed.\n\n"
+            f"Regards,\nYour Store System"
+        )
+        send_mail(subject_admin, message_admin,
+                  settings.DEFAULT_FROM_EMAIL, [admin_email])
+        
+def help_support(request):
+    return render(request, 'store/help_support.html')
+
+@require_POST
+def update_stock(request):
+    try:
+        product_id = int(request.POST.get('product_id'))
+        new_stock = int(request.POST.get('new_stock'))
+        
+        product = Product.objects.get(id=product_id)
+        # Capture the current stock before updating
+        current_stock = product.stock
+        
+        product.stock = new_stock
+        product.save()
+        
+        return JsonResponse({
+            'success': True,
+            'product_id': product_id,
+            'current_stock': current_stock,  # Stock value before update
+            'new_stock': product.stock       # The saved, updated stock value
+        })
+        
+    except (Product.DoesNotExist, ValueError, TypeError) as e:
+        print(f"Error updating stock: {str(e)}")
+        return JsonResponse({'success': False})
+
+@csrf_exempt
+def admin_signup(request):
+    if request.method == "GET":
+        return render(request, "store/admin/admin_signup.html")
+    if request.method == 'POST':
+        uid = request.POST.get("uid")
+        company_name = request.POST.get("company_name")
+        shop_address = request.POST.get("shop_address")
+        pincode = request.POST.get("pincode")
+        phone = request.POST.get("phone")
+        email = request.POST.get("email")
+        company_logo = request.FILES.get("company_logo")
+
+        # Validate that all fields are provided
+        if not all([uid, company_name, shop_address, pincode, phone, email]):
+            return JsonResponse({"success": False, "error": "All fields are required."})
+
+        # Create a new AdminStore record
+        try:
+            # Use the separate ORM function to create a new AdminStore record
+            admin_record = create_admin_store_record(
+                uid, company_logo, company_name, email, phone, shop_address, pincode
+            )
+            
+            # Send an email to notify the superadmin about the new pending signup.
+            # Either use a hardcoded email or use a value from settings.
+            SUPERADMIN_EMAIL = getattr(settings, "SUPERADMIN_EMAIL", "farazashraf413@gmail.com")
+            subject = "New Admin Signup Pending Approval"
+            message = (
+                f"A new admin signup has been submitted.\n\n"
+                f"Company Name: {company_name}\n"
+                f"Email: {email}\n"
+                f"Phone: {phone}\n\n"
+                "Please review the signup in the Django admin panel and approve if valid."
+            )
+            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [SUPERADMIN_EMAIL])
+            
+            # Return a JSON response indicating the signup is pending approval.
+            return JsonResponse({"success": True, "message": "Your signup is pending approval. Please wait."})
+        except Exception as e:
+            return JsonResponse({"success": False, "error": str(e)})
+    else:
+        return JsonResponse({"success": False, "error": "Invalid request method."})
+
+
+def seller_login(request):
+    if request.method == "POST":
+        email = request.POST.get("email")
+        user = AdminStore.objects.filter(email=email, is_approved=True).first()
+        if user:
+            request.session["is_seller"] = True
+            request.session["seller_id"] = str(user.id)
+            return redirect("seller_dashboard")
+        else:
+            messages.error(request, "You are not approved yet.")
+    return render(request, "seller_login.html")
+
+# def super_admin(request):
+#     if request.method == "POST":
+#         email = request.POST.get("email")
+#         password = request.POST.get("password")
+#         user = authenticate(request, username=email, password=password)
+#         if user is not None:
+#             # Check if the user is the designated superadmin
+#             if user.email == SUPERADMIN_EMAIL:
+#                 login(request, user)
+#                 return redirect(reverse("super_admin"))
+#             else:
+#                 messages.error(request, "You are not authorized to access the superadmin dashboard.")
+#         else:
+#             messages.error(request, "Invalid email or password.")
+#     return render(request, "store/admin/super_admin.html")
+
+# Helper to restrict access to superadmins.
+def superadmin_required(user):
+    return user.is_superuser
+
+@login_required
+@user_passes_test(superadmin_required)
+def approve_admin_signup(request, seller_id):
+    seller = get_object_or_404(AdminStore, id=seller_id)
+    if request.method == "POST":
+        seller.is_approved = True
+        seller.save()
+        
+        # Retrieve seller email from the AdminStore record
+        seller_email = seller.email
+        
+        subject = "Your Seller Account Has Been Approved"
+        message = (
+            f"Congratulations!\n\nYour seller account for {seller.company_name} has been approved. "
+            "You can now log in and start selling on our platform."
+        )
+        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [seller_email])
+        
+        messages.success(request, "Seller approved and notified via email.")
+        
+        request.session["approval_message"] = "Approved by the ADMIN"
+        return redirect("pending_seller_signups")  # Redirect to a page listing pending signups.
+    else:
+        # Optionally, render a confirmation page.
+        return render(request, "store/admin/admin_dashboard.html", {"seller": seller})

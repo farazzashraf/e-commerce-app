@@ -1,5 +1,5 @@
 import { auth, googleProvider } from "./firebase-config.js";
-import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-auth.js";
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-auth.js";
 // Function to get the CSRF token from the cookie
 function getCsrfToken() {
     const csrfToken = document.cookie.match(/csrftoken=([\w-]+)/);
@@ -103,4 +103,96 @@ document.addEventListener("DOMContentLoaded", function () {
             if (spinner) spinner.style.display = "none";
         }
     });
+
+    // Forgot Password Modal Handling
+    const forgotPasswordLink = document.getElementById("forgotPasswordLink");
+    const forgotPasswordModal = document.getElementById("forgotPasswordModal");
+    const closeModal = document.querySelector(".close");
+    const resetPasswordBtn = document.getElementById("resetPasswordBtn");
+    const resetEmailInput = document.getElementById("resetEmail");
+    const resetMessage = document.getElementById("resetMessage");
+
+    // Ensure the modal is hidden when the page loads
+    forgotPasswordModal.style.display = "none";
+
+    if (forgotPasswordLink) {
+        forgotPasswordLink.addEventListener("click", function (e) {
+            e.preventDefault();
+            forgotPasswordModal.style.display = "flex";
+        });
+    }
+
+    // Close modal when clicking the close button
+    if (closeModal) {
+        closeModal.addEventListener("click", function () {
+            forgotPasswordModal.style.display = "none";
+        });
+    }
+
+
+    window.addEventListener("click", function (event) {
+        if (event.target === forgotPasswordModal) {
+            forgotPasswordModal.style.display = "none";
+        }
+    });
+
+    resetPasswordBtn.addEventListener("click", async function () {
+        const email = resetEmailInput.value.trim();
+        if (!email) {
+            resetMessage.style.color = "red";
+            resetMessage.textContent = "Please enter a valid email.";
+            return;
+        }
+
+        resetPasswordBtn.disabled = true;
+        resetPasswordBtn.innerText = "Checking...";
+
+        // ✅ Step 1: Check if email exists in Supabase before sending reset link
+        const emailExists = await isEmailRegistered(email);
+        if (!emailExists) {
+            resetMessage.style.color = "red";
+            resetMessage.textContent = "Email not registered.";
+            resetPasswordBtn.disabled = false;
+            resetPasswordBtn.innerText = "Send Reset Link";
+            return;
+        }
+
+        resetPasswordBtn.innerText = "Sending...";
+
+        try {
+            await sendPasswordResetEmail(auth, email);
+            resetMessage.style.color = "green";
+            resetMessage.textContent = "Reset link sent! Check your email.";
+        } catch (error) {
+            console.error("Password Reset Error:", error);
+            resetMessage.style.color = "red";
+            if (error.code === "auth/user-not-found") {
+                resetMessage.textContent = "Email not registered.";
+            } else {
+                resetMessage.textContent = "Failed to send reset link. Try again.";
+            }
+        } finally {
+            resetPasswordBtn.disabled = false;
+            resetPasswordBtn.innerText = "Send Reset Link";
+        }
+    });
 });
+
+// Function to check if email exists in Supabase
+async function isEmailRegistered(email) {
+    try {
+        const response = await fetch("/check-email/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ email }),
+        });
+
+        const data = await response.json();
+        return data.exists; // Returns true if email is found, false otherwise
+    } catch (error) {
+        console.error("Error checking email:", error);
+        return false; // Assume email is not found in case of error
+    }
+}

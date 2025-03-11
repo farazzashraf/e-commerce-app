@@ -17,6 +17,7 @@ import firebase_admin
 from firebase_admin import credentials
 import environ
 from dotenv import load_dotenv
+import psycopg2
 
 # Load environment variables
 load_dotenv()
@@ -37,6 +38,38 @@ SUPABASE_ANON_KEY = env("SUPABASE_ANON_KEY", default=None)
 print("Loaded SUPABASE_URL:", SUPABASE_URL)
 print("Loaded SUPABASE_ANON_KEY:", SUPABASE_ANON_KEY)
 
+user=env("supabase-user", default=None)
+password=env("supabase-password", default=None) 
+host=env("supabase-host", default=None)
+port=env("supabase-port", default=None)
+dbname=env("supabase-dbname", default=None)
+
+# Connect to the database
+try:
+    connection = psycopg2.connect(
+        user=user,
+        password=password,
+        host=host,
+        port=port,
+        dbname=dbname
+    )
+    print("Connection successful!")
+    
+    # Create a cursor to execute SQL queries
+    cursor = connection.cursor()
+    
+    # Example query
+    cursor.execute("SELECT NOW();")
+    result = cursor.fetchone()
+    print("Current Time:", result)
+
+    # Close the cursor and connection
+    cursor.close()
+    connection.close()
+    print("Connection closed.")
+
+except Exception as e:
+    print(f"Failed to connect: {e}")
 
 # BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -63,7 +96,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "store",
     'django',
-    'rest_framework'
+    "corsheaders",  # Correct name
+    "rest_framework",  # If using Django REST Framework
 ]
 
 # Redis for real-time communication
@@ -110,11 +144,17 @@ WSGI_APPLICATION = "ecommerce.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': env('supabase-name', default=None),  # Default database name
+        'USER': env("supabase-user", default=None),  # Supabase database user
+        'PASSWORD': env("supabase-password", default=None),  # Supabase password
+        'HOST': env('supabase-host', default=None),  # Supabase host
+        'PORT': env('supabase-port', default=None),
+        'OPTIONS': {
+            'sslmode': 'require',  # Enforce SSL
+        },
     }
 }
 
@@ -203,13 +243,17 @@ EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
 
-LOGIN_REDIRECT_URL = "/store-admin/orders/"
+ADMIN_EMAIL = "farazashraf413@gmail.com"
 
 
 # settings.py
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 
-ALLOWED_HOSTS = ["192.168.1.9", "localhost", "127.0.0.1"]
-CSRF_TRUSTED_ORIGINS = ["http://192.168.1.9"]
+ALLOWED_HOSTS = ["192.168.20.5", "localhost", "127.0.0.1"]
+CSRF_TRUSTED_ORIGINS = ["http://192.168.20.5"]
 
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:8000",
+    "http://192.168.20.5:8000",  # Add your server IP
+]

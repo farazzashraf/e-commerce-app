@@ -10,6 +10,14 @@ document.addEventListener("DOMContentLoaded", function () {
     const togglePassword = document.querySelector(".toggle-password");
     const spinner = document.querySelector(".spinner");
 
+    // Additional admin fields
+    const companyLogoInput = document.getElementById("company_logo");
+    const companyNameInput = document.getElementById("company_name");
+    const shopAddressInput = document.getElementById("shop_address");
+    const pincodeInput = document.getElementById("pincode");
+    const phoneInput = document.getElementById("phone");
+    const emailInput = document.getElementById("email");
+
     if (!signupButton || !passwordInput || !confirmPasswordInput) {
         console.error("❌ Required elements not found in DOM!");
         return;
@@ -17,70 +25,78 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (spinner) spinner.style.display = "none"; // Hide spinner initially
 
-    function isValidEmail(email) {
-        const emailRegex = /^[a-zA-Z0-9._+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/;
-        return emailRegex.test(email);
+    // Toggle password visibility (with null check)
+    if (togglePassword) {
+        togglePassword.addEventListener("click", function () {
+            passwordInput.type = passwordInput.type === "password" ? "text" : "password";
+            togglePassword.innerHTML =
+                passwordInput.type === "password"
+                    ? '<i class="fas fa-eye"></i>'
+                    : '<i class="fas fa-eye-slash"></i>';
+        });
+    } else {
+        console.warn("Toggle password element not found.");
     }
 
-    function checkPasswordStrength(password) {
-        let strength = 0;
-        if (password.length >= 8) strength++; // ✅ 8+ characters
-        if (/[A-Z]/.test(password)) strength++; // ✅ Uppercase
-        if (/[a-z]/.test(password)) strength++; // ✅ Lowercase
-        if (/\d/.test(password)) strength++; // ✅ Number
-        if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) strength++; // ✅ Special character
-        return strength;
-    }
-
-    function isStrongPassword(password) {
-        return checkPasswordStrength(password) === 5;
-    }
-
-    togglePassword.addEventListener("click", function () {
-        passwordInput.type = passwordInput.type === "password" ? "text" : "password";
-        togglePassword.innerHTML = passwordInput.type === "password" ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
-    });
-
-    // Add this at the top with other element declarations
-    const phoneInput = document.getElementById("phone"); // 🔹 Missing phoneInput definition
-
-    // Ensure only numbers are entered
+    // Ensure only numbers are entered for phone number
     phoneInput.addEventListener("input", function () {
-        this.value = this.value.replace(/\D/g, ""); // Remove non-numeric characters
+        this.value = this.value.replace(/\D/g, "");
         if (this.value.length > 10) {
-            this.value = this.value.slice(0, 10); // Restrict input to 10 digits
+            this.value = this.value.slice(0, 10);
         }
     });
 
     function isValidPhoneNumber(phone) {
-        const phoneRegex = /^[6-9]\d{9}$/; // Must be 10 digits, start with 6-9
+        const phoneRegex = /^[6-9]\d{9}$/; // Must be 10 digits, starting with 6-9
         return phoneRegex.test(phone);
     }
 
-    // Validate phone number on blur (when the user leaves the field)
+    function isValidEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+    
+    function checkPasswordStrength(password) {
+        let strength = 0;
+        if (password.length >= 8) strength++;              // At least 8 characters
+        if (/[A-Z]/.test(password)) strength++;             // Contains uppercase letter
+        if (/[a-z]/.test(password)) strength++;             // Contains lowercase letter
+        if (/\d/.test(password)) strength++;                // Contains a digit
+        if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) strength++; // Contains a special character
+        return strength;
+    }
+    
+    function isStrongPassword(password) {
+        return checkPasswordStrength(password) === 5;
+    }
+
+    // Validate phone number on blur
     phoneInput.addEventListener("blur", function () {
         if (this.value.length > 0 && !isValidPhoneNumber(this.value)) {
             errorMessage.innerText = "Invalid phone number! Must be 10 digits and start with 6-9.";
             errorMessage.style.display = "block";
         } else {
-            errorMessage.style.display = "none"; // Hide error if valid
+            errorMessage.style.display = "none";
         }
     });
-
 
     signupButton.addEventListener("click", async (event) => {
         event.preventDefault();
 
-        const name = document.getElementById("name").value.trim();
-        const phone = document.getElementById("phone").value.trim();
-        const email = document.getElementById("email").value.trim();
+        const companyName = companyNameInput.value.trim();
+        const shopAddress = shopAddressInput.value.trim();
+        const pincode = pincodeInput.value.trim();
+        const phone = phoneInput.value.trim();
+        const email = emailInput.value.trim();
         const password = passwordInput.value.trim();
         const confirmPassword = confirmPasswordInput.value.trim();
+        const companyLogoFile = companyLogoInput.files[0];
 
         errorMessage.style.display = "none";
         errorMessage.innerText = "";
 
-        if (!name || !phone || !email || !password || !confirmPassword) {
+        // Check that all required fields are filled in
+        if (!companyName || !shopAddress || !pincode || !phone || !email || !password || !confirmPassword) {
             errorMessage.innerText = "All fields are required.";
             errorMessage.style.display = "block";
             return;
@@ -104,7 +120,6 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        // 🔹 Add phone validation check here
         if (!isValidPhoneNumber(phone)) {
             errorMessage.innerText = "Invalid phone number! Must be 10 digits and start with 6-9.";
             errorMessage.style.display = "block";
@@ -116,8 +131,8 @@ document.addEventListener("DOMContentLoaded", function () {
         if (spinner) spinner.style.display = "inline-block";
 
         try {
-            // 🔹 Check if email is already registered in Django
-            const response = await fetch('/check-email/', {
+            // Check if the email is already registered for an admin account via Django endpoint
+            const checkResponse = await fetch('/check-email/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -125,55 +140,64 @@ document.addEventListener("DOMContentLoaded", function () {
                 },
                 body: JSON.stringify({ email })
             });
-
-            const result = await response.json();
-            if (!result.success) {
-                errorMessage.innerText = result.error;
+            const checkResult = await checkResponse.json();
+            if (!checkResult.success) {
+                errorMessage.innerText = checkResult.error;
                 errorMessage.style.display = "block";
                 return;
             }
 
-            // 🔹 Register user in Firebase
+            // Create the user in Firebase
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
             console.log("✅ Firebase signup successful:", user.uid);
 
+            // Send email verification
             await sendEmailVerification(user);
             console.log("📧 Verification email sent!");
 
             successMessage.innerText = "Verification email sent! Please verify before logging in.";
             successMessage.style.display = "block";
 
-            // 🔹 Wait for email verification
+            // Wait for email verification
             const checkVerification = async () => {
                 while (!user.emailVerified) {
                     await new Promise(resolve => setTimeout(resolve, 3000));
                     await user.reload();
                 }
-
                 console.log("✅ Email verified! Proceeding with backend registration...");
 
-                // 🔹 Register user in Supabase via Django
-                const backendResponse = await fetch('/signup/', {
+                // Prepare the form data for backend registration
+                let formData = new FormData();
+                formData.append("uid", user.uid);
+                formData.append("company_name", companyName);
+                formData.append("shop_address", shopAddress);
+                formData.append("pincode", pincode);
+                formData.append("phone", phone);
+                formData.append("email", email);
+                if (companyLogoFile) {
+                    formData.append("company_logo", companyLogoFile);
+                }
+
+                // Send the admin registration details to your Django backend
+                const backendResponse = await fetch('/admin-signup/', {
                     method: 'POST',
+                    body: formData,
                     headers: {
-                        'Content-Type': 'application/json',
                         'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
                     },
-                    body: JSON.stringify({ uid: user.uid, name, phone, email })
                 });
-
                 const backendResult = await backendResponse.json();
                 if (backendResult.success) {
                     successMessage.innerText = "Account verified and created successfully! Redirecting...";
-                    setTimeout(() => window.location.href = "/login", 1500);
+                    setTimeout(() => window.location.href = "/store-admin/dashboard", 1500);
                 } else {
                     errorMessage.innerText = backendResult.error;
                     errorMessage.style.display = "block";
                 }
             };
 
-            // Wait until the user verifies their email
+            // Listen for auth state changes to trigger the verification check
             auth.onAuthStateChanged(async (user) => {
                 if (user) {
                     await checkVerification();
@@ -190,5 +214,4 @@ document.addEventListener("DOMContentLoaded", function () {
             if (spinner) spinner.style.display = "none";
         }
     });
-
 });

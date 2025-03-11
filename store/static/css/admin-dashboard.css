@@ -92,3 +92,20 @@ body {
     padding: 24px;
     border-radius: 8px;
 }
+
+.swiper-slide {
+    height: 60vh !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+}
+
+.swiper-slide img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+#filterStatusBar {
+    display: none; /* Hide by default */
+}

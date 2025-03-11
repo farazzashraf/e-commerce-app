@@ -50,12 +50,26 @@
                 <span class="button-text">Sign In</span>
                 <div class="spinner"></div>
             </button>
-            
+
         </form>
 
         <div class="auth-links">
             <a href="/signup">Don't have an account? Sign Up</a>
         </div>
+        <div class="auth-links">
+            <a href="#" id="forgotPasswordLink">Forgot Password?</a>
+        </div>
+        <div id="forgotPasswordModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Reset Password</h2>
+                <p>Enter your email to receive a password reset link.</p>
+                <input type="email" id="resetEmail" placeholder="Enter your email" required>
+                <button id="resetPasswordBtn">Send Reset Link</button>
+                <p id="resetMessage"></p>
+            </div>
+        </div>
+
     </div>
 </body>
 

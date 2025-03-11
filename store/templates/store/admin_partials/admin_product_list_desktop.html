@@ -1,0 +1,105 @@
+<!-- Products Table -->
+<div id="productListDesktop" class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 w-full">
+  <div class="overflow-x-auto">
+    <table class="w-full">
+      <thead class="bg-gray-50">
+        <tr class="text-left text-sm font-semibold text-gray-600">
+          <th class="px-6 py-4">ProductId</th>
+          <th class="px-6 py-4">Image</th>
+          <th class="px-6 py-4">Product</th>
+          <th class="px-6 py-4">Category</th>
+          <th class="px-6 py-4">Price</th>
+          <th class="px-6 py-4">Original Price</th>
+          <th class="px-6 py-4">Description</th>
+          <!-- In admin-dashboard.html table headers -->
+          <th class="px-6 py-4">Stock</th>
+          <th class="px-6 py-4">Status</th>
+          <th class="px-6 py-4">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200 text-gray-700">
+        {% for product in products %}
+          <tr class="hover:bg-gray-50 transition-colors">
+            <td class="px-6 py-4 font-medium">{{ product.id }}</td>
+
+            <td class="px-6 py-4">
+              <div class="flex flex-col items-center">
+                <img src="{{ product.image_url }}" alt="{{ product.name }}" class="w-14 h-14 object-cover rounded-lg shadow-sm border border-gray-200" />
+                <button data-product-id="{{ product.id }}"
+                  data-image-urls="{{ product.image_url }}{% if product.image_url2 %}
+                    
+                      ,{{ product.image_url2 }}
+                  {% endif %}{% if product.image_url3 %}
+                    
+                      ,{{ product.image_url3 }}
+                  {% endif %}{% if product.image_url4 %}
+                    
+                      ,{{ product.image_url4 }}
+                  {% endif %}"
+                  onclick="showImagesModal(this)"
+                  class="text-blue-600 text-sm mt-2">
+                  View Images
+                </button>
+              </div>
+            </td>
+            <td class="px-6 py-4 font-medium">{{ product.name }}</td>
+            <td class="px-6 py-4">
+              <span class="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm">{{ product.category }}</span>
+            </td>
+            <td class="px-6 py-4 font-medium">₹{{ product.price }}</td>
+            <td class="px-6 py-4 font-medium">₹{{ product.original_price }}</td>
+            <td class="px-6 py-4 text-gray-600 max-w-xs truncate">{{ product.description }}</td>
+
+            <td class="px-6 py-4">
+              <div class="flex items-center">
+                <span class="stock-value mr-2" id="stock-value-{{ product.id }}">{{ product.stock }}</span>
+                <button onclick="showStockEditModal('{{ product.id }}', {{ product.stock }})" class="text-blue-600 hover:text-blue-800">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
+                </button>
+              </div>
+            </td>
+
+            <!-- Status Column -->
+            <td class="px-6 py-4 font-medium">
+              {% if not product.is_active %}
+                <span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm">Sold</span>
+              {% else %}
+                <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">Available</span>
+              {% endif %}
+            </td>
+
+            <td class="px-6 py-4">
+              <div class="flex space-x-3">
+                <a href="{% url 'admin_update' product.id %}" class="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Edit">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
+                </a>
+                <button onclick="showDeleteModal('{{ product.id }}')" class="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Delete">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="10" class="px-6 py-8 text-center text-gray-500">
+              <div class="flex flex-col items-center justify-center space-y-4 mx-auto w-full" style="min-height: 300px;">
+                <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+                </svg>
+                <p class="text-lg font-medium text-gray-600">No products found</p>
+                <button onclick="window.location.href='{% url 'add_product_view' %}'" class="mt-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">Add Product</button>
+              </div>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+

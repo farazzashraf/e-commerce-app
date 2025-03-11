@@ -94,27 +94,42 @@
 
         <div class="product-controls">
             <div class="filter-options">
-                <button class="filter-button active">All Items</button>
-                <button class="filter-button">Jackets</button>
-                <button class="filter-button">Pants</button>
-                <button class="filter-button">Shirts</button>
-                <button class="filter-button">T-Shirts</button>
+                <a href="{% url 'home' %}" class="filter-button {% if not selected_category %}active{% endif %}">All
+                    Items</a>
+                <a href="{% url 'home' %}?category=jackets"
+                    class="filter-button {% if selected_category == 'jackets' %}active{% endif %}">Jackets</a>
+                <a href="{% url 'home' %}?category=pants"
+                    class="filter-button {% if selected_category == 'pants' %}active{% endif %}">Pants</a>
+                <a href="{% url 'home' %}?category=shirts"
+                    class="filter-button {% if selected_category == 'shirts' %}active{% endif %}">Shirts</a>
+                <a href="{% url 'home' %}?category=t-shirts"
+                    class="filter-button {% if selected_category == 'T-Shirts' %}active{% endif %}">T-Shirts</a>
             </div>
             <div class="sort-dropdown">
-                <select id="sort-options">
-                    <option value="featured">Featured</option>
-                    <option value="price-low">Price: Low to High</option>
-                    <option value="price-high">Price: High to Low</option>
-                    <option value="newest">Newest Arrivals</option>
+                <select id="sort-options" onchange="location = this.value;">
+                    <option value="{% url 'home' %}?sort=featured" {% if sort_option == 'featured' %}selected{% endif %}>
+                        Featured
+                    </option>
+                    <option value="{% url 'home' %}?sort=price-low" {% if sort_option == 'price-low' %}selected{% endif %}>
+                        Price: Low to High
+                    </option>
+                    <option value="{% url 'home' %}?sort=price-high" {% if sort_option == 'price-high' %}selected{% endif %}>
+                        Price: High to Low
+                    </option>
+                    <option value="{% url 'home' %}?sort=newest" {% if sort_option == 'newest' %}selected{% endif %}>
+                        Newest Arrivals
+                    </option>
                 </select>
             </div>
         </div>
+
         {% if products %}
         <div class="product-grid">
             {% for product in products %}
             <div class="product-card view-details" data-product-id="{{ product.id }}"
                 data-description="{{ product.description|escapejs }}"
-                data-added="{{ product.created_at|default:'N/A' }}"
+                data-added="{{ product.created_at|default:'N/A' }}" 
+                data-stock="{{ product.stock }}"
                 data-images="{{ product.image_url }}{% if product.image_url2 %},{{ product.image_url2 }}{% endif %}{% if product.image_url3 %},{{ product.image_url3 }}{% endif %}{% if product.image_url4 %},{{ product.image_url4 }}{% endif %}">
                 <img src="{{ product.image_url }}" alt="{{ product.name }}">
                 <!-- <p>Product ID: {{ product.id }}, Created At: "<strong>{{ product.created_at }}</strong>"</p> -->
@@ -122,7 +137,6 @@
                 <!-- <div class="hover-overlay">
                     <button class="view-details">View Details</button>
                 </div> -->
-
                 <h3>{{ product.name }}</h3>
                 <p class="category">{{ product.category }}</p> <!-- ✅ Added Category -->
                 <!-- <p class="description">{{ product.description }}</p> -->
@@ -150,6 +164,7 @@
 
         <!-- Product Detail Overlay -->
         <div class="product-overlay" id="product-overlay">
+            <div id="toast-message" class="toast-message"></div>
             <div class="product-overlay-content">
                 <button class="close-overlay"><i class="fas fa-times"></i></button>
 
@@ -171,7 +186,7 @@
                     <!-- Right Column: Product Details -->
                     <div class="product-details">
                         <div class="product-badges">
-                            <span class="badge new-badge">New</span>
+                            <!-- <span class="badge new-badge">New</span> -->
                             <span class="badge sale-badge">Sale</span>
                         </div>
 
@@ -189,7 +204,9 @@
                         <div class="product-meta">
                             <div class="meta-item">
                                 <i class="fas fa-box"></i>
-                                <span class="availability">In Stock</span>
+                                <span class="availability">
+                                    <span class="stock-quantity"></span>
+                                </span>
                             </div>
                             <div class="meta-item">
                                 <i class="fas fa-truck"></i>
@@ -252,18 +269,19 @@
             </div>
         </div>
 
-        <!-- Add to Cart Success Modal -->
+        <!-- Updated Error Modal -->
         <div class="modal-overlay" id="cart-modal">
             <div class="modal-content">
                 <button class="modal-close"><i class="fas fa-times"></i></button>
-                <h3>Item Added to Cart!</h3>
-                <p>Vintage Denim Jacket has been added to your shopping cart.</p>
+                <h3><i class="fas fa-check-circle success-icon"></i> Item Added!</h3>
+                <p class="modal-message"></p>
                 <div class="modal-buttons">
                     <button class="modal-button primary-button">View Cart</button>
                     <button class="modal-button secondary-button">Continue Shopping</button>
                 </div>
             </div>
         </div>
+
     </section>
 
 

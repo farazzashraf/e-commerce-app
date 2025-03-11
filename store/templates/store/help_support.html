@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Help & Support | Thrift Shop</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #2A2A72;
+            --secondary-color: #FFA400;
+            --accent-color: #7FDBFF;
+            --text-color: #333;
+            --bg-color: #f8f9fa;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+        }
+
+        /* Mobile First Approach */
+        .help-container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+
+        /* Mobile Navigation */
+        .mobile-nav {
+            display: flex;
+            justify-content: space-around;
+            background: white;
+            padding: 1rem;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-item.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* Desktop Navigation */
+        @media (min-width: 768px) {
+            .help-container {
+                flex-direction: row;
+                gap: 2rem;
+                max-width: 1400px;
+                margin: 0 auto;
+                padding: 2rem;
+            }
+
+            .sidebar {
+                width: 280px;
+                position: sticky;
+                top: 2rem;
+                height: fit-content;
+                background: white;
+                border-radius: 16px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            }
+
+            .mobile-nav {
+                display: none;
+            }
+        }
+
+        /* Search Bar */
+        .search-container {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+
+        .search-bar {
+            width: 100%;
+            padding: 1rem 1rem 1rem 3rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path fill="%23999" d="M23.707 22.293l-5.969-5.969a10.016 10.016 0 1 0-1.414 1.414l5.969 5.969a1 1 0 0 0 1.414-1.414zM10 18a8 8 0 1 1 8-8 8.009 8.009 0 0 1-8 8z"/></svg>') no-repeat 1rem center;
+        }
+
+        .search-bar:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 4px 12px rgba(42,42,114,0.1);
+        }
+
+        /* FAQ Section */
+        .faq-item {
+            background: white;
+            margin-bottom: 1rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+
+        .faq-item:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .faq-question {
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .faq-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            padding: 0 1.5rem;
+        }
+
+        .faq-item.active .faq-answer {
+            max-height: 500px;
+            padding: 0 1.5rem 1.5rem;
+        }
+
+        .faq-item.active .faq-icon {
+            transform: rotate(180deg);
+        }
+
+        /* Contact Form */
+        .contact-form {
+            display: grid;
+            gap: 1.5rem;
+            background: white;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        }
+
+        .form-group {
+            position: relative;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 4px 12px rgba(42,42,114,0.1);
+        }
+
+        .form-label {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: white;
+            padding: 0 0.5rem;
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+
+        .form-input:focus + .form-label,
+        .form-input:not(:placeholder-shown) + .form-label {
+            top: 0;
+            font-size: 0.875rem;
+            color: var(--primary-color);
+        }
+
+        /* Chat Button */
+        .chat-button {
+            position: fixed;
+            bottom: 5rem;
+            right: 1rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 1.25rem;
+            border-radius: 50%;
+            box-shadow: 0 8px 24px rgba(42,42,114,0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .chat-button:hover {
+            transform: scale(1.1) rotate(10deg);
+            box-shadow: 0 12px 28px rgba(42,42,114,0.4);
+        }
+
+        /* Loading Animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .help-section {
+            animation: fadeIn 0.4s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="help-container">
+        <!-- Desktop Sidebar -->
+        <nav class="sidebar">
+            <div class="search-container">
+                <input type="text" class="search-bar" placeholder="Search help articles...">
+            </div>
+            <ul>
+                <li class="nav-item active"><i class="fas fa-question-circle"></i> FAQs</li>
+                <li class="nav-item"><i class="fas fa-box"></i> Orders & Shipping</li>
+                <li class="nav-item"><i class="fas fa-undo"></i> Returns</li>
+                <li class="nav-item"><i class="fas fa-credit-card"></i> Payments</li>
+                <li class="nav-item"><i class="fas fa-store"></i> Seller Support</li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="content">
+            <section class="help-section active" id="faq">
+                <h1 class="section-title">Frequently Asked Questions</h1>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>How do I track my order?</span>
+                        <i class="fas fa-chevron-down faq-icon"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>You can track your order through our tracking portal...</p>
+                    </div>
+                </div>
+                <!-- More FAQ items -->
+            </section>
+
+            <!-- Other sections -->
+        </main>
+
+        <!-- Mobile Bottom Navigation -->
+        <nav class="mobile-nav">
+            <div class="nav-item active"><i class="fas fa-question"></i>FAQ</div>
+            <div class="nav-item"><i class="fas fa-box"></i>Orders</div>
+            <div class="nav-item"><i class="fas fa-comments"></i>Chat</div>
+            <div class="nav-item"><i class="fas fa-user"></i>Account</div>
+        </nav>
+    </div>
+
+    <!-- Floating Chat Button -->
+    <div class="chat-button">
+        <i class="fas fa-comment-dots fa-lg"></i>
+    </div>
+
+    <script>
+        // Enhanced Interactions
+        document.querySelectorAll('.faq-question').forEach(question => {
+            question.addEventListener('click', () => {
+                const parent = question.parentElement;
+                parent.classList.toggle('active');
+            });
+        });
+
+        // Form Input Animation
+        document.querySelectorAll('.form-input').forEach(input => {
+            input.addEventListener('input', () => {
+                if(input.value) input.parentElement.classList.add('filled');
+                else input.parentElement.classList.remove('filled');
+            });
+        });
+
+        // Responsive Navigation
+        function updateNavigation() {
+            if(window.innerWidth < 768) {
+                document.querySelectorAll('.sidebar .nav-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        document.querySelector('.nav-item.active').classList.remove('active');
+                        item.classList.add('active');
+                    });
+                });
+            }
+        }
+        window.addEventListener('resize', updateNavigation);
+        updateNavigation();
+    </script>
+</body>
+</html>

@@ -1,54 +1,51 @@
-function showDeleteModal(productId) {
-    console.log("Product ID:", productId); // Debugging
+// Add this to your main JavaScript file or include it in a script tag
+document.addEventListener('alpine:init', () => {
+    Alpine.data('filterPanel', () => ({
+        showFilters: false,
 
-    const modal = document.getElementById('deleteModal');
-    const form = document.getElementById('deleteForm');
+        init() {
+            // Close filter panel when Escape key is pressed
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && this.showFilters) {
+                    this.showFilters = false;
+                }
+            });
 
-    if (!modal || !form) {
-        console.error("Modal or form not found!");
-        return;
-    }
+            // Close filter panel when clicking outside
+            this.$watch('showFilters', (value) => {
+                if (value) {
+                    document.body.classList.add('overflow-hidden'); // Prevent scrolling when filter is open
+                } else {
+                    document.body.classList.remove('overflow-hidden');
+                }
+            });
 
-    form.action = `/store-admin/delete-product/${productId}/`;
-    modal.style.display = "flex"; // Show modal
-}
+            // Handle query parameter changes
+            this.updateActiveFilters();
+        },
 
-function closeDeleteModal() {
-    const modal = document.getElementById('deleteModal');
-    if (modal) {
-        modal.style.display = "none"; // Hide it properly
-    }
-}
+        updateActiveFilters() {
+            // Optional: Automatically update the active filters based on URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('category') || urlParams.has('min_price') ||
+                urlParams.has('max_price') || urlParams.has('status') ||
+                urlParams.has('stock_status') ||
+                (urlParams.has('sort_by') && urlParams.get('sort_by') !== 'id_asc')) {
+                // There are active filters
+                this.hasActiveFilters = true;
+            } else {
+                this.hasActiveFilters = false;
+            }
+        },
 
-function showImagesModal(button) {
-    const imagesModal = document.getElementById("imagesModal");
-    const imagesModalContent = document.getElementById("imagesModalContent");
-
-    // Clear previous content
-    imagesModalContent.innerHTML = "";
-
-    // Get image URLs from the data attribute
-    let imageUrls = button.getAttribute("data-image-urls").split(",");
-
-    // Trim and filter empty values
-    imageUrls = imageUrls.map(url => url.trim()).filter(url => url !== "");
-
-    console.log('Processed URLs:', imageUrls); // Add this line
-
-    if (imageUrls.length > 0) {
-        imageUrls.forEach(url => {
-            const imgElement = document.createElement("img");
-            imgElement.src = url;
-            imgElement.className = "w-32 h-32 object-cover rounded-lg shadow-sm border border-gray-200 m-2";
-            imagesModalContent.appendChild(imgElement);
-        });
-
-        imagesModal.classList.remove("hidden");
-    } else {
-        alert("No images available.");
-    }
-}
-
-function closeImagesModal() {
-    document.getElementById("imagesModal").classList.add("hidden");
-}
+        clearAllFilters() {
+            // Helper function to clear all filters at once
+            const searchParam = new URLSearchParams(window.location.search).get('q');
+            if (searchParam) {
+                window.location.href = `${window.location.pathname}?q=${searchParam}`;
+            } else {
+                window.location.href = window.location.pathname;
+            }
+        }
+    }));
+});

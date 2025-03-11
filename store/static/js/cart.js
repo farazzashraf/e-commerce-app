@@ -154,14 +154,14 @@ function updateCartCount() {
         headers: { 'X-Requested-With': 'XMLHttpRequest' },
         credentials: 'same-origin'
     })
-    .then(response => response.json())
-    .then(data => {
-        const cartCountElement = document.querySelector('.cart-count');
-        if (cartCountElement) {
-            cartCountElement.textContent = data.cart_count || 0;
-        }
-    })
-    .catch(error => console.error('Error updating cart count:', error));
+        .then(response => response.json())
+        .then(data => {
+            const cartCountElement = document.querySelector('.cart-count');
+            if (cartCountElement) {
+                cartCountElement.textContent = data.cart_count || 0;
+            }
+        })
+        .catch(error => console.error('Error updating cart count:', error));
 }
 
 function updateCartQuantity(productId, action) {
@@ -180,6 +180,12 @@ function updateCartQuantity(productId, action) {
                 updateCartCount();
                 document.dispatchEvent(new Event('cart-updated'));
             } else {
+                // Check if the error message indicates stock limit reached
+                if (data.error && data.error.includes("exceeds available stock")) {
+                    showToast("You've reached the maximum available stock for this product.");
+                } else {
+                    showToast("Error updating cart quantity.");
+                }
                 console.error('Error updating cart:', data.error);
             }
         })
@@ -195,16 +201,16 @@ function removeFromCart(productId) {
         },
         body: JSON.stringify({ product_id: productId })
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            loadCart();
-            updateCartCount();
-        } else {
-            console.error("Error removing item:", data.error);
-        }
-    })
-    .catch(error => console.error('Error:', error));
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                loadCart();
+                updateCartCount();
+            } else {
+                console.error("Error removing item:", data.error);
+            }
+        })
+        .catch(error => console.error('Error:', error));
 }
 
 function getCSRFToken() {
@@ -238,24 +244,24 @@ function applyPromoCode() {
         },
         body: JSON.stringify({ promo_code: promoCode }),
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            sessionStorage.setItem("discount", data.discount);
-            document.querySelector(".summary-item.discount span:last-child").textContent = `-₹${data.discount}`;
-            
-            // ✅ Show Cancel Button
-            document.getElementById("cancel-promo-btn").style.display = "inline-block";
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                sessionStorage.setItem("discount", data.discount);
+                document.querySelector(".summary-item.discount span:last-child").textContent = `-₹${data.discount}`;
 
-            // ✅ Show Success Message
-            showToast("Promo code applied successfully!");
+                // ✅ Show Cancel Button
+                document.getElementById("cancel-promo-btn").style.display = "inline-block";
 
-            loadCart();
-        } else {
-            showToast(data.error);
-        }
-    })
-    .catch(error => console.error("Error:", error));
+                // ✅ Show Success Message
+                showToast("Promo code applied successfully!");
+
+                loadCart();
+            } else {
+                showToast(data.error);
+            }
+        })
+        .catch(error => console.error("Error:", error));
 }
 
 
@@ -298,7 +304,7 @@ document.addEventListener("DOMContentLoaded", function () {
 function cancelPromoCode() {
     sessionStorage.removeItem("discount");
     document.querySelector('.summary-item.discount span:last-child').textContent = "-₹0";
-    
+
     // ✅ Hide Cancel Button
     document.getElementById("cancel-promo-btn").style.display = "none";
 
@@ -318,7 +324,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const cancelPromoBtn = document.querySelector('#cancel-promo-btn');
 
     if (applyPromoBtn) {
-        applyPromoBtn.addEventListener('click', function(event) {
+        applyPromoBtn.addEventListener('click', function (event) {
             event.preventDefault();
             try {
                 applyPromoCode();
@@ -329,7 +335,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     if (cancelPromoBtn) {
-        cancelPromoBtn.addEventListener('click', function(event) {
+        cancelPromoBtn.addEventListener('click', function (event) {
             event.preventDefault();
             try {
                 cancelPromoCode();
@@ -344,18 +350,18 @@ document.addEventListener("DOMContentLoaded", function () {
     if (checkoutButton) {
         checkoutButton.addEventListener('click', function (event) {
             event.preventDefault(); // Prevent default action
-    
+
             // Check if cart has items
             const cartItems = document.querySelectorAll('.cart-item');
-    
+
             if (cartItems.length === 0) {
                 alert('Your cart is empty. Please add items before checkout.');
                 return;
             }
-    
+
             let discount = sessionStorage.getItem("discount") || 0;
             let shipping = 99;
-    
+
             // Redirect to checkout with discount and shipping applied
             window.location.href = `/checkout/?discount=${discount}&shipping=${shipping}`;
         });

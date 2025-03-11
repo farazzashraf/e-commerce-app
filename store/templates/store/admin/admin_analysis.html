@@ -1,0 +1,482 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Analytics | Admin Dashboard</title>
+    <!-- Tailwind CSS for consistency with your dashboard -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <!-- Font Awesome for icons (consistent with order page) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <!-- Alpine.js for interactivity (consistent with dashboard) -->
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <!-- Custom analytics script -->
+    <script src="{% static 'js/admin-analytics.js' %}" defer></script>
+    <style>
+        /* Custom styles */
+        .stat-card {
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        /* Date range picker styling */
+        .date-picker {
+            border-radius: 0.375rem;
+            border: 1px solid #e2e8f0;
+            padding: 0.5rem 1rem;
+        }
+        
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .mobile-nav {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background: white;
+                display: flex;
+                padding: 0.75rem 0;
+                box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+                z-index: 50;
+            }
+            
+            .mobile-nav-item {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                font-size: 0.75rem;
+                color: #4b5563;
+                text-decoration: none;
+            }
+            
+            .mobile-nav-item.active {
+                color: #4f46e5;
+            }
+            
+            .mobile-nav-item i {
+                font-size: 1.25rem;
+                margin-bottom: 0.25rem;
+            }
+            
+            body {
+                padding-bottom: 70px;
+            }
+        }
+
+        /* Chart container styling */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+        
+        /* Ensure proper rendering of the doughnut chart */
+        .doughnut-container {
+            height: 280px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 font-['Inter']">
+    <!-- Navigation (styled consistent with dashboard) -->
+    <nav class="bg-gradient-to-r from-indigo-600 to-blue-600 shadow-xl">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center">
+                    <h1 class="text-white text-2xl font-bold tracking-tight">Admin Console</h1>
+                </div>
+                <div x-data="{ open: false }" class="relative">
+                    <button @click="open = !open" class="md:hidden text-white focus:outline-none">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+                    <div x-show="open" @click.away="open = false"
+                        class="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-lg py-2 z-50 md:hidden">
+                        <a href="{% url 'admin_dashboard' %}"
+                            class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Dashboard</a>
+                        <a href="{% url 'add_product_view' %}"
+                            class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Add Product</a>
+                        <a href="{% url 'admin_orders' %}"
+                            class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Orders</a>
+                        <a href="{% url 'logout' %}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Logout</a>
+                    </div>
+                    <div class="hidden md:flex items-center space-x-4">
+                        <!-- <a href="{% url 'admin_analysis' %}"
+                            class="flex items-center bg-white/20 text-white px-4 py-2 rounded-lg transition-all">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                            </svg>
+                            Analytics
+                        </a> -->
+                        <a href="{% url 'add_product_view' %}"
+                            class="flex items-center bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg transition-all">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 4v16m8-8H4" />
+                            </svg>
+                            Add Product
+                        </a>
+                        <a href="{% url 'admin_orders' %}"
+                            class="flex items-center bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg transition-all">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 10h11M9 21V3m11 6h-8m8 5h-8m8 5h-8" />
+                            </svg>
+                            Orders
+                        </a>
+                        <a href="{% url 'admin_dashboard' %}"
+                            class="flex items-center bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg transition-all">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                            </svg>
+                            Dashboard
+                        </a>
+                        <a href="{% url 'logout' %}"
+                            class="flex items-center bg-rose-500 hover:bg-rose-600 text-white px-4 py-2 rounded-lg transition-all">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
+                            Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Page Header with Date Filter -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800 mb-1">Order Analytics</h1>
+                <p class="text-gray-600">Insights and performance metrics for your store</p>
+            </div>
+            <div class="mt-4 md:mt-0" x-data="{ dateRange: 'last30days' }">
+                <div class="flex flex-wrap items-center space-x-2">
+                    <label for="date-range" class="text-gray-700">Time Period:</label>
+                    <select id="date-range" x-model="dateRange" class="date-picker rounded-md border-gray-300 shadow-sm">
+                        <option value="today">Today</option>
+                        <option value="yesterday">Yesterday</option>
+                        <option value="last7days">Last 7 Days</option>
+                        <option value="last30days">Last 30 Days</option>
+                        <option value="thisMonth">This Month</option>
+                        <option value="lastMonth">Last Month</option>
+                        <option value="custom">Custom Range</option>
+                    </select>
+                    <button 
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center"
+                        @click="$dispatch('update-charts')">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Update
+                    </button>
+                </div>
+                <!-- Custom date range inputs (hidden by default) -->
+                <div x-show="dateRange === 'custom'" class="mt-2 flex items-center space-x-2">
+                    <input type="date" id="start-date" class="date-picker" />
+                    <span>to</span>
+                    <input type="date" id="end-date" class="date-picker" />
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Overview Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <!-- Total Orders Card -->
+            <div class="bg-white rounded-xl shadow-md p-6 stat-card border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500 mb-1">Total Orders</p>
+                        <h3 class="text-2xl font-bold text-gray-800">156</h3>
+                        <p class="text-sm mt-2">
+                            <span class="text-emerald-500 font-medium">↑ 12.5%</span>
+                            <span class="text-gray-500">vs previous period</span>
+                        </p>
+                    </div>
+                    <div class="bg-indigo-100 rounded-lg p-3">
+                        <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Revenue Card -->
+            <div class="bg-white rounded-xl shadow-md p-6 stat-card border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500 mb-1">Total Revenue</p>
+                        <h3 class="text-2xl font-bold text-gray-800">₹95,240</h3>
+                        <p class="text-sm mt-2">
+                            <span class="text-emerald-500 font-medium">↑ 18.2%</span>
+                            <span class="text-gray-500">vs previous period</span>
+                        </p>
+                    </div>
+                    <div class="bg-emerald-100 rounded-lg p-3">
+                        <svg class="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Average Order Value Card -->
+            <div class="bg-white rounded-xl shadow-md p-6 stat-card border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500 mb-1">Avg. Order Value</p>
+                        <h3 class="text-2xl font-bold text-gray-800">₹610</h3>
+                        <p class="text-sm mt-2">
+                            <span class="text-emerald-500 font-medium">↑ 5.3%</span>
+                            <span class="text-gray-500">vs previous period</span>
+                        </p>
+                    </div>
+                    <div class="bg-blue-100 rounded-lg p-3">
+                        <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Conversion Rate Card -->
+            <div class="bg-white rounded-xl shadow-md p-6 stat-card border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500 mb-1">Conversion Rate</p>
+                        <h3 class="text-2xl font-bold text-gray-800">3.2%</h3>
+                        <p class="text-sm mt-2">
+                            <span class="text-rose-500 font-medium">↓ 0.8%</span>
+                            <span class="text-gray-500">vs previous period</span>
+                        </p>
+                    </div>
+                    <div class="bg-purple-100 rounded-lg p-3">
+                        <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- Revenue Trend Chart -->
+            <div class="bg-white rounded-xl shadow-md p-6 border border-gray-200">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-gray-800">Revenue Trends</h3>
+                    <div x-data="{ timeframe: 'days' }">
+                        <div class="flex rounded-lg overflow-hidden border border-gray-200">
+                            <button 
+                                @click="timeframe = 'days'; $dispatch('update-revenue-chart', {timeframe: 'days'})" 
+                                :class="{'bg-indigo-600 text-white': timeframe === 'days', 'bg-gray-100 text-gray-700': timeframe !== 'days'}"
+                                class="px-3 py-1 text-sm">
+                                Days
+                            </button>
+                            <button 
+                                @click="timeframe = 'weeks'; $dispatch('update-revenue-chart', {timeframe: 'weeks'})" 
+                                :class="{'bg-indigo-600 text-white': timeframe === 'weeks', 'bg-gray-100 text-gray-700': timeframe !== 'weeks'}"
+                                class="px-3 py-1 text-sm">
+                                Weeks
+                            </button>
+                            <button 
+                                @click="timeframe = 'months'; $dispatch('update-revenue-chart', {timeframe: 'months'})" 
+                                :class="{'bg-indigo-600 text-white': timeframe === 'months', 'bg-gray-100 text-gray-700': timeframe !== 'months'}"
+                                class="px-3 py-1 text-sm">
+                                Months
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Order Status Distribution -->
+            <div class="bg-white rounded-xl shadow-md p-6 border border-gray-200">
+                <h3 class="font-bold text-gray-800 mb-4">Order Status Distribution</h3>
+                <div class="doughnut-container">
+                    <canvas id="orderStatusChart"></canvas>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4">
+                    <div class="flex items-center">
+                        <div class="w-3 h-3 rounded-full bg-emerald-500 mr-2"></div>
+                        <span class="text-sm text-gray-600">Shipped (38%)</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-3 h-3 rounded-full bg-blue-500 mr-2"></div>
+                        <span class="text-sm text-gray-600">Confirmed (25%)</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-3 h-3 rounded-full bg-amber-500 mr-2"></div>
+                        <span class="text-sm text-gray-600">Pending (22%)</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-3 h-3 rounded-full bg-red-500 mr-2"></div>
+                        <span class="text-sm text-gray-600">Canceled (15%)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Analytics Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Top Selling Products Card -->
+            <div class="bg-white rounded-xl shadow-md border border-gray-200 col-span-1 lg:col-span-2">
+                <div class="p-6 border-b border-gray-200">
+                    <h3 class="font-bold text-gray-800">Top Selling Products</h3>
+                </div>
+                <div class="p-6">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full">
+                            <thead>
+                                <tr class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th class="px-4 py-3">Product</th>
+                                    <th class="px-4 py-3">Orders</th>
+                                    <th class="px-4 py-3">Revenue</th>
+                                    <th class="px-4 py-3 hidden md:table-cell">Trend</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                <tr>
+                                    <td class="px-4 py-3">
+                                        <div class="flex items-center">
+                                            <div class="h-10 w-10 flex-shrink-0 mr-3">
+                                                <img class="h-10 w-10 rounded-lg object-cover" src="/api/placeholder/64/64" alt="Product">
+                                            </div>
+                                            <div>
+                                                <p class="text-sm font-medium text-gray-800">Premium Leather Wallet</p>
+                                                <p class="text-xs text-gray-500">#ID4721</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <span class="text-sm text-gray-800">85 orders</span>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <span class="text-sm font-medium text-gray-800">₹18,700</span>
+                                    </td>
+                                    <td class="px-4 py-3 hidden md:table-cell">
+                                        <div class="flex items-center">
+                                            <span class="text-emerald-500 mr-1">↑ 12%</span>
+                                            <svg class="w-16 h-8" viewBox="0 0 64 24">
+                                                <path d="M0 20L6 17L12 19L18 15L24 17L30 9L36 17L42 5L48 15L54 8L60 12L64 2" fill="none" stroke="#4ade80" stroke-width="2" />
+                                            </svg>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-3">
+                                        <div class="flex items-center">
+                                            <div class="h-10 w-10 flex-shrink-0 mr-3">
+                                                <img class="h-10 w-10 rounded-lg object-cover" src="/api/placeholder/64/64" alt="Product">
+                                            </div>
+                                            <div>
+                                                <p class="text-sm font-medium text-gray-800">Wireless Earbuds</p>
+                                                <p class="text-xs text-gray-500">#ID3892</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <span class="text-sm text-gray-800">63 orders</span>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <span class="text-sm font-medium text-gray-800">₹15,750</span>
+                                    </td>
+                                    <td class="px-4 py-3 hidden md:table-cell">
+                                        <div class="flex items-center">
+                                            <span class="text-emerald-500 mr-1">↑ 8%</span>
+                                            <svg class="w-16 h-8" viewBox="0 0 64 24">
+                                                <path d="M0 15L6 12L12 16L18 10L24 12L30 6L36 10L42 8L48 14L54 12L60 8L64 10" fill="none" stroke="#4ade80" stroke-width="2" />
+                                            </svg>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-3">
+                                        <div class="flex items-center">
+                                            <div class="h-10 w-10 flex-shrink-0 mr-3">
+                                                <img class="h-10 w-10 rounded-lg object-cover" src="/api/placeholder/64/64" alt="Product">
+                                            </div>
+                                            <div>
+                                                <p class="text-sm font-medium text-gray-800">Smartphone Case</p>
+                                                <p class="text-xs text-gray-500">#ID2156</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <span class="text-sm text-gray-800">51 orders</span>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <span class="text-sm font-medium text-gray-800">₹4,080</span>
+                                    </td>
+                                    <td class="px-4 py-3 hidden md:table-cell">
+                                        <div class="flex items-center">
+                                            <span class="text-rose-500 mr-1">↓ 3%</span>
+                                            <svg class="w-16 h-8" viewBox="0 0 64 24">
+                                                <path d="M0 10L6 8L12 14L18 12L24 16L30 6L36 10L42 18L48 14L54 16L60 12L64 15" fill="none" stroke="#f43f5e" stroke-width="2" />
+                                            </svg>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-4 text-center">
+                        <a class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
+                            View Full Product Report →
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Customer Metrics Card -->
+            <div class="bg-white rounded-xl shadow-md border border-gray-200">
+                <div class="p-6 border-b border-gray-200">
+                    <h3 class="font-bold text-gray-800">Customer Insights</h3>
+                </div>
+                <div class="p-6 space-y-4">
+                    <!-- New vs Returning -->
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <h4 class="text-sm font-medium text-gray-600">New vs Returning</h4>
+                            <span class="text-xs text-gray-500">156 customers total</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5 mb-1">
+                            <div class="bg-indigo-600 h-2.5 rounded-full" style="width: 68%"></div>
+                        </div>
+                        <div class="flex justify-between text-xs text-gray-500">
+                            <span>68% New (106)</span>
+                            <span>32% Returning (50)</span>
+                        </div>
+                    </div>
+
+                    <!-- Device Distribution -->
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <h4 class="text-sm font-medium text-gray-600">Device Distribution</h4>
+                        </div>
+                        <div class="space-y-

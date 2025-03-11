@@ -1,0 +1,909 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <title>Admin Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <script src="{% static 'js/admin-dashboard.js' %}" defer></script>
+    <script src="{% static 'js/admin-dashboard-filter.js' %}" defer></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+    <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css">
+    <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
+
+    <style>
+        .pending-message {
+          margin: 50px auto;
+          max-width: 500px;
+          padding: 30px;
+          text-align: center;
+          border: 1px solid #ccc;
+          border-radius: 8px;
+          background: #f9f9f9;
+        }
+
+        .flash-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+        }
+      </style>
+</head>
+
+<body class="bg-gray-50 font-['Inter']">
+    {% if not seller.is_approved %}
+    <div class="container">
+        <div class="pending-message">
+          <h3>Your account is pending approval</h3>
+          <p>{{ message }}</p>
+        </div>
+    </div>
+    {% else %}
+    
+    <!-- Navigation -->
+    <nav class="hidden md:block bg-gradient-to-r from-indigo-600 to-blue-600 shadow-xl">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center">
+                    <h1 class="text-white text-2xl font-bold tracking-tight">Admin Console</h1>
+                </div>
+                <div x-data="{ open: false }" class="relative">
+                    <button @click="open = !open" class="md:hidden text-white focus:outline-none">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+                    <div x-show="open" @click.away="open = false"
+                        class="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-lg py-2 z-50 md:hidden">
+                        <a href="{% url 'add_product_view' %}"
+                            class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Add Product</a>
+                        <a href="{% url 'admin_orders' %}"
+                            class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Orders</a>
+                        <a href="{% url 'admin_analysis' %}"
+                            class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Analytics</a>
+                        <a href="{% url 'logout' %}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Logout</a>
+                    </div>
+                    <div class="hidden md:flex items-center space-x-4">
+                        <a href="{% url 'admin_analysis' %}"
+                            class="flex items-center bg-white/20 text-white px-4 py-2 rounded-lg transition-all">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                            </svg>
+                            Analytics
+                        </a>
+                        <a href="{% url 'add_product_view' %}"
+                            class="flex items-center bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg transition-all">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 4v16m8-8H4" />
+                            </svg>
+                            Add Product
+                        </a>
+                        <a href="{% url 'admin_orders' %}"
+                            class="flex items-center bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg transition-all">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 10h11M9 21V3m11 6h-8m8 5h-8m8 5h-8" />
+                            </svg>
+                            Orders
+                        </a>
+                        <a href="{% url 'logout' %}"
+                            class="flex items-center bg-rose-500 hover:bg-rose-600 text-white px-4 py-2 rounded-lg transition-all">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
+                            Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    {% comment %} Desktop search and filter {% endcomment %}
+    <div class="hidden md:block sticky top-16 bg-white z-40 border-b shadow-sm px-6 py-3">
+        <div class="flex items-center space-x-3 max-w-4xl mx-auto">
+            <!-- Search Input -->
+            <div class="relative flex-grow">
+                <input type="text" id="searchInput" name="q" value="{{ query }}" placeholder="Search products..."
+                    class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-300 focus:border-indigo-300 transition-all">
+                <div class="absolute left-3 top-2.5 text-gray-400">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+            </div>
+
+    
+            <!-- Filter Button -->
+            {% comment %} <button x-data="{ showFilters: false }" @click="showFilters = !showFilters"
+                class="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all">
+                <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                </svg>
+            </button> {% endcomment %}
+            <div x-data="{ showFilters: false }" class="relative">
+                <!-- Single Filter Toggle Button -->
+                <button @click="showFilters = !showFilters"
+                  class="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all focus:outline-none">
+                  <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                  </svg>
+                </button>
+              
+                <!-- Sidebar Filter Panel (slides in from right) -->
+                <div x-show="showFilters" class="fixed inset-0 z-50 flex">
+                  <!-- Overlay: Clicking the overlay closes the sidebar -->
+                  <div class="flex-grow" @click="showFilters = false">
+                    <div class="absolute inset-0 bg-black opacity-50"></div>
+                  </div>
+                  <!-- Filter Sidebar -->
+                  <div x-show="showFilters"
+                       x-transition:enter="transition transform duration-300"
+                       x-transition:enter-start="translate-x-full"
+                       x-transition:enter-end="translate-x-0"
+                       x-transition:leave="transition transform duration-300"
+                       x-transition:leave-start="translate-x-0"
+                       x-transition:leave-end="translate-x-full"
+                       class="relative bg-white w-80 max-w-full p-6 overflow-y-auto shadow-lg"
+                       @click.away="showFilters = false">
+                    <div class="flex items-center justify-between mb-6">
+                      <h2 class="text-2xl font-semibold text-gray-800">Filters</h2>
+                      <button @click="showFilters = false" class="text-gray-600 hover:text-gray-800 focus:outline-none">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                    
+                    <!-- Filter Form -->
+                    <form id="filterForm" method="GET" action="{% url 'admin_dashboard' %}">
+                      
+                      <!-- Category Filter -->
+                      <div class="mb-4">
+                        <label for="category" class="block text-gray-700 mb-2">Category</label>
+                        <select id="category" name="category"
+                          class="w-full p-2 border border-gray-300 rounded focus:ring focus:border-blue-300">
+                          <option value="">All Categories</option>
+                          {% for cat in categories %}
+                            <option value="{{ cat }}" {% if selected_filters.category == cat %}selected{% endif %}>
+                              {{ cat }}
+                            </option>
+                          {% endfor %}
+                        </select>
+                      </div>
+                      
+                      <!-- Price Range Filter -->
+                      <div class="mb-4">
+                        <label class="block text-gray-700 mb-2">Price Range</label>
+                        <div class="flex space-x-2">
+                          <input type="number" name="min_price" placeholder="Min"
+                            value="{{ selected_filters.min_price }}"
+                            class="w-1/2 p-2 border border-gray-300 rounded focus:ring focus:border-blue-300" />
+                          <input type="number" name="max_price" placeholder="Max"
+                            value="{{ selected_filters.max_price }}"
+                            class="w-1/2 p-2 border border-gray-300 rounded focus:ring focus:border-blue-300" />
+                        </div>
+                      </div>
+                      
+                      <!-- Status Filter -->
+                      <div class="mb-4">
+                        <label for="status" class="block text-gray-700 mb-2">Status</label>
+                        <select id="status" name="status"
+                          class="w-full p-2 border border-gray-300 rounded focus:ring focus:border-blue-300">
+                          <option value="">All Status</option>
+                          <option value="available" {% if selected_filters.status == "available" %}selected{% endif %}>
+                            Available
+                          </option>
+                          <option value="sold" {% if selected_filters.status == "sold" %}selected{% endif %}>
+                            Sold
+                          </option>
+                        </select>
+                      </div>
+                      
+                      <!-- Stock Filter with Condition Labels -->
+                      <div class="mb-4">
+                        <label for="stock_status" class="block text-gray-700 mb-2">Stock</label>
+                        <select id="stock_status" name="stock_status"
+                          class="w-full p-2 border border-gray-300 rounded focus:ring focus:border-blue-300">
+                          <option value="">All Stocks</option>
+                          <option value="in" {% if selected_filters.stock_status == "in" %}selected{% endif %}>
+                            In Stock (&gt; 10)
+                          </option>
+                          <option value="low" {% if selected_filters.stock_status == "low" %}selected{% endif %}>
+                            Low Stock (≤ 10)
+                          </option>
+                          <option value="out" {% if selected_filters.stock_status == "out" %}selected{% endif %}>
+                            Out of Stock (0)
+                          </option>
+                        </select>
+                      </div>
+                      
+                      <!-- Sort Options -->
+                      <div class="mb-4">
+                        <label for="sort_by" class="block text-gray-700 mb-2">Sort By</label>
+                        <select id="sort_by" name="sort_by"
+                          class="w-full p-2 border border-gray-300 rounded focus:ring focus:border-blue-300">
+                          <option value="id_asc" {% if selected_filters.sort_by == "id_asc" %}selected{% endif %}>
+                            ID Ascending
+                          </option>
+                          <option value="id_desc" {% if selected_filters.sort_by == "id_desc" %}selected{% endif %}>
+                            ID Descending
+                          </option>
+                          <option value="price_asc" {% if selected_filters.sort_by == "price_asc" %}selected{% endif %}>
+                            Price Ascending
+                          </option>
+                          <option value="price_desc" {% if selected_filters.sort_by == "price_desc" %}selected{% endif %}>
+                            Price Descending
+                          </option>
+                          <option value="stock_asc" {% if selected_filters.sort_by == "stock_asc" %}selected{% endif %}>
+                            Stock Ascending
+                          </option>
+                          <option value="stock_desc" {% if selected_filters.sort_by == "stock_desc" %}selected{% endif %}>
+                            Stock Descending
+                          </option>
+                        </select>
+                      </div>
+                      
+                      <!-- Apply and Reset Buttons (Sidebar) -->
+                      <div class="flex flex-col gap-2">
+                        <button type="submit"
+                          class="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition focus:outline-none">
+                          Apply Filters
+                        </button>
+                        <!-- Reset button that clears the form fields without closing the sidebar -->
+                        <button type="button" onclick="clearFilterForm()"
+                          class="w-full py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 transition focus:outline-none">
+                          Reset Filters
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>                 
+        </div>
+    </div>
+
+    <!-- Filter Status Bar - Only shows when filters are applied -->
+    <div id="filterStatusBar" class="{% if has_active_filters %}flex{% else %}hidden{% endif %} items-center justify-between bg-gray-50 border-b px-6 py-2 shadow-sm max-w-4xl mx-auto">
+        <div class="flex flex-wrap items-center gap-2">
+            <span class="text-sm font-medium text-gray-700">Active filters:</span>
+            
+            {% if selected_filters.category %}
+            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                Category: {{ selected_filters.category }}
+                <button onclick="removeFilter('category')" class="ml-1 text-blue-600 hover:text-blue-800">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </span>
+            {% endif %}
+            
+            {% if selected_filters.min_price or selected_filters.max_price %}
+            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                Price: {% if selected_filters.min_price %}${{ selected_filters.min_price }}{% else %}$0{% endif %} - 
+                {% if selected_filters.max_price %}${{ selected_filters.max_price }}{% else %}Any{% endif %}
+                <button onclick="removeFilter('price')" class="ml-1 text-blue-600 hover:text-blue-800">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </span>
+            {% endif %}
+            
+            {% if selected_filters.status %}
+            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                Status: {{ selected_filters.status|title }}
+                <button onclick="removeFilter('status')" class="ml-1 text-blue-600 hover:text-blue-800">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </span>
+            {% endif %}
+            
+            {% if selected_filters.stock_status %}
+            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                Stock: 
+                {% if selected_filters.stock_status == "in" %}In Stock
+                {% elif selected_filters.stock_status == "low" %}Low Stock
+                {% elif selected_filters.stock_status == "out" %}Out of Stock
+                {% endif %}
+                <button onclick="removeFilter('stock_status')" class="ml-1 text-blue-600 hover:text-blue-800">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </span>
+            {% endif %}
+            
+            {% if query %}
+            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                Search: "{{ query }}"
+                <button onclick="removeFilter('q')" class="ml-1 text-blue-600 hover:text-blue-800">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </span>
+            {% endif %}
+            
+            {% if selected_filters.sort_by %}
+            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                Sort by: 
+                {% if selected_filters.sort_by == "id_asc" %}ID (A-Z)
+                {% elif selected_filters.sort_by == "id_desc" %}ID (Z-A)
+                {% elif selected_filters.sort_by == "price_asc" %}Price (Low-High)
+                {% elif selected_filters.sort_by == "price_desc" %}Price (High-Low)
+                {% elif selected_filters.sort_by == "stock_asc" %}Stock (Low-High)
+                {% elif selected_filters.sort_by == "stock_desc" %}Stock (High-Low)
+                {% endif %}
+                <button onclick="removeFilter('sort_by')" class="ml-1 text-blue-600 hover:text-blue-800">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </span>
+            {% endif %}
+        </div>
+        
+        <button onclick="clearAllFilters()" class="text-sm font-medium text-red-600 hover:text-red-800 flex items-center">
+            Clear all
+            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+        </button>
+    </div>
+
+    
+
+    <!-- Main Content -->
+    <main class="hidden md:flex flex-col items-center justify-center max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {% if messages %}
+        <div class="mb-6 space-y-3 w-full">
+            {% for message in messages %}
+            <div
+                class="p-4 rounded-lg flex items-start {% if message.tags == 'error' %}bg-rose-100 text-rose-800{% else %}bg-emerald-100 text-emerald-800{% endif %}">
+                <svg class="w-5 h-5 mt-0.5 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {% if message.tags == 'error' %}
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    {% else %}
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    {% endif %}
+                </svg>
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Header with Add Promo Button -->
+        {% include 'store/admin_partials/admin_product_list_desktop.html' %}
+        
+    </main>
+
+    
+    
+
+    <!-- Images Modal -->
+    <div id="imagesModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-lg p-4 relative">
+            <button onclick="closeImagesModal()" class="absolute top-2 right-2 text-gray-600 hover:text-gray-800">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                    </path>
+                </svg>
+            </button>
+            <div id="imagesModalContent" class="flex flex-wrap justify-center"></div>
+        </div>
+    </div>
+
+    <!-- Delete Modal (existing code) -->
+    <div id="deleteModal"
+        class="fixed inset-0 bg-black/50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full transform transition-all">
+            <div class="p-6">
+                <div class="flex items-center space-x-3 mb-4">
+                    <div class="p-2 bg-blue-100 rounded-lg">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-blue-700">Confirm Deletion</h3>
+                </div>
+                <p class="text-gray-600 mb-6">This action cannot be undone. Are you sure you want to permanently delete
+                    this product?</p>
+                <div class="flex justify-end space-x-3">
+                    <button onclick="closeDeleteModal()"
+                        class="px-4 py-2 text-gray-600 hover:bg-gray-200 rounded-lg transition-colors">
+                        Cancel
+                    </button>
+                    <form id="deleteForm" method="POST">
+                        {% csrf_token %}
+                        <button type="submit"
+                            class="block px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stock Edit Modal -->
+    <div id="stockEditModal" 
+        class="fixed inset-0 z-[100] bg-black/50 hidden flex items-center justify-center p-4 transition-opacity duration-300">
+        <div class="bg-white rounded-xl p-6 w-96 transform transition-transform duration-300 scale-90">
+            <h3 class="text-lg font-semibold mb-4">Update Stock</h3>
+            <form id="updateStockForm" method="POST" action="{% url 'update_stock' %}">
+                {% csrf_token %}
+                <input type="hidden" name="product_id" id="productIdField">
+                <input type="number" name="new_stock" id="newStockValue" 
+                        class="border p-2 w-full mb-4" min="0">
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="closeStockModal()" 
+                            class="px-4 py-2 text-gray-600">Cancel</button>
+                    <button type="submit" 
+                            class="px-4 py-2 bg-blue-600 text-white rounded">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Mobile Navigation -->
+    <nav x-data="{ isOpen: false }" class="block md:hidden bg-gradient-to-r from-indigo-600 to-blue-600 shadow-xl sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center">
+                    <h1 class="text-white text-xl font-bold tracking-tight">Admin Console</h1>
+                </div>
+                <div class="flex items-center">
+                    <button @click="isOpen = !isOpen" class="text-white focus:outline-none" aria-label="Toggle menu">
+                        <svg x-show="!isOpen" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                        <svg x-show="isOpen" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div x-show="isOpen" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-4" @click.away="isOpen = false" class="absolute inset-x-0 top-16 bg-white rounded-b-xl shadow-lg border-t border-gray-100 py-2 px-4 space-y-1">
+            <a href="{% url 'admin_analysis' %}" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-indigo-50 transition-colors">
+                <div class="bg-indigo-100 p-2 rounded-lg">
+                    <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                </div>
+                <span class="font-medium text-gray-700">Analytics</span>
+            </a>
+            <a href="{% url 'add_product_view' %}" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-indigo-50 transition-colors">
+                <div class="bg-green-100 p-2 rounded-lg">
+                    <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                </div>
+                <span class="font-medium text-gray-700">Add Product</span>
+            </a>
+            <a href="{% url 'admin_orders' %}" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-indigo-50 transition-colors">
+                <div class="bg-blue-100 p-2 rounded-lg">
+                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h11M9 21V3m11 6h-8m8 5h-8m8 5h-8" />
+                    </svg>
+                </div>
+                <span class="font-medium text-gray-700">Orders</span>
+            </a>
+            <a href="{% url 'logout' %}" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-rose-50 transition-colors">
+                <div class="bg-rose-100 p-2 rounded-lg">
+                    <svg class="w-5 h-5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                </div>
+                <span class="font-medium text-gray-700">Logout</span>
+            </a>
+        </div>
+    </nav>
+    
+
+    <!-- Mobile Search & Filter Bar -->
+    <div class="block md:hidden sticky top-16 bg-white z-40 border-b shadow-sm p-3">
+        <div class="flex space-x-2">
+            <div class="relative flex-grow">
+                <input type="text" id="searchInput" name="q" value="{{ query }}" placeholder="Search products..."
+                    class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-300 focus:border-indigo-300 transition-all">
+                <div class="absolute left-3 top-2.5 text-gray-400">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+            </div>
+            
+            <div x-data="{ showFilters: false }" class="relative">
+                <!-- Single Filter Toggle Button -->
+                <button @click="showFilters = !showFilters"
+                  class="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all focus:outline-none">
+                  <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                  </svg>
+                </button>
+                
+                <!-- Sidebar Filter Panel (slides in from right) -->
+                <div x-show="showFilters" class="fixed inset-0 z-50 flex">
+                  <!-- Overlay: Clicking the overlay closes the sidebar -->
+                  <div class="flex-grow" @click="showFilters = false">
+                    <div class="absolute inset-0 bg-black opacity-50"></div>
+                  </div>
+                  <!-- Filter Sidebar -->
+                  <div x-show="showFilters"
+                       x-transition:enter="transition transform duration-300"
+                       x-transition:enter-start="translate-x-full"
+                       x-transition:enter-end="translate-x-0"
+                       x-transition:leave="transition transform duration-300"
+                       x-transition:leave-start="translate-x-0"
+                       x-transition:leave-end="translate-x-full"
+                       class="relative bg-white w-80 max-w-full p-6 overflow-y-auto shadow-lg"
+                       style="max-height: 100vh;">
+                    <div class="flex items-center justify-between mb-6">
+                      <h2 class="text-2xl font-semibold text-gray-800">Filters</h2>
+                      <button @click="showFilters = false" class="text-gray-600 hover:text-gray-800 focus:outline-none">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                    
+                    <!-- Filter Form -->
+                    <form id="filterForm" method="GET" action="{% url 'admin_dashboard' %}">
+                      
+                      <!-- Category Filter -->
+                      <div class="mb-4">
+                        <label for="category" class="block text-gray-700 mb-2">Category</label>
+                        <select id="category" name="category"
+                          class="w-full p-2 border border-gray-300 rounded focus:ring focus:border-blue-300">
+                          <option value="">All Categories</option>
+                          {% for cat in categories %}
+                            <option value="{{ cat }}" {% if selected_filters.category == cat %}selected{% endif %}>
+                              {{ cat }}
+                            </option>
+                          {% endfor %}
+                        </select>
+                      </div>
+                      
+                      <!-- Price Range Filter -->
+                      <div class="mb-4">
+                        <label class="block text-gray-700 mb-2">Price Range</label>
+                        <div class="flex space-x-2">
+                          <input type="number" name="min_price" placeholder="Min"
+                            value="{{ selected_filters.min_price }}"
+                            class="w-1/2 p-2 border border-gray-300 rounded focus:ring focus:border-blue-300" />
+                          <input type="number" name="max_price" placeholder="Max"
+                            value="{{ selected_filters.max_price }}"
+                            class="w-1/2 p-2 border border-gray-300 rounded focus:ring focus:border-blue-300" />
+                        </div>
+                      </div>
+                      
+                      <!-- Status Filter -->
+                      <div class="mb-4">
+                        <label for="status" class="block text-gray-700 mb-2">Status</label>
+                        <select id="status" name="status"
+                          class="w-full p-2 border border-gray-300 rounded focus:ring focus:border-blue-300">
+                          <option value="">All Status</option>
+                          <option value="available" {% if selected_filters.status == "available" %}selected{% endif %}>
+                            Available
+                          </option>
+                          <option value="sold" {% if selected_filters.status == "sold" %}selected{% endif %}>
+                            Sold
+                          </option>
+                        </select>
+                      </div>
+                      
+                      <!-- Stock Filter with Condition Labels -->
+                      <div class="mb-4">
+                        <label for="stock_status" class="block text-gray-700 mb-2">Stock</label>
+                        <select id="stock_status" name="stock_status"
+                          class="w-full p-2 border border-gray-300 rounded focus:ring focus:border-blue-300">
+                          <option value="">All Stocks</option>
+                          <option value="in" {% if selected_filters.stock_status == "in" %}selected{% endif %}>
+                            In Stock (&gt; 10)
+                          </option>
+                          <option value="low" {% if selected_filters.stock_status == "low" %}selected{% endif %}>
+                            Low Stock (≤ 10)
+                          </option>
+                          <option value="out" {% if selected_filters.stock_status == "out" %}selected{% endif %}>
+                            Out of Stock (0)
+                          </option>
+                        </select>
+                      </div>
+                      
+                      <!-- Sort Options -->
+                      <div class="mb-4">
+                        <label for="sort_by" class="block text-gray-700 mb-2">Sort By</label>
+                        <select id="sort_by" name="sort_by"
+                          class="w-full p-2 border border-gray-300 rounded focus:ring focus:border-blue-300">
+                          <option value="id_asc" {% if selected_filters.sort_by == "id_asc" %}selected{% endif %}>
+                            ID Ascending
+                          </option>
+                          <option value="id_desc" {% if selected_filters.sort_by == "id_desc" %}selected{% endif %}>
+                            ID Descending
+                          </option>
+                          <option value="price_asc" {% if selected_filters.sort_by == "price_asc" %}selected{% endif %}>
+                            Price Ascending
+                          </option>
+                          <option value="price_desc" {% if selected_filters.sort_by == "price_desc" %}selected{% endif %}>
+                            Price Descending
+                          </option>
+                          <option value="stock_asc" {% if selected_filters.sort_by == "stock_asc" %}selected{% endif %}>
+                            Stock Ascending
+                          </option>
+                          <option value="stock_desc" {% if selected_filters.sort_by == "stock_desc" %}selected{% endif %}>
+                            Stock Descending
+                          </option>
+                        </select>
+                      </div>
+                      
+                      <!-- Apply and Reset Buttons (Sidebar) -->
+                      <div class="flex flex-col gap-2 mt-4">
+                        <button type="submit"
+                          class="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition focus:outline-none">
+                          Apply Filters
+                        </button>
+                        <!-- Reset button clears the form fields without closing the sidebar -->
+                        <button type="button" onclick="clearFilterForm()"
+                          class="w-full py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 transition focus:outline-none">
+                          Reset Filters
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+        </div>
+    </div>
+
+    <!-- Filter Status Bar - Only shows when filters are applied -->
+    <div id="filterStatusBar" class="{% if has_active_filters %}flex{% else %}hidden{% endif %} flex-col md:flex-row items-center justify-between bg-gray-50 border-b px-4 md:px-6 py-2 shadow-sm max-w-full md:max-w-4xl mx-auto">
+        <div class="block md:hidden flex flex-wrap items-center gap-2 mb-2 md:mb-0">
+        <span class="text-sm font-medium text-gray-700">Active filters:</span>
+        
+        {% if selected_filters.category %}
+        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+            Category: {{ selected_filters.category }}
+            <button onclick="removeFilter('category')" class="ml-1 text-blue-600 hover:text-blue-800">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            </button>
+        </span>
+        {% endif %}
+        
+        {% if selected_filters.min_price or selected_filters.max_price %}
+        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+            Price: {% if selected_filters.min_price %}${{ selected_filters.min_price }}{% else %}$0{% endif %} - 
+            {% if selected_filters.max_price %}${{ selected_filters.max_price }}{% else %}Any{% endif %}
+            <button onclick="removeFilter('price')" class="ml-1 text-blue-600 hover:text-blue-800">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            </button>
+        </span>
+        {% endif %}
+        
+        {% if selected_filters.status %}
+        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+            Status: {{ selected_filters.status|title }}
+            <button onclick="removeFilter('status')" class="ml-1 text-blue-600 hover:text-blue-800">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            </button>
+        </span>
+        {% endif %}
+        
+        {% if selected_filters.stock_status %}
+        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+            Stock: 
+            {% if selected_filters.stock_status == "in" %}In Stock
+            {% elif selected_filters.stock_status == "low" %}Low Stock
+            {% elif selected_filters.stock_status == "out" %}Out of Stock
+            {% endif %}
+            <button onclick="removeFilter('stock_status')" class="ml-1 text-blue-600 hover:text-blue-800">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            </button>
+        </span>
+        {% endif %}
+        
+        {% if query %}
+        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+            Search: "{{ query }}"
+            <button onclick="removeFilter('q')" class="ml-1 text-blue-600 hover:text-blue-800">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            </button>
+        </span>
+        {% endif %}
+        
+        {% if selected_filters.sort_by %}
+        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+            Sort by: 
+            {% if selected_filters.sort_by == "id_asc" %}ID (A-Z)
+            {% elif selected_filters.sort_by == "id_desc" %}ID (Z-A)
+            {% elif selected_filters.sort_by == "price_asc" %}Price (Low-High)
+            {% elif selected_filters.sort_by == "price_desc" %}Price (High-Low)
+            {% elif selected_filters.sort_by == "stock_asc" %}Stock (Low-High)
+            {% elif selected_filters.sort_by == "stock_desc" %}Stock (High-Low)
+            {% endif %}
+            <button onclick="removeFilter('sort_by')" class="ml-1 text-blue-600 hover:text-blue-800">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            </button>
+        </span>
+        {% endif %}
+        </div>
+        
+        <button onclick="clearAllFilters()" class="text-sm font-medium text-red-600 hover:text-red-800 flex items-center">
+        Clear all
+        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+        </svg>
+        </button>
+    </div>
+  
+
+    <!-- Mobile Main Content -->
+    <main class="block md:hidden px-4 py-5 mb-16">
+        {% if messages %}
+        <div class="mb-6 space-y-3">
+            {% for message in messages %}
+            <div class="p-4 rounded-lg flex items-start {% if message.tags == 'error' %}bg-rose-100 text-rose-800{% else %}bg-emerald-100 text-emerald-800{% endif %}">
+                <svg class="w-5 h-5 mt-0.5 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {% if message.tags == 'error' %}
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    {% else %}
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    {% endif %}
+                </svg>
+                <span>{{ message }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% include 'store/admin_partials/admin_product_list_mobile.html' %}
+        
+    </main>
+
+
+    <!-- Mobile Floating Action Button -->
+    <div class="block md:hidden fixed bottom-20 right-4 z-50">
+        <a href="{% url 'add_product_view' %}" class="bg-indigo-600 w-14 h-14 rounded-full flex items-center justify-center shadow-lg hover:bg-indigo-700 transition-colors">
+            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+        </a>
+    </div>
+
+    <!-- Mobile Bottom Navigation -->
+    <div class="block md:hidden fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 py-2 px-4 z-40">
+        <div class="flex justify-between items-center gap-6">
+            <a href="{% url 'admin_dashboard' %}" class="flex flex-col items-center flex-grow p-1 text-indigo-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                <span class="text-xs mt-1">Home</span>
+            </a>
+            <a href="{% url 'admin_analysis' %}" class="flex flex-col items-center flex-grow p-1 text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                <span class="text-xs mt-1">Analytics</span>
+            </a>
+            {% comment %} <div class="w-14"></div> <!-- Spacer for FAB --> {% endcomment %}
+            <a href="{% url 'admin_orders' %}" class="flex flex-col items-center flex-grow p-1 text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 10h11M9 21V3m11 6h-8m8 5h-8m8 5h-8" />
+                </svg>
+                <span class="text-xs mt-1">Orders</span>
+            </a>
+            <a href="{% url 'logout' %}" class="flex flex-col items-center flex-grow p-1 text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                <span class="text-xs mt-1">Logout</span>
+            </a>
+        </div>
+    </div>
+
+
+    
+    <!-- Desktop Images Modal (hidden on mobile) -->
+    <div id="desktopImagesModal" class="hidden fixed inset-0 flex bg-black/90 items-center justify-center z-50 transition-opacity duration-300 opacity-0">
+        <div class="relative bg-white rounded-xl shadow-2xl max-w-4xl w-full mx-4 overflow-hidden">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between p-4 border-b">
+                <h2 class="text-xl font-semibold text-gray-800">Product Images</h2>
+                <button onclick="closeImagesModal()" class="p-2 rounded-full hover:bg-gray-100 transition-colors">
+                    <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Image Gallery Content -->
+            <div class="p-4 overflow-y-auto max-h-[70vh]">
+                <div id="desktopImagesContent" class="flex flex-wrap justify-center gap-4"></div>
+            </div>
+            
+            {% comment %} <!-- Modal Footer -->
+            <div class="p-4 border-t">
+                <button onclick="closeImagesModal()" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg transition-colors">
+                    Close
+                </button>
+            </div> {% endcomment %}
+        </div>
+    </div>
+
+    <!-- Mobile Images Modal (hidden on desktop) -->
+    <div id="mobileImagesModal" class="flex md:hidden fixed inset-0 bg-black/90 items-center justify-center hidden z-50 transition-opacity duration-300 opacity-0">
+        <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-4xl mx-4 overflow-hidden flex flex-col max-h-[90vh]">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between p-3 border-b">
+                <h2 class="text-lg font-semibold text-gray-800">Product Images</h2>
+                <button onclick="closeImagesModal()" class="p-2 rounded-full hover:bg-gray-100 transition-colors">
+                    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Image Gallery Content - Scrollable on mobile -->
+            <div class="p-3 overflow-y-auto flex-grow">
+                <div id="mobileImagesContent" class="flex flex-col items-center"></div>
+            </div>
+            
+            <!-- Modal Footer - Fixed at bottom on mobile -->
+            <div class="p-3 border-t">
+                <div class="flex justify-between items-center">
+                    <span id="imageCounter" class="text-sm text-gray-600"></span>
+                    <button onclick="closeImagesModal()" class="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg transition-colors text-sm">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</body>
+
+</html>

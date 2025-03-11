@@ -170,6 +170,11 @@ class ProductOverlay {
 
         this.productImages = images;
 
+        // Get stock information from product card
+        const stock = parseInt(productCard.dataset.stock) || 0;
+        console.log("Product card stock:", productCard.dataset.stock, "Parsed stock:", stock);
+
+
         // Store current product data
         this.currentProduct = {
             id: this.currentProductId,
@@ -179,7 +184,8 @@ class ProductOverlay {
             currentPrice: currentPrice,
             discountPercentage: discountPercentage,
             description: description,
-            images: this.productImages
+            images: this.productImages,
+            stock: stock
         };
 
         // ✅ Update overlay content only if images exist
@@ -222,6 +228,34 @@ class ProductOverlay {
 
         // Reset quantity
         this.overlay.querySelector('.quantity-input').value = 1;
+
+        const stockElement = this.overlay.querySelector('.stock-quantity');
+        const metaItem = stockElement.closest('.meta-item');
+        const addToCartBtn = this.overlay.querySelector('.add-to-cart-btn');
+
+        console.log("Setting stock quantity:", this.currentProduct.stock);
+        stockElement.textContent = `${this.currentProduct.stock} in stock`;
+        console.log("Stock element after setting:", stockElement.textContent);
+
+        console.log("Stock element exists:", stockElement !== null);
+        console.log("Stock element display style:", window.getComputedStyle(stockElement).display);
+
+        if (this.currentProduct.stock > 0) {
+            stockElement.textContent = `${this.currentProduct.stock} in stock`;
+            metaItem.classList.remove('out-of-stock', 'low-stock');
+
+            if (this.currentProduct.stock < 5) {
+                metaItem.classList.add('low-stock');
+                stockElement.textContent += ' (Low Stock)';
+            }
+
+            addToCartBtn.disabled = false;
+        } else {
+            stockElement.textContent = 'Out of Stock';
+            metaItem.classList.add('out-of-stock');
+            addToCartBtn.disabled = true;
+        }
+
 
         // Update badges
         const newBadge = this.overlay.querySelector('.new-badge');
@@ -389,7 +423,7 @@ class ProductOverlay {
 document.addEventListener('DOMContentLoaded', () => {
     const cart = new ShoppingCart();
     const productListing = new ProductListing(cart);
-    const productFilter = new ProductFilter();
+    // const productFilter = new ProductFilter();
     const productOverlay = new ProductOverlay(cart);
 
     // Reset quantities
@@ -399,7 +433,6 @@ document.addEventListener('DOMContentLoaded', () => {
     cart.updateCartCount();
 
     // Load products for filtering
-    productFilter.loadProductsFromDOM();
 
     // Add CSS for animations
     const style = document.createElement('style');

@@ -186,6 +186,7 @@
 .sale-badge {
     background-color: #e25c4a;
     color: white;
+    margin-right: 2rem;
 }
 
 .product-title {
@@ -254,6 +255,26 @@
 
 .meta-item i {
     color: #4a90e2;
+}
+
+/* Stock status indicators */
+.meta-item .stock-quantity {
+    font-weight: 600;
+}
+
+.meta-item.low-stock .stock-quantity {
+    color: #e67e22;
+}
+
+.meta-item.out-of-stock .stock-quantity {
+    color: #e74c3c;
+}
+
+/* Disabled add to cart button */
+.add-to-cart-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: #95a5a6;
 }
 
 .product-actions {
@@ -428,6 +449,21 @@
     margin: 0;
     line-height: 1.6;
     color: #666;
+}
+
+/* Add to your CSS */
+.stock-quantity {
+    font-weight: bold;
+    color: #00b894; /* Default color */
+}
+
+.stock-quantity.low {
+    color: #d63031; /* Red for low stock */
+}
+
+.stock-quantity.out {
+    color: #666;
+    font-style: italic;
 }
 
 /* Responsive Styles */

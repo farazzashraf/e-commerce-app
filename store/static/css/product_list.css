@@ -162,7 +162,9 @@ body {
     flex-wrap: wrap;
 }
 
+/* Ensure links look exactly like buttons */
 .filter-button {
+    display: inline-block; /* Allows proper spacing like buttons */
     padding: 8px 16px;
     background-color: #fff;
     border: 1px solid #ddd;
@@ -170,8 +172,12 @@ body {
     cursor: pointer;
     transition: all 0.3s ease;
     font-size: 0.9rem;
+    text-align: center;
+    text-decoration: none; /* Removes underline */
+    color: black; /* Ensures text color is normal */
 }
 
+/* Active and hover states */
 .filter-button:hover,
 .filter-button.active {
     background-color: #ff5733;
@@ -179,6 +185,7 @@ body {
     border-color: #ff5733;
 }
 
+/* Sort dropdown */
 .sort-dropdown {
     position: relative;
 }
@@ -195,6 +202,7 @@ body {
     font-size: 0.9rem;
 }
 
+/* Dropdown arrow */
 .sort-dropdown::after {
     content: "\f0d7";
     font-family: "Font Awesome 6 Free";
@@ -498,26 +506,22 @@ body {
     border: 2px solid white;
 }
 
-/* Modal */
+/* Modal Overlay Styles */
 .modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.7);
-    display: flex;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
     justify-content: center;
     align-items: center;
     z-index: 1000;
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.3s ease;
 }
 
 .modal-overlay.active {
-    opacity: 1;
-    visibility: visible;
+    display: flex;
 }
 
 .modal-content {
@@ -608,6 +612,7 @@ body {
     animation: spin 1s linear infinite;
 }
 
+
 @keyframes spin {
     0% {
         transform: rotate(0deg);
@@ -631,84 +636,244 @@ body {
     /* Adjust to center vertically */
 }
 
-/* Responsive Styles */
-@media screen and (max-width: 1200px) {
-    .product-grid {
-        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-        gap: 20px;
+/* Enhanced Mobile Product Card */
+@media screen and (max-width: 768px) {
+    .product-controls {
+        display: none;
+    }
+
+    .product-card {
+        display: flex;
+        flex-direction: column;
+        height: auto;
+        transition: transform 0.2s ease;
+    }
+
+    /* Reduce hover effect for touch - more subtle */
+    .product-card:hover {
+        transform: translateY(-5px);
+    }
+
+    /* Add active state for touch feedback */
+    .product-card:active {
+        transform: scale(0.98);
+        transition: transform 0.1s ease;
+    }
+
+    /* Better image container proportions */
+    .product-card img {
+        width: 75%;
+        height: auto;
+        max-height: 150px;
+        object-fit: contain;
+        margin: 0 auto;
+    }
+
+    /* More efficient use of space */
+    .product-card h3 {
+        margin: 8px 0 5px;
+        line-height: 1.3;
+    }
+
+    /* Sale badge positioning */
+    .card-badge {
+        top: 8px;
+        left: 8px;
+        padding: 4px 8px;
+        font-size: 0.7rem;
+    }
+
+    /* Price display */
+    .price {
+        margin: 8px 0;
+    }
+
+    /* Add better touch spacing for all actionable elements */
+    .add-to-cart,
+    .quantity button,
+    .filter-button {
+        min-height: 42px;
+        /* Minimum Apple guideline for touch targets */
+    }
+
+    /* Quick add bottom bar for mobile */
+    .mobile-quick-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-top: 10px;
+        margin-top: auto;
+    }
+
+    /* Compress whitespace */
+    .product-card {
+        gap: 6px;
     }
 }
 
-@media screen and (max-width: 992px) {
-    .products {
-        padding: 40px 4%;
-    }
-
-    .section-header h2 {
-        font-size: 2.2rem;
-    }
-}
-
+/* Mobile Product Grid */
 @media screen and (max-width: 768px) {
     .products {
-        padding: 30px 15px;
-        margin-top: 20px;
+        padding: 30px 12px;
     }
 
-    .section-header h2 {
-        font-size: 1.8rem;
-    }
-
-    .section-header p {
-        font-size: 1rem;
-    }
-
+    /* Make filter controls more accessible */
     .product-controls {
         flex-direction: column;
-        align-items: stretch;
+        gap: 10px;
+        margin-bottom: 20px;
     }
 
     .filter-options {
-        justify-content: center;
-        margin-bottom: 15px;
+        display: flex;
+        overflow-x: auto;
+        padding-bottom: 10px;
+        -webkit-overflow-scrolling: touch;
+        width: 100%;
+        justify-content: flex-start;
+        gap: 10px;
+    }
+
+    .filter-button {
+        flex-shrink: 0;
+        white-space: nowrap;
+        padding: 8px 14px;
+        font-size: 0.85rem;
     }
 
     .sort-dropdown {
-        width: 100%;
+        align-self: flex-end;
     }
 
     .sort-dropdown select {
         width: 100%;
+        max-width: 200px;
+        padding: 10px 16px;
     }
 
+    /* Better product grid layout */
     .product-grid {
-        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-        gap: 15px;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    /* Refine product cards for mobile */
+    .product-card {
+        padding: 12px;
+        border-radius: 12px;
+    }
+
+    .product-card img {
+        width: 85%;
+    }
+
+    .product-card h3 {
+        font-size: 0.9rem;
+        margin-top: 10px;
+        /* Ensure text doesn't overflow */
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        /* height: 2.8rem; */
+    }
+
+    .category {
+        font-size: 0.7rem;
+    }
+
+    .price {
+        font-size: 1rem;
+        margin-bottom: 10px;
+    }
+
+    .price .original-price {
+        font-size: 0.8rem;
     }
 }
 
-@media screen and (max-width: 576px) {
+/* Small mobile screens */
+@media screen and (max-width: 480px) {
     .product-grid {
-        grid-template-columns: 1fr;
-        gap: 20px;
-        max-width: 320px;
-        margin: 0 auto;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
     }
 
-    .image-container {
-        height: 220px;
+    .product-card h3 {
+        font-size: 0.85rem;
     }
 
-    .filter-button {
-        font-size: 0.8rem;
-        padding: 7px 12px;
+    .price {
+        font-size: 0.9rem;
+    }
+}
+
+/* Mobile Cart & Loading States */
+@media screen and (max-width: 768px) {
+
+    /* More accessible sticky cart button */
+    .sticky-cart-container {
+        bottom: 20px;
+        right: 20px;
     }
 
     .sticky-cart-btn {
-        width: 50px;
-        height: 50px;
-        font-size: 1.3rem;
-        right: 20px;
-        bottom: 20px;
+        width: 56px;
+        height: 56px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     }
+
+    .cart-count {
+        width: 22px;
+        height: 22px;
+        font-size: 0.75rem;
+    }
+
+    /* Better loading state for mobile */
+    .loader {
+        padding: 30px 0;
+    }
+
+    .loader i {
+        font-size: 1.8rem;
+    }
+
+    /* Modal adjustments */
+    .modal-content {
+        padding: 25px 20px;
+        width: 90%;
+        max-width: 340px;
+    }
+
+    .modal-buttons {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .modal-button {
+        width: 100%;
+        padding: 12px;
+        font-size: 0.9rem;
+    }
+
+    /* No products message */
+    .no-products-message {
+        height: 30vh;
+        font-size: 1rem;
+    }
+}
+
+.toast-message {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #333;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    display: none;
+    z-index: 1000;
+    font-size: 16px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
 }

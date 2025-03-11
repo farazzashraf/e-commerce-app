@@ -6,71 +6,510 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thrift Shop - Enhanced Footer</title>
-    <link rel="stylesheet" href="{% static 'css/footer.css' %}">
+    <title>Thrift Shop - Responsive Footer</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* General Footer Styles */
+        .modern-footer {
+            --primary-color: #4a9f7b;
+            --text-light: #f8f9fa;
+            --text-dark: #343a40;
+            --bg-dark: #212529;
+            --bg-light: #f8f9fa;
+
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            padding: 0;
+            margin: 0;
+        }
+
+        .footer-wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Top Section with Logo and Subscribe */
+        .footer-top {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            text-decoration: none;
+            color: var(--text-light);
+        }
+
+        .footer-logo img {
+            height: 50px;
+            width: auto;
+            border-radius: 8px;
+        }
+
+        .logo-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo-text strong {
+            font-size: 1.25rem;
+            letter-spacing: 0.5px;
+        }
+
+        .logo-text small {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+
+        .footer-subscribe {
+            margin-top: 1rem;
+            width: 100%;
+            max-width: 350px;
+        }
+
+        .subscribe-form {
+            display: flex;
+            height: 42px;
+        }
+
+        .subscribe-form input {
+            flex: 1;
+            padding: 0 15px;
+            border: none;
+            border-radius: 6px 0 0 6px;
+            font-size: 14px;
+        }
+
+        .subscribe-form button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0 15px;
+            border-radius: 0 6px 6px 0;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+
+        .subscribe-form button:hover {
+            background-color: #3d8a6a;
+        }
+
+        /* Main Content Area */
+        .footer-content {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            padding: 2rem 0;
+            gap: 2rem;
+        }
+
+        .footer-links {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .footer-links h4 {
+            font-size: 1rem;
+            margin-bottom: 1.2rem;
+            font-weight: 600;
+            position: relative;
+            padding-bottom: 8px;
+        }
+
+        .footer-links h4::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            height: 2px;
+            width: 30px;
+            background-color: var(--primary-color);
+        }
+
+        .footer-links ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .footer-links li {
+            margin-bottom: 0.7rem;
+        }
+
+        .footer-links a {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            transition: color 0.2s, transform 0.2s;
+            font-size: 0.9rem;
+            display: inline-block;
+        }
+
+        .footer-links a:hover {
+            color: var(--primary-color);
+            transform: translateX(3px);
+        }
+
+        .footer-contact i {
+            width: 20px;
+            margin-right: 8px;
+            color: var(--primary-color);
+        }
+
+        .footer-contact p {
+            margin: 0 0 1rem 0;
+            display: flex;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+
+
+        /* Bottom Copyright */
+        .footer-bottom {
+            text-align: center;
+            padding: 1.5rem 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.85rem;
+            opacity: 0.7;
+        }
+
+        .footer-bottom a {
+            color: var(--text-light);
+            text-decoration: none;
+        }
+
+        .footer-bottom a:hover {
+            color: var(--primary-color);
+            text-decoration: underline;
+        }
+
+        /* Accordion Toggle for Mobile */
+        .footer-toggle {
+            display: none;
+        }
+
+        .social-icons {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            /* justify-content: center; */
+            margin: 20px 0;
+        }
+
+        .social-icons a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: var(--primary-color, #4a76fd);
+            color: white;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .social-icons a:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(0);
+            transition: transform 0.3s ease;
+            border-radius: 50%;
+        }
+
+        .social-icons a i {
+            font-size: 20px;
+            /* Removed the absolute positioning that was causing centering issues */
+            /* position is no longer needed since we're using flex centering */
+            z-index: 2;
+            transition: transform 0.3s ease;
+            /* Remove any default margins that might affect centering */
+            margin: 0;
+            padding: 0;
+            /* Using line-height to help with vertical alignment */
+            line-height: 1;
+            /* Ensure the width is consistent for better centering */
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .social-icons a:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .social-icons a:hover:before {
+            transform: scale(1);
+        }
+
+        .social-icons a:hover i {
+            transform: scale(1.2);
+        }
+
+        /* Custom colors for each platform */
+        .social-icons a.facebook {
+            background-color: #3b5998;
+        }
+
+        .social-icons a.instagram {
+            background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+        }
+
+        .social-icons a.twitter {
+            background-color: #1da1f2;
+        }
+
+        .social-icons a.pinterest {
+            background-color: #e60023;
+        }
+
+        /* For dark mode compatibility */
+        @media (prefers-color-scheme: dark) {
+            .social-icons a {
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            }
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .social-icons {
+                gap: 12px;
+            }
+
+            .social-icons a {
+                width: 40px;
+                height: 40px;
+            }
+
+            .social-icons a i {
+                font-size: 18px;
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .footer-top {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1.5rem;
+            }
+
+            .footer-subscribe {
+                margin-top: 1.5rem;
+                max-width: 100%;
+            }
+
+            .footer-content {
+                flex-direction: column;
+                gap: 0;
+            }
+
+            .footer-links {
+                width: 100%;
+                margin-bottom: 0;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            }
+
+            .footer-links ul {
+                display: none;
+                padding-bottom: 1rem;
+            }
+
+            .footer-toggle {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                width: 100%;
+                background: none;
+                border: none;
+                color: var(--text-light);
+                padding: 1rem 0;
+                cursor: pointer;
+                text-align: left;
+                font-size: 1rem;
+                font-weight: 600;
+            }
+
+            .footer-toggle i {
+                transition: transform 0.3s;
+            }
+
+            .footer-toggle.active i {
+                transform: rotate(180deg);
+            }
+
+            .footer-toggle.active+ul {
+                display: block;
+            }
+
+            .footer-links h4 {
+                display: none;
+            }
+
+            .footer-contact {
+                margin-top: 1rem;
+                padding-top: 1rem;
+            }
+        }
+    </style>
 </head>
 
 <body>
     <!-- Your main content goes here -->
 
-    <!-- Enhanced Footer Section -->
-    <footer class="footer-enhanced">
-        <div class="footer-content">
-            <div class="footer-section logo-section">
+    <!-- Modern Responsive Footer -->
+    <footer class="modern-footer">
+        <div class="footer-wrapper">
+            <!-- Top Section -->
+            <div class="footer-top">
                 <a href="/" class="footer-logo">
                     <img src="{% static 'images/logo1.jpg' %}" alt="Thrift Shop Logo">
+                    <div class="logo-text">
+                        <strong>Thrift Shop</strong>
+                        <small>Sustainable Fashion, Unique Finds</small>
+                    </div>
                 </a>
-                <p class="footer-tagline">Sustainable Fashion, Unique Finds</p>
-            </div>
 
-            <div class="footer-section quick-links">
-                <h4>Quick Links</h4>
-                <ul>
-                    <li><a href="/about_us">About Us</a></li>
-                    <li><a href="/shop">Shop</a></li>
-                    <li><a href="/sell">Sell with Us</a></li>
-                    <li><a href="/contact">Contact</a></li>
-                    <li><a href="/faq">FAQ</a></li>
-                </ul>
-            </div>
-
-            <div class="footer-section legal-links">
-                <h4>Legal</h4>
-                <ul>
-                    <li><a href="/terms">Terms & Conditions</a></li>
-                    <li><a href="/privacy">Privacy Policy</a></li>
-                    <li><a href="/returns">Return Policy</a></li>
-                    <li><a href="/shipping">Shipping Info</a></li>
-                </ul>
-            </div>
-
-            <div class="footer-section contact-info">
-                <h4>Contact Us</h4>
-                <p><i class="fas fa-map-marker-alt"></i> 123 Thrift Street, Fashion City</p>
-                <p><i class="fas fa-phone"></i> (555) 123-4567</p>
-                <p><i class="fas fa-envelope"></i> support@thriftshop.com</p>
-            </div>
-
-            <div class="footer-section newsletter">
-                <h4>Stay Connected</h4>
-                <form class="newsletter-form">
-                    <input type="email" placeholder="Enter your email" required>
-                    <button type="submit">Subscribe</button>
-                </form>
-                <div class="social-icons">
-                    <a href="https://facebook.com" target="_blank"><i class="fab fa-facebook-f"></i></a>
-                    <a href="https://instagram.com" target="_blank"><i class="fab fa-instagram"></i></a>
-                    <a href="https://twitter.com" target="_blank"><i class="fab fa-twitter"></i></a>
-                    <a href="https://linkedin.com" target="_blank"><i class="fab fa-linkedin-in"></i></a>
+                <div class="footer-subscribe">
+                    <form class="subscribe-form">
+                        <input type="email" placeholder="Enter your email" required>
+                        <button type="submit">Subscribe</button>
+                    </form>
                 </div>
             </div>
-        </div>
 
-        <div class="footer-bottom">
-            <p>&copy; 2025 Thrift Shop. All Rights Reserved. | Sustainable Fashion Marketplace</p>
+            <!-- Main Footer Content -->
+            <div class="footer-content">
+                <!-- Shop Links -->
+                <div class="footer-links">
+                    <button class="footer-toggle">
+                        Shop
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <h4>Shop</h4>
+                    <ul>
+                        <li><a href="/shop">All Products</a></li>
+                        <li><a href="/shop/women">Women</a></li>
+                        <li><a href="/shop/men">Men</a></li>
+                        <li><a href="/shop/accessories">Accessories</a></li>
+                    </ul>
+                </div>
+
+                <!-- Company Links -->
+                <div class="footer-links">
+                    <button class="footer-toggle">
+                        Company
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <h4>Company</h4>
+                    <ul>
+                        <li><a href="/about_us">About Us</a></li>
+                        <li><a href="/sell">Sell with Us</a></li>
+                        <li><a href="/sustainability">Sustainability</a></li>
+                        <li><a href="/careers">Careers</a></li>
+                    </ul>
+                </div>
+
+                <!-- Support Links -->
+                <div class="footer-links">
+                    <button class="footer-toggle">
+                        Support
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <h4>Support</h4>
+                    <ul>
+                        <li><a href="/faq">FAQ</a></li>
+                        <li><a href="/contact">Contact Us</a></li>
+                        <li><a href="/returns">Returns & Exchanges</a></li>
+                        <li><a href="/shipping">Shipping Info</a></li>
+                    </ul>
+                </div>
+
+                <!-- Contact Information -->
+                <div class="footer-links footer-contact">
+                    <button class="footer-toggle">
+                        Contact
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <h4>Contact Us</h4>
+                    <ul>
+                        <li>
+                            <p><i class="fas fa-map-marker-alt"></i> 123 Thrift Street, Fashion City</p>
+                        </li>
+                        <li>
+                            <p><i class="fas fa-phone"></i> (555) 123-4567</p>
+                        </li>
+                        <li>
+                            <p><i class="fas fa-envelope"></i> support@thriftshop.com</p>
+                        </li>
+                    </ul>
+
+                    <div class="social-icons">
+                        <a href="https://facebook.com" target="_blank" aria-label="Facebook" class="facebook">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="https://instagram.com" target="_blank" aria-label="Instagram" class="instagram">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="https://twitter.com" target="_blank" aria-label="Twitter" class="twitter">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="https://pinterest.com" target="_blank" aria-label="Pinterest" class="pinterest">
+                            <i class="fab fa-pinterest-p"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Copyright -->
+            <div class="footer-bottom">
+                <p>&copy; 2025 Thrift Shop. All Rights Reserved. | <a href="/privacy">Privacy</a> | <a
+                        href="/terms">Terms</a></p>
+            </div>
         </div>
     </footer>
+
+    <script>
+        // Toggle mobile accordion
+        document.addEventListener('DOMContentLoaded', function () {
+            const toggleButtons = document.querySelectorAll('.footer-toggle');
+
+            toggleButtons.forEach(button => {
+                button.addEventListener('click', function () {
+                    this.classList.toggle('active');
+
+                    // Find the next sibling element (the ul)
+                    const content = this.nextElementSibling.nextElementSibling;
+                    if (content && content.style) {
+                        if (content.style.display === 'block') {
+                            content.style.display = 'none';
+                        } else {
+                            content.style.display = 'block';
+                        }
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 
 </html>

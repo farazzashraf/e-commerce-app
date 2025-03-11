@@ -1,0 +1,298 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Orders</title>
+
+    <link rel="stylesheet" href="{% static 'css/admin-orders.css' %}">
+    <script src="{% static 'js/admin-orders.js' %}" defer></script>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome for better icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+</head>
+
+<body>
+    <!-- Pull-to-refresh indicator -->
+    <div class="refresh-indicator" id="refreshIndicator"></div>
+
+    <!-- Navbar for admin navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/store-admin/orders">
+                <i class="fas fa-store me-2"></i>Admin
+            </a>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <i class="fas fa-ellipsis-v"></i>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/store-admin/orders">
+                            <i class="fas fa-shopping-bag me-1"></i> Orders
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/store-admin/dashboard">
+                            <i class="fas fa-box me-1"></i> Products
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/store-admin/settings">
+                            <i class="fas fa-cog me-1"></i> Settings
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Alerts Container -->
+    <div class="container mt-3">
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{% if message.tags == 'error' %}danger{% elif message.tags == 'success' %}success{% elif message.tags == 'warning' %}warning{% else %}info{% endif %} alert-dismissible fade show"
+            role="alert">
+            <i
+                class="fas fa-{% if message.tags == 'error' %}exclamation-circle{% elif message.tags == 'success' %}check-circle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %} me-2"></i>
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+    </div>
+
+    <!-- Main Content -->
+    <div class="container mt-3">
+        <!-- Filter and Search Section - Mobile Friendly -->
+        <div class="filter-section mb-3">
+            <div class="row g-2">
+                <div class="col-md-4 col-sm-12">
+                    <select class="form-select filter-dropdown" id="statusFilter">
+                        <option value="all">All Orders</option>
+                        <option value="pending">Pending</option>
+                        <option value="confirmed">Confirmed</option>
+                        <option value="shipped">Shipped</option>
+                        <option value="rejected">Rejected</option>
+                        <option value="canceled">Canceled</option>
+
+                    </select>
+                </div>
+                <div class="col-md-8 col-sm-12">
+                    <form method="GET" action="{% url 'admin_orders' %}" class="input-group">
+                        <input type="text" name="q" value="{{ query }}" class="form-control search-input"
+                            placeholder="Search orders or customers...">
+                        <button class="btn btn-primary" type="submit" style="border-radius: 0 50px 50px 0;">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Orders Section -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-shopping-bag me-2"></i>Manage Orders</h5>
+                <span class="badge bg-primary"></span>
+            </div>
+
+            <!-- Desktop Table View -->
+            <div class="table-responsive desktop-table">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Customer Name</th>
+                            <th>Total Price</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders %}
+                        <tr class="order-row" data-order-id="{{ order.id }}">
+                            <td>#{{ order.id }}</td>
+                            <td>{{ order.customer_name }}</td>
+                            <td>₹{{ order.total_price }}</td>
+                            <td>
+                                {% if order.status == "pending" %}
+                                <span class="badge bg-pending">Pending</span>
+                                {% elif order.status == "confirmed" %}
+                                <span class="badge bg-confirmed">Confirmed</span>
+                                {% elif order.status == "rejected" %}
+                                <span class="badge bg-rejected">Rejected</span>
+                                {% elif order.status == "shipped" %}
+                                <span class="badge bg-primary">Shipped</span>
+                                {% elif order.status == "canceled" %}
+                                <span class="badge bg-canceled">Canceled</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if order.status == "pending" %}
+                                <form action="{% url 'admin_approve_order' order.id 'approve' %}" method="post"
+                                    style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-confirm btn-sm">
+                                        <i class="fas fa-check"></i> Approve
+                                    </button>
+                                </form>
+                                <form action="{% url 'admin_approve_order' order.id 'reject' %}" method="post"
+                                    style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-reject btn-sm">
+                                        <i class="fas fa-times"></i> Reject
+                                    </button>
+                                </form>
+                                {% elif order.status == "confirmed" %}
+                                <form action="{% url 'admin_approve_order' order.id 'shipped' %}" method="post"
+                                    style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-ship btn-sm">
+                                        <i class="fas fa-truck"></i> Ship
+                                    </button>
+                                </form>
+                                {% else %}
+                                <span class="text-muted">No Actions</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-4">
+                                <i class="fas fa-box-open fa-3x mb-3 text-muted"></i>
+                                <p>No orders available.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Mobile Card View -->
+            <div class="p-3 mobile-order-list">
+                {% for order in orders %}
+                <div class="order-item" data-order-id="{{ order.id }}">
+                    <div class="order-header">
+                        <div>
+                            <div class="order-id">#{{ order.id }}</div>
+                            <div class="customer-name">{{ order.customer_name }}</div>
+                        </div>
+                        <div class="order-status-price">
+                            <div class="order-price">₹{{ order.total_price }}</div>
+                            {% if order.status == "pending" %}
+                            <span class="badge bg-pending">Pending</span>
+                            {% elif order.status == "confirmed" %}
+                            <span class="badge bg-confirmed">Confirmed</span>
+                            {% elif order.status == "rejected" %}
+                            <span class="badge bg-rejected">Rejected</span>
+                            {% elif order.status == "shipped" %}
+                            <span class="badge bg-primary">Shipped</span>
+                            {% elif order.status == "canceled" %}
+                            <span class="badge bg-rejected">Canceled</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="order-actions">
+                        {% if order.status == "pending" %}
+                        <form action="{% url 'admin_approve_order' order.id 'approve' %}" method="post"
+                            style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-action btn-confirm">
+                                <i class="fas fa-check"></i> Approve
+                            </button>
+                        </form>
+                        <form action="{% url 'admin_approve_order' order.id 'reject' %}" method="post"
+                            style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-action btn-reject">
+                                <i class="fas fa-times"></i> Reject
+                            </button>
+                        </form>
+                        {% elif order.status == "confirmed" %}
+                        <form action="{% url 'admin_approve_order' order.id 'shipped' %}" method="post"
+                            style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-action btn-ship">
+                                <i class="fas fa-truck"></i> Shipped
+                            </button>
+                        </form>
+                        {% else %}
+                        <span class="text-muted">No Actions Available</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-5">
+                    <i class="fas fa-box-open fa-3x mb-3 text-muted"></i>
+                    <p>No orders available.</p>
+                    <button class="btn btn-primary mt-2">Refresh</button>
+                </div>
+                {% endfor %}
+
+                <!-- Loading skeleton (normally hidden, shown during loading) -->
+                <div class="skeleton d-none"></div>
+                <div class="skeleton d-none"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Details Modal Overlay -->
+    <div class="modal fade" id="orderDetailsModal" tabindex="-1" aria-labelledby="orderDetailsModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 id="orderDetailsModalLabel" class="modal-title">Order Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Order items and price breakdown will be dynamically loaded here -->
+                    <div id="order-details-content">
+                        <!-- Order items table will be inserted here -->
+                    </div>
+                    <div id="order-summary" class="mt-3">
+                        <!-- Price breakdown summary will be inserted here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Footer -->
+    <footer class="text-center py-4">
+        <p>&copy; 2025 My E-commerce Store. All rights reserved.</p>
+    </footer>
+
+    <!-- Mobile Bottom Navigation -->
+    <div class="mobile-nav">
+        <a href="/store-admin/orders" class="mobile-nav-item active flex-grow-1">
+            <i class="fas fa-shopping-bag"></i>
+            <span>Orders</span>
+        </a>
+        <a href="/store-admin/dashboard" class="mobile-nav-item flex-grow-1">
+            <i class="fas fa-box"></i>
+            <span>Products</span>
+        </a>
+        <a href="/store-admin/customers" class="mobile-nav-item flex-grow-1">
+            <i class="fas fa-users"></i>
+            <span>Customers</span>
+        </a>
+        <a href="/store-admin/settings" class="mobile-nav-item flex-grow-1">
+            <i class="fas fa-cog"></i>
+            <span>Settings</span>
+        </a>
+    </div>
+</body>
+
+</html>

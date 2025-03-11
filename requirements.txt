@@ -3,3 +3,4 @@ djangorestframework
 djongo 
 pymongo
 six  
+psycopg2-binary

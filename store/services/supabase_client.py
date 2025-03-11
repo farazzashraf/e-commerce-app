@@ -29,7 +29,6 @@ SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-
 def create_user(uid, name, phone, email, is_verified):
     try:
         response = supabase.table("users").insert({
@@ -519,13 +518,15 @@ def get_products_by_ids(product_ids):
 
     return products
 
-def create_order(user_id, total_price, payment_method, address_data):
+def create_order(user_id, total_price, payment_method, address_data, shipping, discount):
     order_data = {
         "user_id": user_id,
         "total_price": total_price,
         "payment_method": payment_method,
         "address": json.dumps(address_data),  # Ensure address_data is serialized properly
         "status": "pending",
+        "shipping_rate": shipping,
+        "discount_rate": discount
     }
     
     print("🔹 Order Data Being Sent to Supabase:", order_data)  # Debugging
@@ -601,73 +602,80 @@ def delete_order(order_id):
         return str(e)
 
 
-def delete_purchased_products(cart):
-    """Mark purchased products as inactive in Supabase database and clean up cart."""
-    product_ids = [int(product_id) for product_id in cart.keys()]
-
-    print("🛑 Marking products with IDs as inactive:", product_ids)  # Debugging log
+def delete_purchased_products(product_ids):
+    """Mark purchased products as inactive using their IDs."""
+    
+    if not isinstance(product_ids, list):
+        print("❌ Error: Expected list of product IDs, got", type(product_ids))
+        return "Invalid product IDs format"
 
     try:
-        # Fetch product details to get image URLs before updating
-        response = supabase.table("products").select("id, image_url").in_("id", product_ids).execute()
+        # Convert to integers (if needed)
+        product_ids = [int(pid) for pid in product_ids if str(pid).isdigit()]
+        
+        if not product_ids:
+            print("❌ Error: No valid product IDs provided")
+            return "No products to delete"
 
-        # if response.data:
-        #     image_urls = [product["image_url"] for product in response.data if "image_url" in product]
+        print("🛑 Marking products as inactive:", product_ids)
+        
+        # ✅ Update products to inactive
+        update_response = supabase.table("products").update({"is_active": False}).in_("id", product_ids).execute()
+        
+        # Check for Supabase errors (not just empty data)
+        if hasattr(update_response, 'error') and update_response.error:
+            print("❌ Supabase update error:", update_response.error.message)
+            return "Failed to mark products as inactive"
 
-        #     if image_urls:
-        #         # Delete images from Supabase Storage
-        #         storage_response = supabase.storage.from_("product-image").remove(image_urls)
+        print(f"✅ Marked {len(update_response.data)} products as inactive")
 
-        #         if isinstance(storage_response, list) and storage_response:
-        #             first_item = storage_response[0]
-        #             if "error" in first_item:
-        #                 print("❌ Error deleting images:", first_item["error"])
-        #             else:
-        #                 print("🟢 Images deleted successfully:", image_urls)
-        #         else:
-        #             print("🟢 Images deleted successfully:", image_urls)
+        # ✅ Delete from carts (all users' carts)
+        delete_response = supabase.table("carts").delete().in_("product_id", product_ids).execute()
+        
+        if hasattr(delete_response, 'error') and delete_response.error:
+            print("❌ Supabase delete error:", delete_response.error.message)
+            return "Failed to delete cart entries"
 
-        # ✅ Update products to mark as inactive in Supabase database
-        update_products_response = supabase.table("products").update({"is_active": False}).in_("id", product_ids).execute()
-
-        if update_products_response.data:
-            print("✅ Products marked as inactive successfully.")
-
-            # ✅ Delete corresponding entries from the `cart` table
-            delete_cart_response = supabase.table("carts").delete().in_("product_id", product_ids).execute()
-
-            if delete_cart_response.data:
-                print("✅ Cart entries deleted successfully.")
-                return None  # No error
-            else:
-                print("❌ Failed to delete cart entries:", delete_cart_response)
-                return "Failed to delete cart entries"
-
-        print("❌ Failed to mark products as inactive:", update_products_response)
-        return "Failed to mark products as inactive"
+        print(f"✅ Deleted {len(delete_response.data)} cart entries")
+        return None  # Success
 
     except Exception as e:
-        print("❌ Exception while processing products:", str(e))
+        print("❌ Exception:", str(e))
         return "Error processing products"
 
 def get_user_email(user_id):
     try:
-        response = supabase.table("users").select("email").eq("id", user_id).single().execute()
+        print(f"🔍 Fetching email for user ID: {user_id}")  # Debugging
 
-        if response.data:  # Check if data exists
-            return response.data[0]["email"]  # Extract email correctly
+        response = supabase.table("users").select("email").eq("id", user_id).execute()
         
-        return None  # No user found
-    
+        print(f"🔍 Supabase Response: {response}")  # Debugging
+        
+        # Ensure data exists
+        if not response.data:
+            print(f"❌ No user found with ID: {user_id}")
+            return None
+
+        # Get email from first record
+        user_data = response.data[0]
+        email = user_data.get("email")
+
+        if not email or "@" not in email:
+            print(f"❌ Invalid email format for user {user_id}: {email}")
+            return None
+
+        print(f"✅ User Email Found: {email}")  # Debugging
+        return email
+
     except Exception as e:
-        print(f"Error fetching user email: {str(e)}")
-        return None  # Return None on error
+        print(f"🚨 Error fetching user email: {str(e)}")
+        return None
 
 
 def get_order_by_id(order_id: int) -> dict:
     response = supabase.table('orders').select('*').eq('id', order_id).execute()
 
-    if not response.data:
+    if not response.data or len(response.data) == 0:
         return None  # Order not found
     return response.data[0]  # Return the first order, as we're querying by ID
 
@@ -677,21 +685,16 @@ def update_order_status(order_id: int, status: str) -> bool:
     
     # Check if the update was successful
     if response.data:
-        return "update succeessful"
+        return "update successful"
     return False
 
 def get_order_items(order_id):
     try:
         response = supabase.table("order_items").select("product_id").eq("order_id", order_id).execute()
-
-        if response.data:
-            return [item["product_id"] for item in response.data]  # Return list of product IDs
-        
-        return None  # No items found
-
+        return [item["product_id"] for item in response.data]  # Returns list like [123, 456]
     except Exception as e:
-        print(f"Error fetching order items: {str(e)}")
-        return None  # Return None on error
+        print(f"Error: {str(e)}")
+        return []
 
 def get_all_orders():
     try:
@@ -710,3 +713,103 @@ def get_all_orders():
     except Exception as e:
         print(f"Error fetching orders: {str(e)}")
         return []
+    
+def get_order_items_with_details(order_id):
+    try:
+        # Get order items with product details
+        response = supabase.table("order_items").select(
+            "id, order_id, product_id, quantity, price"
+        ).eq("order_id", order_id).execute()
+
+        if not response.data:
+            return []
+        
+        # For each order item, fetch product name
+        items_with_details = []
+        for item in response.data:
+            # Fetch product name
+            product_response = supabase.table("products").select(
+                "name"
+            ).eq("id", item["product_id"]).execute()
+            
+            product_name = product_response.data[0]["name"] if product_response.data else "Unknown Product"
+            
+            items_with_details.append({
+                "id": item["id"],
+                "product_id": item["product_id"],
+                "product_name": product_name,
+                "quantity": item["quantity"],
+                "price": item["price"]
+            })
+            
+        return items_with_details
+    
+    except Exception as e:
+        print(f"Error fetching order items with details: {str(e)}")
+        return []
+
+def extract_customer_name(address):
+    """
+    Extract customer name from the JSON address string.
+    """
+    if not address:
+        return "Unknown"
+
+    try:
+        # Parse the JSON string
+        address_data = json.loads(address)
+        return address_data.get("name", "Unknown")  # Extract only the name
+    except json.JSONDecodeError:
+        return "Unknown"
+
+def get_all_orders_for_admin():
+    try:
+        # Fetch all orders with essential fields
+        response = supabase.table("orders").select(
+            "id, user_id, total_price, status, created_at, address, payment_method"
+        ).order('created_at', desc=True).execute()
+        
+        if not response.data:
+            return []
+
+        orders = []
+        for order in response.data:
+            # Extract customer name from address
+            customer_name = extract_customer_name(order["address"])
+            
+            # Get order items
+            order_items = get_order_items_with_details(order["id"])
+            
+            # Calculate total items count
+            total_items = sum(item["quantity"] for item in order_items) if order_items else 0
+            
+            # Format date nicely
+            created_date = datetime.fromisoformat(order["created_at"].replace('Z', '+00:00')) if "created_at" in order else None
+            formatted_date = created_date.strftime("%b %d, %Y at %I:%M %p") if created_date else "Unknown"
+            
+            # Create a complete order object
+            complete_order = {
+                "id": order["id"],
+                "user_id": order["user_id"],
+                "customer_name": customer_name,
+                "total_price": order["total_price"],
+                "status": order["status"],
+                "created_at": formatted_date,
+                "address": order["address"],
+                "payment_method": order["payment_method"],
+                "items": order_items,
+                "total_items": total_items
+            }
+            
+            orders.append(complete_order)
+
+        return orders
+
+    except Exception as e:
+        print(f"Error fetching orders for admin: {str(e)}")
+        return []
+    
+def search_products_in_supabase(query):
+    """Search for products in the Supabase database."""
+    response = supabase.table("products").select("*").ilike("name", f"%{query}%").execute()
+    return response.data if response.data else []

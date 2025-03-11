@@ -1,4 +1,3 @@
-// ============ Cart Functionality ============
 class ShoppingCart {
     constructor() {
         this.cartCount = 0;
@@ -84,6 +83,21 @@ class ShoppingCart {
         }, 3000);
     }
 
+    // In ShoppingCart class
+    showStockError(message) {
+        const modal = document.getElementById('cart-modal');
+        modal.querySelector('h3').innerHTML = '<i class="fas fa-exclamation-triangle"></i> Stock Limit';
+        modal.querySelector('p').textContent = message;
+        modal.classList.add('stock-error');
+        modal.classList.add('active');
+
+        if (this.modalTimeout) clearTimeout(this.modalTimeout);
+        this.modalTimeout = setTimeout(() => {
+            modal.classList.remove('active');
+            modal.classList.remove('stock-error');
+        }, 5000);
+    }
+
     // Add product to cart
     addToCart(productCard) {
         if (!productCard) {
@@ -157,8 +171,11 @@ class ShoppingCart {
                         }
                     }));
                 } else {
-                    console.error("Failed to add product to cart", data.error);
-                    this.showError(`Couldn't add to cart: ${data.error || 'Unknown error'}`);
+                    if (data.error.includes('available') || data.error.includes('add')) {
+                        this.showStockError(data.error);
+                    } else {
+                        this.showError(data.error);
+                    }
                 }
             })
             .catch(error => {
@@ -250,7 +267,12 @@ class ProductListing {
                     btn.classList.remove('active');
                 });
                 button.classList.add('active');
-                this.filterProducts(button.textContent.trim());
+
+                // Backend filtering: Redirect to the filtered product page
+                const category = button.textContent.trim();
+                window.location.href = `/?category=${encodeURIComponent(category)}`;
+
+                // this.filterProducts(button.textContent.trim());
             }
 
             // Modal close button
@@ -434,4 +456,3 @@ document.addEventListener('DOMContentLoaded', function () {
 //         // productCard.innerHTML += `<p><strong>Date Added:</strong> ${dateAdded}</p>`;
 //     });
 // });
-
