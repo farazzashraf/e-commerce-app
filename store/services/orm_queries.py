@@ -1,4 +1,4 @@
-from store.models import Product, User, Cart, PromoCode, Order, OrderItem, AdminStore
+from store.models import Product, User, Cart, PromoCode, Order, OrderItem, AdminStore, Category, Subcategory
 import logging
 from django.core.files.storage import default_storage
 from datetime import datetime
@@ -156,7 +156,7 @@ def upload_image(image_file):
         return None
 
 
-def orm_add_product(name, category, price, original_price, description, image_file, additional_image_files, admin_store_id, stock):
+def orm_add_product(name, category_id, subcategory_id, price, original_price, description, sizes, fit, image_file, additional_image_files, admin_store_id, stock):
     """
     Add a new product using Django ORM.
     The admin_id is stored as a TextField.
@@ -167,6 +167,18 @@ def orm_add_product(name, category, price, original_price, description, image_fi
         admin_store = AdminStore.objects.get(id=admin_store_id)  # ✅ Fetch using UUID
     except AdminStore.DoesNotExist:
         return {"success": False, "error": "Invalid AdminStore ID."}
+    
+    # Validate and fetch Category
+    try:
+        category_obj = Category.objects.get(id=category_id)
+    except Category.DoesNotExist:
+        return {"success": False, "error": "Invalid Category ID."}
+    
+    # Validate and fetch Subcategory
+    try:
+        subcategory_obj = Subcategory.objects.get(id=subcategory_id)
+    except Subcategory.DoesNotExist:
+        return {"success": False, "error": "Invalid Subcategory ID."}
     
     # Upload the main image and get its URL
     main_image_url = upload_image(image_file)
@@ -182,10 +194,13 @@ def orm_add_product(name, category, price, original_price, description, image_fi
     # Create the Product instance using Django ORM, including admin_id
     product = Product.objects.create(
         name=name,
-        category=category,
+        category=category_obj,
+        subcategory=subcategory_obj,
         price=price,
         original_price=original_price,
         description=description,
+        sizes=sizes,
+        fit=fit,
         image_url=main_image_url,
         admin_id=admin_store,
         stock=stock,

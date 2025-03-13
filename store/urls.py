@@ -4,7 +4,7 @@ from .views import (
     update_cart, admin_dashboard, admin_login, add_product_view, delete_product_view, remove_from_cart,
     update_product_view, check_login_status, api_products, update_verification, about_us, apply_promo, checkout, admin_approve_order,
     place_order, order_success, admin_orders, order_details, admin_analysis, orders_view, cancel_order, help_support,
-    update_stock, admin_signup # Import the new place_order view
+    update_stock, admin_signup, get_subcategories, get_categories # Import the new place_order view
 )
 from django.conf import settings
 from django.conf.urls.static import static
@@ -47,9 +47,9 @@ urlpatterns = [
     # path('update-stock/<int:product_id>/', update_stock, name='update_stock'),
     path('update-stock/', update_stock, name='update_stock'),
     path("admin-signup/", admin_signup, name="admin_signup"),
-    # path("super-admin/", super_admin, name="super_admin"),
-    # path('admin/', admin.site.urls)
-    
+    # API endpoints for categories and products
+    path('api/categories/', get_categories, name='api_categories'),
+    path('api/categories/<int:category_id>/subcategories/', get_subcategories, name='api_subcategories'),
 
     
     

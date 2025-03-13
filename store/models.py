@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils import timezone
 import uuid
+from django.utils.text import slugify
 
 class User(models.Model):
     id = models.TextField(primary_key=True)  # Supabase stores user ID as TEXT
@@ -43,15 +44,58 @@ class PromoCode(models.Model):
 
     def __str__(self):
         return f"{self.code} - {'Expired' if self.is_expired() else 'Valid'}"
+    
+class Category(models.Model):
+    name = models.CharField(max_length=100)
+    slug = models.SlugField(max_length=120, unique=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+    
+    def __str__(self):
+        return self.name
+    
+    class Meta:
+        verbose_name_plural = "Categories"
+        ordering = ['name']
+
+class Subcategory(models.Model):
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='subcategories')
+    name = models.CharField(max_length=100)
+    slug = models.SlugField(max_length=120, unique=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            # Create a unique slug by combining category and subcategory names
+            self.slug = slugify(f"{self.category.name}-{self.name}")
+        super().save(*args, **kwargs)
+    
+    def __str__(self):
+        return f"{self.category.name} - {self.name}"
+    
+    class Meta:
+        verbose_name_plural = "Subcategories"
+        ordering = ['category__name', 'name']
 
 
 class Product(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255)
-    category = models.CharField(max_length=255, null=True, blank=True)  # Added missing field
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products')
+    subcategory = models.ForeignKey(Subcategory, on_delete=models.CASCADE, related_name='products')
     description = models.TextField(null=True, blank=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     original_price = models.DecimalField(max_digits=10, decimal_places=2, null=True)  # Added
+    sizes = models.CharField(max_length=100, blank=True)
+    fit = models.CharField(max_length=100, blank=True)
     image_url = models.URLField(null=True, blank=True)
     image_url2 = models.URLField(null=True, blank=True)
     image_url3 = models.URLField(null=True, blank=True)

@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse
 import json
 from firebase_admin import auth, credentials
@@ -31,7 +32,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 
 import traceback
 # Ensure your Order model is correctly imported
-from store.models import Order, Product, User, Cart, OrderItem, AdminStore
+from store.models import Order, Product, User, Cart, OrderItem, AdminStore, Category, Subcategory
 from store.services.orm_queries import (create_user, get_user_by_uid, get_all_products, orm_add_product, fetch_all_products,
                                         delete_product, orm_update_product, fetch_product_details_orm, get_promo_code_details,
                                         get_products_by_ids, create_order, create_order_items,
@@ -684,7 +685,20 @@ def admin_login(request):
         logger.error(f"❌ Unexpected error in admin_login: {str(e)}")
         return JsonResponse({"error": "Internal server error"}, status=500)
 
+# API endpoint to get all active categories
+@require_http_methods(["GET"])
+def get_categories(request):
+    categories = Category.objects.filter(is_active=True).values('id', 'name')
+    return JsonResponse(list(categories), safe=False)
 
+# API endpoint to get subcategories for a specific category
+@require_http_methods(["GET"])
+def get_subcategories(request, category_id):
+    subcategories = Subcategory.objects.filter(
+        category_id=category_id,
+        is_active=True
+    ).values('id', 'name')
+    return JsonResponse(list(subcategories), safe=False)
 
 @admin_required
 @csrf_exempt
@@ -694,16 +708,27 @@ def add_product_view(request):
 
     if request.method == 'POST':
         name = request.POST.get('name')
-        category = request.POST.get("category")
+        category_id = request.POST.get('category')
+        subcategory_id = request.POST.get('subcategory')
         price = float(request.POST.get('price'))
-        originalPrice = float(request.POST.get('originalprice'))
+        original_price = float(request.POST.get('originalprice'))
         description = request.POST.get('description')
+        sizes = request.POST.get('sizes', '')
+        fit = request.POST.get('fit', '')
         stock = request.POST.get('stock')
         
 
         # Get the main image and additional images (as a list)
         image = request.FILES.get('image')
         additional_images = request.FILES.getlist('additional_images')
+        
+        # Validate required fields
+        if not all([name, category_id, subcategory_id, price, original_price, description]):
+            return JsonResponse({'error': 'Missing required fields'}, status=400)
+        
+        # # Check if category and subcategory exist and are related
+        # category = get_object_or_404(Category, id=category_id)
+        # subcategory = get_object_or_404(Subcategory, id=subcategory_id, category=category)
 
         firebase_uid = request.session.get('admin_uid')  # This is the Firebase UID
         print(f"🔹 Firebase UID from session: {firebase_uid}")
@@ -717,10 +742,20 @@ def add_product_view(request):
             admin_store_id = str(admin_store.id)  # Convert UUID to string
             print(f"🔹 Resolved AdminStore ID: {admin_store_id}")
             
-            # Use the Django ORM function to add the product
+            # Correctly ordered parameters when calling orm_add_product:
             product = orm_add_product(
-                name, category, price, originalPrice, description,
-                image, additional_images, admin_store_id, stock
+                name,
+                category_id,
+                subcategory_id,
+                price,
+                original_price,
+                description,
+                sizes,  # This maps to the `size` field in your function
+                fit,
+                image,
+                additional_images,
+                admin_store_id,
+                stock
             )
             
             if isinstance(product, dict) and not product.get("success"):
