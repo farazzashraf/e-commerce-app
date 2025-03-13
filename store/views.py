@@ -698,24 +698,33 @@ def add_product_view(request):
         price = float(request.POST.get('price'))
         originalPrice = float(request.POST.get('originalprice'))
         description = request.POST.get('description')
+        stock = request.POST.get('stock')
+        
 
         # Get the main image and additional images (as a list)
         image = request.FILES.get('image')
         additional_images = request.FILES.getlist('additional_images')
 
-        admin_id = request.session.get('admin_uid')
-        print(f"🔹 Admin ID from session: {admin_id}")
+        firebase_uid = request.session.get('admin_uid')  # This is the Firebase UID
+        print(f"🔹 Firebase UID from session: {firebase_uid}")
 
-        if not admin_id:
-            return JsonResponse({"error": "Admin ID is missing."}, status=400)
+        if not firebase_uid:
+            return JsonResponse({"error": "Admin is not authenticated."}, status=400)
 
         try:
+            # Fetch the AdminStore record using Firebase UID
+            admin_store = AdminStore.objects.get(firebase_uid=firebase_uid)
+            admin_store_id = str(admin_store.id)  # Convert UUID to string
+            print(f"🔹 Resolved AdminStore ID: {admin_store_id}")
+            
             # Use the Django ORM function to add the product
             product = orm_add_product(
                 name, category, price, originalPrice, description,
-                image, additional_images, admin_id
+                image, additional_images, admin_store_id, stock
             )
-            print(f"🔹 ORM Inserted Product: {product}")
+            
+            if isinstance(product, dict) and not product.get("success"):
+                return JsonResponse(product, status=400)  # Return the error message properly
             if product:
                 messages.success(request, "Product added successfully!")
                 return JsonResponse({"success": True}, status=200)
@@ -1252,6 +1261,15 @@ def admin_approve_order(request, order_id, action):
         elif action == "reject":
             result = update_order_status(order_id, "rejected")
             if result:
+                # Fetch OrderItem objects to get quantities
+                order_items = OrderItem.objects.filter(order_id=order_id)
+
+                for order_item in order_items:
+                    product = order_item.product_id  # This should be a Product instance
+                    product.stock += order_item.quantity  # Restore stock
+                    product.is_active = True  # Ensure product is active again
+                    product.save()
+                    
                 send_rejection_email(order.user_id.id, order_id)
                 return redirect('admin_orders')
             else:
@@ -1429,6 +1447,14 @@ def cancel_order(request, order_id):
             request, "This order cannot be cancelled at this stage.")
         # Replace with the appropriate orders view name
         return redirect("orders")
+    
+    # Restore stock for each product in the order
+    order_items = OrderItem.objects.filter(order_id=order)  # Fixed field name
+    for order_item in order_items:
+        product = order_item.product_id  # This should be a Product instance
+        product.stock += order_item.quantity  # Restore stock
+        product.is_active = True  # Ensure the product is marked as active again
+        product.save()
 
     # Update the order status to "canceled"
     order.status = "canceled"
@@ -1483,21 +1509,24 @@ def update_stock(request):
         new_stock = int(request.POST.get('new_stock'))
         
         product = Product.objects.get(id=product_id)
-        # Capture the current stock before updating
-        current_stock = product.stock
         
+        # Update stock
         product.stock = new_stock
+        
+        # Ensure is_active is True when stock is available
+        product.is_active = new_stock > 0  
+        
         product.save()
         
-        return JsonResponse({
-            'success': True,
-            'product_id': product_id,
-            'current_stock': current_stock,  # Stock value before update
-            'new_stock': product.stock       # The saved, updated stock value
-        })
+        # Refresh from the database to ensure changes are reflected
+        product.refresh_from_db()
+        
+        print(f"✅ Product {product_id} updated: Stock = {product.stock}, is_active = {product.is_active}")
+        
+        return redirect("admin_dashboard")  # Replace with actual dashboard URL name
         
     except (Product.DoesNotExist, ValueError, TypeError) as e:
-        print(f"Error updating stock: {str(e)}")
+        print(f"❌ Error updating stock: {str(e)}")
         return JsonResponse({'success': False})
 
 @csrf_exempt

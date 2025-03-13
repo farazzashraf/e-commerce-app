@@ -49,3 +49,89 @@ document.addEventListener('alpine:init', () => {
         }
     }));
 });
+
+// Show Images Modal
+function showImagesModal(button) {
+    const imageUrls = button.getAttribute("data-image-urls");
+
+    if (!imageUrls) {
+        console.error("No images found for this product.");
+        return;
+    }
+
+    // Convert the comma-separated string into an array
+    const images = imageUrls.split(",").map(url => url.trim());
+
+    const modalContent = document.getElementById("imagesModalContent");
+    modalContent.innerHTML = ""; // Clear previous images
+
+    // Create image elements and append to modal
+    images.forEach(url => {
+        if (url) {
+            const img = document.createElement("img");
+            img.src = url;
+            img.className = "w-32 h-32 object-cover m-2 rounded-lg border";
+            modalContent.appendChild(img);
+        }
+    });
+
+    // Show the modal
+    document.getElementById("imagesModal").classList.remove("hidden");
+}
+
+// Close Images Modal
+function closeImagesModal() {
+    document.getElementById("imagesModal").classList.add("hidden");
+}
+
+// Show Stock Edit Modal
+function showStockEditModal(productId) {
+    const modal = document.getElementById("stockEditModal");
+
+    if (!modal) {
+        console.error("Stock Edit Modal not found!");
+        return;
+    }
+
+    // Set the product ID in the hidden input field
+    document.getElementById("productIdField").value = productId;
+
+    // Show the modal
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+}
+
+// Close Stock Edit Modal
+function closeStockModal() {
+    const modal = document.getElementById("stockEditModal");
+    if (modal) {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+    }
+}
+
+// Show Delete Modal
+function showDeleteModal(productId, deleteUrl) {
+    const modal = document.getElementById("deleteModal");
+
+    if (!modal) {
+        console.error("Delete Modal not found!");
+        return;
+    }
+
+    // Set the form action dynamically
+    document.getElementById("deleteForm").setAttribute("action", deleteUrl);
+
+    // Show the modal
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+}
+
+// Close Delete Modal
+function closeDeleteModal() {
+    const modal = document.getElementById("deleteModal");
+    if (modal) {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+    }
+}

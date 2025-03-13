@@ -139,10 +139,10 @@
                 </div> -->
                 <h3>{{ product.name }}</h3>
                 <p class="category">{{ product.category }}</p> <!-- ✅ Added Category -->
+                
                 <!-- <p class="description">{{ product.description }}</p> -->
                 <!-- You can choose to display or hide the description on the card -->
                 <p class="description" style="display:none;">{{ product.description }}</p>
-                <!-- <p class="price">₹{{ product.price }}</p> -->
                 <p class="price">
                     {% if product.original_price and product.original_price > product.price %}
                     <span class="original-price">₹{{ product.original_price }}</span>

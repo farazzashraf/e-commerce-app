@@ -156,11 +156,18 @@ def upload_image(image_file):
         return None
 
 
-def orm_add_product(name, category, price, original_price, description, image_file, additional_image_files, admin_id):
+def orm_add_product(name, category, price, original_price, description, image_file, additional_image_files, admin_store_id, stock):
     """
     Add a new product using Django ORM.
     The admin_id is stored as a TextField.
     """
+    
+    # Validate that the admin exists using the UUID
+    try:
+        admin_store = AdminStore.objects.get(id=admin_store_id)  # ✅ Fetch using UUID
+    except AdminStore.DoesNotExist:
+        return {"success": False, "error": "Invalid AdminStore ID."}
+    
     # Upload the main image and get its URL
     main_image_url = upload_image(image_file)
 
@@ -180,7 +187,8 @@ def orm_add_product(name, category, price, original_price, description, image_fi
         original_price=original_price,
         description=description,
         image_url=main_image_url,
-        admin_id=admin_id,
+        admin_id=admin_store,
+        stock=stock,
     )
 
     # Assign additional image URLs if available
@@ -665,8 +673,13 @@ def create_order_items(order_id, cart):
                 total_price=requested_qty * item.get("price")
             )
 
-            # Deduct the ordered quantity from product stock.
+            # Deduct stock
             product.stock -= requested_qty
+
+            # Immediately mark product as inactive if stock reaches 0
+            if product.stock <= 0:
+                product.is_active = False
+
             product.save()
 
         print("✅ Order Items created successfully.")

@@ -230,40 +230,60 @@ class ProductOverlay {
         this.overlay.querySelector('.quantity-input').value = 1;
 
         const stockElement = this.overlay.querySelector('.stock-quantity');
-        const metaItem = stockElement.closest('.meta-item');
-        const addToCartBtn = this.overlay.querySelector('.add-to-cart-btn');
 
-        console.log("Setting stock quantity:", this.currentProduct.stock);
-        stockElement.textContent = `${this.currentProduct.stock} in stock`;
-        console.log("Stock element after setting:", stockElement.textContent);
 
-        console.log("Stock element exists:", stockElement !== null);
-        console.log("Stock element display style:", window.getComputedStyle(stockElement).display);
 
-        if (this.currentProduct.stock > 0) {
+        // First check if stockElement exists
+        if (stockElement) {
+            const metaItem = stockElement.closest('.meta-item');
+            const addToCartBtn = this.overlay.querySelector('.add-to-cart-btn');
+
+            console.log("Setting stock quantity:", this.currentProduct.stock);
             stockElement.textContent = `${this.currentProduct.stock} in stock`;
-            metaItem.classList.remove('out-of-stock', 'low-stock');
 
-            if (this.currentProduct.stock < 5) {
-                metaItem.classList.add('low-stock');
-                stockElement.textContent += ' (Low Stock)';
+            // Check if metaItem exists before using it
+            if (metaItem) {
+                if (this.currentProduct.stock > 0) {
+                    stockElement.textContent = `${this.currentProduct.stock} in stock`;
+                    metaItem.classList.remove('out-of-stock', 'low-stock');
+
+                    if (this.currentProduct.stock < 5) {
+                        metaItem.classList.add('low-stock');
+                        stockElement.textContent += ' (Low Stock)';
+                    }
+
+                    if (addToCartBtn) {
+                        addToCartBtn.disabled = false;
+                    }
+                } else {
+                    stockElement.textContent = 'Out of Stock';
+                    metaItem.classList.add('out-of-stock');
+
+                    if (addToCartBtn) {
+                        addToCartBtn.disabled = true;
+                    }
+                }
+            } else {
+                console.warn("Meta item not found for stock element");
             }
-
-            addToCartBtn.disabled = false;
         } else {
-            stockElement.textContent = 'Out of Stock';
-            metaItem.classList.add('out-of-stock');
-            addToCartBtn.disabled = true;
+            console.warn("Stock quantity element not found in the overlay");
         }
 
 
-        // Update badges
         const newBadge = this.overlay.querySelector('.new-badge');
         const saleBadge = this.overlay.querySelector('.sale-badge');
 
-        // In a real app, this logic would be based on actual product data
-        newBadge.style.display = Math.random() > 0.5 ? 'inline-block' : 'none';
-        saleBadge.style.display = this.currentProduct.discountPercentage ? 'inline-block' : 'none';
+        // Check if badges exist before setting their styles
+        if (newBadge) {
+            newBadge.style.display = Math.random() > 0.5 ? 'inline-block' : 'none';
+        }
+
+        if (saleBadge && this.currentProduct.discountPercentage) {
+            saleBadge.style.display = 'inline-block';
+        } else if (saleBadge) {
+            saleBadge.style.display = 'none';
+        }
 
         // Set main image and thumbnails
         this.currentImageIndex = 0;
@@ -313,6 +333,8 @@ class ProductOverlay {
                     this.setActiveImage(index);
                 }
             });
+        } else {
+            console.warn("Thumbnail container not found in the overlay");
         }
     }
 

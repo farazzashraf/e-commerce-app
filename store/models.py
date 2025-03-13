@@ -14,6 +14,19 @@ class User(models.Model):
     def __str__(self):
         return self.name if self.name else self.email
 
+class AdminStore(models.Model):
+    id = models.UUIDField(primary_key=True, unique=True, default=uuid.uuid4, editable=False)
+    firebase_uid = models.CharField(max_length=128, unique=True)
+    company_logo =  models.URLField(null=True, blank=True)
+    company_name = models.CharField(max_length=255)
+    email = models.EmailField(unique=True)
+    phone = models.CharField(max_length=15)
+    shop_address = models.TextField()
+    pincode = models.CharField(max_length=10)
+    is_approved = models.BooleanField(default=False)  # Approval system for admins
+
+    def __str__(self):
+        return self.company_name
 
 class PromoCode(models.Model):
     id = models.AutoField(primary_key=True)  # Integer primary key
@@ -43,16 +56,21 @@ class Product(models.Model):
     image_url2 = models.URLField(null=True, blank=True)
     image_url3 = models.URLField(null=True, blank=True)
     image_url4 = models.URLField(null=True, blank=True)
-    admin_id = models.TextField(null=True, blank=True)  # Added admin_id as TextField
+    admin_id = models.ForeignKey(
+        AdminStore,  # Ensure AdminStore model exists
+        on_delete=models.CASCADE,
+        related_name="products",
+        db_column="admin_id"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_verified = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)  # Add this line
     is_deleted = models.BooleanField(default=False)  # New field for soft deletion
     stock = models.IntegerField(default=0)
-
+    
     def __str__(self):
-        return self.name
+        return f"Product {self.id} - {self.name} ({self.admin_id.name if hasattr(self.admin_id, 'name') else 'No Admin'})"
 
 
 class Order(models.Model):
@@ -102,17 +120,3 @@ class Cart(models.Model):
 
     def __str__(self):
         return f"Cart Item - {self.name} ({self.user_id.name if self.user_id.name else self.user_id.email})"
-
-class AdminStore(models.Model):
-    id = models.UUIDField(primary_key=True, unique=True, default=uuid.uuid4, editable=False)
-    firebase_uid = models.CharField(max_length=128, unique=True)
-    company_logo =  models.URLField(null=True, blank=True)
-    company_name = models.CharField(max_length=255)
-    email = models.EmailField(unique=True)
-    phone = models.CharField(max_length=15)
-    shop_address = models.TextField()
-    pincode = models.CharField(max_length=10)
-    is_approved = models.BooleanField(default=False)  # Approval system for admins
-
-    def __str__(self):
-        return self.company_name

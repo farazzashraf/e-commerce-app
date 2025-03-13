@@ -38,11 +38,11 @@ SUPABASE_ANON_KEY = env("SUPABASE_ANON_KEY", default=None)
 print("Loaded SUPABASE_URL:", SUPABASE_URL)
 print("Loaded SUPABASE_ANON_KEY:", SUPABASE_ANON_KEY)
 
-user=env("supabase-user", default=None)
-password=env("supabase-password", default=None) 
-host=env("supabase-host", default=None)
-port=env("supabase-port", default=None)
-dbname=env("supabase-dbname", default=None)
+user=env("supabase_user", default=None)
+password=env("supabase_password", default=None) 
+host=env("supabase_host", default=None)
+port=env("supabase_port", default=None)
+dbname=env("supabase_dbname", default=None)
 
 # Connect to the database
 try:
@@ -147,11 +147,11 @@ WSGI_APPLICATION = "ecommerce.wsgi.application"
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': env('supabase-name', default=None),  # Default database name
-        'USER': env("supabase-user", default=None),  # Supabase database user
-        'PASSWORD': env("supabase-password", default=None),  # Supabase password
-        'HOST': env('supabase-host', default=None),  # Supabase host
-        'PORT': env('supabase-port', default=None),
+        'NAME': env('supabase_name', default=None),  # Default database name
+        'USER': env("supabase_user", default=None),  # Supabase database user
+        'PASSWORD': env("supabase_password", default=None),  # Supabase password
+        'HOST': env('supabase_host', default=None),  # Supabase host
+        'PORT': env('supabase_port', default=None),
         'OPTIONS': {
             'sslmode': 'require',  # Enforce SSL
         },
