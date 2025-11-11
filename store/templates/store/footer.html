@@ -1,14 +1,13 @@
 {% load static %}
-
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thrift Shop - Responsive Footer</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Thrift Shop - Responsive Footer</title>
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+              rel="stylesheet">
+        <style>
         /* General Footer Styles */
         .modern-footer {
             --primary-color: #4a9f7b;
@@ -370,125 +369,158 @@
                 padding-top: 1rem;
             }
         }
-    </style>
-</head>
-
-<body>
-    <!-- Your main content goes here -->
-
-    <!-- Modern Responsive Footer -->
-    <footer class="modern-footer">
-        <div class="footer-wrapper">
-            <!-- Top Section -->
-            <div class="footer-top">
-                <a href="/" class="footer-logo">
-                    <img src="{% static 'images/logo1.jpg' %}" alt="Thrift Shop Logo">
-                    <div class="logo-text">
-                        <strong>Thrift Shop</strong>
-                        <small>Sustainable Fashion, Unique Finds</small>
-                    </div>
-                </a>
-
-                <div class="footer-subscribe">
-                    <form class="subscribe-form">
-                        <input type="email" placeholder="Enter your email" required>
-                        <button type="submit">Subscribe</button>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Main Footer Content -->
-            <div class="footer-content">
-                <!-- Shop Links -->
-                <div class="footer-links">
-                    <button class="footer-toggle">
-                        Shop
-                        <i class="fas fa-chevron-down"></i>
-                    </button>
-                    <h4>Shop</h4>
-                    <ul>
-                        <li><a href="/shop">All Products</a></li>
-                        <li><a href="/shop/women">Women</a></li>
-                        <li><a href="/shop/men">Men</a></li>
-                        <li><a href="/shop/accessories">Accessories</a></li>
-                    </ul>
-                </div>
-
-                <!-- Company Links -->
-                <div class="footer-links">
-                    <button class="footer-toggle">
-                        Company
-                        <i class="fas fa-chevron-down"></i>
-                    </button>
-                    <h4>Company</h4>
-                    <ul>
-                        <li><a href="/about_us">About Us</a></li>
-                        <li><a href="/sell">Sell with Us</a></li>
-                        <li><a href="/sustainability">Sustainability</a></li>
-                        <li><a href="/careers">Careers</a></li>
-                    </ul>
-                </div>
-
-                <!-- Support Links -->
-                <div class="footer-links">
-                    <button class="footer-toggle">
-                        Support
-                        <i class="fas fa-chevron-down"></i>
-                    </button>
-                    <h4>Support</h4>
-                    <ul>
-                        <li><a href="/faq">FAQ</a></li>
-                        <li><a href="/contact">Contact Us</a></li>
-                        <li><a href="/returns">Returns & Exchanges</a></li>
-                        <li><a href="/shipping">Shipping Info</a></li>
-                    </ul>
-                </div>
-
-                <!-- Contact Information -->
-                <div class="footer-links footer-contact">
-                    <button class="footer-toggle">
-                        Contact
-                        <i class="fas fa-chevron-down"></i>
-                    </button>
-                    <h4>Contact Us</h4>
-                    <ul>
-                        <li>
-                            <p><i class="fas fa-map-marker-alt"></i> 123 Thrift Street, Fashion City</p>
-                        </li>
-                        <li>
-                            <p><i class="fas fa-phone"></i> (555) 123-4567</p>
-                        </li>
-                        <li>
-                            <p><i class="fas fa-envelope"></i> support@thriftshop.com</p>
-                        </li>
-                    </ul>
-
-                    <div class="social-icons">
-                        <a href="https://facebook.com" target="_blank" aria-label="Facebook" class="facebook">
-                            <i class="fab fa-facebook-f"></i>
-                        </a>
-                        <a href="https://instagram.com" target="_blank" aria-label="Instagram" class="instagram">
-                            <i class="fab fa-instagram"></i>
-                        </a>
-                        <a href="https://twitter.com" target="_blank" aria-label="Twitter" class="twitter">
-                            <i class="fab fa-twitter"></i>
-                        </a>
-                        <a href="https://pinterest.com" target="_blank" aria-label="Pinterest" class="pinterest">
-                            <i class="fab fa-pinterest-p"></i>
-                        </a>
+        </style>
+    </head>
+    <body>
+        <!-- Your main content goes here -->
+        <!-- Modern Responsive Footer -->
+        <footer class="modern-footer">
+            <div class="footer-wrapper">
+                <!-- Top Section -->
+                <div class="footer-top">
+                    <a href="/" class="footer-logo">
+                        <img src="{% static 'images/logo1.jpg' %}" alt="Thrift Shop Logo">
+                        <div class="logo-text">
+                            <strong>Thrift Shop</strong>
+                            <small>Sustainable Fashion, Unique Finds</small>
+                        </div>
+                    </a>
+                    <div class="footer-subscribe">
+                        <form class="subscribe-form">
+                            <input type="email" placeholder="Enter your email" required>
+                            <button type="submit">Subscribe</button>
+                        </form>
                     </div>
                 </div>
+                <!-- Main Footer Content -->
+                <div class="footer-content">
+                    <!-- Shop Links -->
+                    <div class="footer-links">
+                        <button class="footer-toggle">
+                            Shop
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <h4>Shop</h4>
+                        <ul>
+                            <li>
+                                <a href="/shop">All Products</a>
+                            </li>
+                            <li>
+                                <a href="/shop/women">Women</a>
+                            </li>
+                            <li>
+                                <a href="/shop/men">Men</a>
+                            </li>
+                            <li>
+                                <a href="/shop/accessories">Accessories</a>
+                            </li>
+                        </ul>
+                    </div>
+                    <!-- Company Links -->
+                    <div class="footer-links">
+                        <button class="footer-toggle">
+                            Company
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <h4>Company</h4>
+                        <ul>
+                            <li>
+                                <a href="/about_us">About Us</a>
+                            </li>
+                            <li>
+                                <a href="/sell">Sell with Us</a>
+                            </li>
+                            <li>
+                                <a href="/sustainability">Sustainability</a>
+                            </li>
+                            <li>
+                                <a href="/careers">Careers</a>
+                            </li>
+                        </ul>
+                    </div>
+                    <!-- Support Links -->
+                    <div class="footer-links">
+                        <button class="footer-toggle">
+                            Support
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <h4>Support</h4>
+                        <ul>
+                            <li>
+                                <a href="/faq">FAQ</a>
+                            </li>
+                            <li>
+                                <a href="/contact">Contact Us</a>
+                            </li>
+                            <li>
+                                <a href="/returns">Returns & Exchanges</a>
+                            </li>
+                            <li>
+                                <a href="/shipping">Shipping Info</a>
+                            </li>
+                        </ul>
+                    </div>
+                    <!-- Contact Information -->
+                    <div class="footer-links footer-contact">
+                        <button class="footer-toggle">
+                            Contact
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <h4>Contact Us</h4>
+                        <ul>
+                            <li>
+                                <p>
+                                    <i class="fas fa-map-marker-alt"></i> 123 Thrift Street, Fashion City
+                                </p>
+                            </li>
+                            <li>
+                                <p>
+                                    <i class="fas fa-phone"></i> (555) 123-4567
+                                </p>
+                            </li>
+                            <li>
+                                <p>
+                                    <i class="fas fa-envelope"></i> support@thriftshop.com
+                                </p>
+                            </li>
+                        </ul>
+                        <div class="social-icons">
+                            <a href="https://facebook.com"
+                               target="_blank"
+                               aria-label="Facebook"
+                               class="facebook">
+                                <i class="fab fa-facebook-f"></i>
+                            </a>
+                            <a href="https://instagram.com"
+                               target="_blank"
+                               aria-label="Instagram"
+                               class="instagram">
+                                <i class="fab fa-instagram"></i>
+                            </a>
+                            <a href="https://twitter.com"
+                               target="_blank"
+                               aria-label="Twitter"
+                               class="twitter">
+                                <i class="fab fa-twitter"></i>
+                            </a>
+                            <a href="https://pinterest.com"
+                               target="_blank"
+                               aria-label="Pinterest"
+                               class="pinterest">
+                                <i class="fab fa-pinterest-p"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <!-- Bottom Copyright -->
+                <div class="footer-bottom">
+                    <p>
+                        &copy; 2025 Thrift Shop. All Rights Reserved. | <a href="/privacy">Privacy</a> | <a href="/terms">Terms</a>
+                    </p>
+                </div>
             </div>
-
-            <!-- Bottom Copyright -->
-            <div class="footer-bottom">
-                <p>&copy; 2025 Thrift Shop. All Rights Reserved. | <a href="/privacy">Privacy</a> | <a
-                        href="/terms">Terms</a></p>
-            </div>
-        </div>
-    </footer>
-
-    <script>
+        </footer>
+        <script>
         // Toggle mobile accordion
         document.addEventListener('DOMContentLoaded', function () {
             const toggleButtons = document.querySelectorAll('.footer-toggle');
@@ -509,7 +541,6 @@
                 });
             });
         });
-    </script>
-</body>
-
+        </script>
+    </body>
 </html>

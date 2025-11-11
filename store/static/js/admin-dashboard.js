@@ -1,137 +1,113 @@
-// Add this to your main JavaScript file or include it in a script tag
-document.addEventListener('alpine:init', () => {
-    Alpine.data('filterPanel', () => ({
-        showFilters: false,
+// Profile overlay toggle
+const profileBtn = document.getElementById('profileBtn')
+const mobileProfileBtn = document.getElementById('mobileProfileBtn')
+const profileOverlay = document.getElementById('profileOverlay')
+const closeProfileBtn = document.getElementById('closeProfileBtn')
 
-        init() {
-            // Close filter panel when Escape key is pressed
-            window.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && this.showFilters) {
-                    this.showFilters = false;
-                }
-            });
+if (profileBtn) {
+    profileBtn.addEventListener('click', () => {
+        profileOverlay.classList.remove('hidden')
+    })
+}
 
-            // Close filter panel when clicking outside
-            this.$watch('showFilters', (value) => {
-                if (value) {
-                    document.body.classList.add('overflow-hidden'); // Prevent scrolling when filter is open
-                } else {
-                    document.body.classList.remove('overflow-hidden');
-                }
-            });
+if (mobileProfileBtn) {
+    mobileProfileBtn.addEventListener('click', () => {
+        profileOverlay.classList.remove('hidden')
+    })
+}
 
-            // Handle query parameter changes
-            this.updateActiveFilters();
-        },
+closeProfileBtn.addEventListener('click', () => {
+    profileOverlay.classList.add('hidden')
+})
 
-        updateActiveFilters() {
-            // Optional: Automatically update the active filters based on URL parameters
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('category') || urlParams.has('min_price') ||
-                urlParams.has('max_price') || urlParams.has('status') ||
-                urlParams.has('stock_status') ||
-                (urlParams.has('sort_by') && urlParams.get('sort_by') !== 'id_asc')) {
-                // There are active filters
-                this.hasActiveFilters = true;
-            } else {
-                this.hasActiveFilters = false;
-            }
-        },
+// Close overlay when clicking outside
+profileOverlay.addEventListener('click', (e) => {
+    if (e.target === profileOverlay) {
+        profileOverlay.classList.add('hidden')
+    }
+})
 
-        clearAllFilters() {
-            // Helper function to clear all filters at once
-            const searchParam = new URLSearchParams(window.location.search).get('q');
-            if (searchParam) {
-                window.location.href = `${window.location.pathname}?q=${searchParam}`;
-            } else {
-                window.location.href = window.location.pathname;
-            }
-        }
-    }));
+// Mobile menu toggle
+const mobileMenuBtn = document.getElementById('mobileMenuBtn')
+const closeMobileMenuBtn = document.getElementById('closeMobileMenuBtn')
+const mobileMenu = document.querySelector('.mobile-menu')
+
+if (mobileMenuBtn) {
+    mobileMenuBtn.addEventListener('click', () => {
+        mobileMenu.classList.add('open')
+    })
+}
+
+if (closeMobileMenuBtn) {
+    closeMobileMenuBtn.addEventListener('click', () => {
+        mobileMenu.classList.remove('open')
+    })
+}
+
+// Mobile tabs navigation
+const ordersTabBtn = document.getElementById('ordersTabBtn')
+const stockTabBtn = document.getElementById('stockTabBtn')
+const announcementsTabBtn = document.getElementById('announcementsTabBtn')
+
+const ordersTab = document.getElementById('ordersTab')
+const stockTab = document.getElementById('stockTab')
+const announcementsTab = document.getElementById('announcementsTab')
+
+function activateTab(activeTab, activeBtn) {
+    // Hide all tabs
+    ;[ordersTab, stockTab, announcementsTab].forEach((tab) => {
+        if (tab) tab.classList.add('hidden')
+    })
+
+        // Reset all buttons
+        ;[ordersTabBtn, stockTabBtn, announcementsTabBtn].forEach((btn) => {
+            if (btn) btn.classList.remove('bg-blue-600', 'bg-opacity-20', 'text-blue-400')
+            if (btn) btn.classList.add('bg-navy-light', 'text-gray-300')
+        })
+
+    // Show active tab and set active button
+    if (activeTab) activeTab.classList.remove('hidden')
+    if (activeBtn) {
+        activeBtn.classList.remove('bg-navy-light', 'text-gray-300')
+        activeBtn.classList.add('bg-blue-600', 'bg-opacity-20', 'text-blue-400')
+    }
+}
+
+if (ordersTabBtn) {
+    ordersTabBtn.addEventListener('click', () => {
+        activateTab(ordersTab, ordersTabBtn)
+    })
+}
+
+if (stockTabBtn) {
+    stockTabBtn.addEventListener('click', () => {
+        activateTab(stockTab, stockTabBtn)
+    })
+}
+
+if (announcementsTabBtn) {
+    announcementsTabBtn.addEventListener('click', () => {
+        activateTab(announcementsTab, announcementsTabBtn)
+    })
+}
+
+// Initialize tabs
+if (window.innerWidth < 768) {
+    activateTab(ordersTab, ordersTabBtn)
+}
+
+// Restock modal: attach click events to all restock buttons
+document.querySelectorAll('.restock-btn').forEach(function (button) {
+    button.addEventListener('click', function () {
+        const productId = this.getAttribute('data-product-id');
+        const productName = this.getAttribute('data-product-name');
+        document.getElementById('restockProductId').value = productId;
+        document.getElementById('restockModalTitle').innerText = 'Restock ' + productName;
+        document.getElementById('restockModal').classList.remove('hidden');
+    });
 });
 
-// Show Images Modal
-function showImagesModal(button) {
-    const imageUrls = button.getAttribute("data-image-urls");
-
-    if (!imageUrls) {
-        console.error("No images found for this product.");
-        return;
-    }
-
-    // Convert the comma-separated string into an array
-    const images = imageUrls.split(",").map(url => url.trim());
-
-    const modalContent = document.getElementById("imagesModalContent");
-    modalContent.innerHTML = ""; // Clear previous images
-
-    // Create image elements and append to modal
-    images.forEach(url => {
-        if (url) {
-            const img = document.createElement("img");
-            img.src = url;
-            img.className = "w-32 h-32 object-cover m-2 rounded-lg border";
-            modalContent.appendChild(img);
-        }
-    });
-
-    // Show the modal
-    document.getElementById("imagesModal").classList.remove("hidden");
-}
-
-// Close Images Modal
-function closeImagesModal() {
-    document.getElementById("imagesModal").classList.add("hidden");
-}
-
-// Show Stock Edit Modal
-function showStockEditModal(productId) {
-    const modal = document.getElementById("stockEditModal");
-
-    if (!modal) {
-        console.error("Stock Edit Modal not found!");
-        return;
-    }
-
-    // Set the product ID in the hidden input field
-    document.getElementById("productIdField").value = productId;
-
-    // Show the modal
-    modal.classList.remove("hidden");
-    modal.classList.add("flex");
-}
-
-// Close Stock Edit Modal
-function closeStockModal() {
-    const modal = document.getElementById("stockEditModal");
-    if (modal) {
-        modal.classList.add("hidden");
-        modal.classList.remove("flex");
-    }
-}
-
-// Show Delete Modal
-function showDeleteModal(productId, deleteUrl) {
-    const modal = document.getElementById("deleteModal");
-
-    if (!modal) {
-        console.error("Delete Modal not found!");
-        return;
-    }
-
-    // Set the form action dynamically
-    document.getElementById("deleteForm").setAttribute("action", deleteUrl);
-
-    // Show the modal
-    modal.classList.remove("hidden");
-    modal.classList.add("flex");
-}
-
-// Close Delete Modal
-function closeDeleteModal() {
-    const modal = document.getElementById("deleteModal");
-    if (modal) {
-        modal.classList.add("hidden");
-        modal.classList.remove("flex");
-    }
-}
+// Cancel button closes the modal
+document.getElementById('cancelRestockBtn').addEventListener('click', function () {
+    document.getElementById('restockModal').classList.add('hidden');
+});

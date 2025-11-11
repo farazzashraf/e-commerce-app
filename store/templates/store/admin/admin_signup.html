@@ -1,22 +1,18 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Become a Seller - Register Your Store</title>
-    <!-- Font Awesome for icons -->
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-    />
-    <!-- Google Fonts for typography -->
-    <link
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"
-      rel="stylesheet"
-    />
-    <script type="module" src="{% static 'js/admin_signup.js' %}" defer></script>
-    <style>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Become a Seller - Register Your Store</title>
+        <!-- Font Awesome for icons -->
+        <link rel="stylesheet"
+              href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+        <!-- Google Fonts for typography -->
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"
+              rel="stylesheet" />
+        <script type="module" src="{% static 'js/admin_signup.js' %}" defer></script>
+        <style>
       /* Reset and Base Styles */
       * {
         margin: 0;
@@ -129,106 +125,100 @@
           padding: 1.5rem;
         }
       }
-    </style>
-  </head>
-  <body>
-    <header>
-      <a href="{% url 'home' %}">
-        <img src="{% static 'images/logo2.webp' %}" alt="MyStore Logo" class="logo" />
-      </a>
-    </header>
-    <div class="signup-container">
-      <h2>Become a Seller</h2>
-      <p>Register your store and start selling today!</p>
-      <!-- Containers for error and success messages -->
-      <div id="errorMessage" style="display:none; color:red; margin-bottom:1rem;"></div>
-      <div id="successMessage" style="display:none; color:green; margin-bottom:1rem;"></div>
-      <form method="POST" enctype="multipart/form-data">
-        {% csrf_token %}
-        <div class="form-group">
-          <label for="company_logo">Company Logo:</label>
-          <input type="file" id="company_logo" name="company_logo" required />
+        </style>
+    </head>
+    <body>
+        <header>
+            <a href="{% url 'home' %}">
+                <img src="{% static 'images/logo2.webp' %}"
+                     alt="MyStore Logo"
+                     class="logo" />
+            </a>
+        </header>
+        <div class="signup-container">
+            <h2>Become a Seller</h2>
+            <p>Register your store and start selling today!</p>
+            <!-- Containers for error and success messages -->
+            <div id="errorMessage"
+                 style="display:none;
+                        color:red;
+                        margin-bottom:1rem"></div>
+            <div id="successMessage"
+                 style="display:none;
+                        color:green;
+                        margin-bottom:1rem"></div>
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="company_logo">Company Logo:</label>
+                    <input type="file" id="company_logo" name="company_logo" required />
+                </div>
+                <div class="form-group">
+                    <label for="company_name">Company Name:</label>
+                    <input type="text"
+                           id="company_name"
+                           name="company_name"
+                           placeholder="Enter company name"
+                           required />
+                </div>
+                <div class="form-group">
+                    <label for="email">Email Address:</label>
+                    <input type="email"
+                           id="email"
+                           name="email"
+                           placeholder="Enter email address"
+                           required />
+                </div>
+                <div class="form-group">
+                    <label for="phone">Phone Number:</label>
+                    <input type="tel"
+                           id="phone"
+                           name="phone"
+                           placeholder="Enter phone number"
+                           required />
+                </div>
+                <div class="form-group">
+                    <label for="shop_address">Shop Address:</label>
+                    <textarea id="shop_address"
+                              name="shop_address"
+                              placeholder="Enter shop address"
+                              required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="pincode">Pincode:</label>
+                    <input type="text"
+                           id="pincode"
+                           name="pincode"
+                           placeholder="Enter pincode"
+                           required />
+                </div>
+                <!-- Password fields for Firebase signup -->
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input type="password"
+                           id="password"
+                           name="password"
+                           placeholder="Enter password"
+                           required />
+                    <span class="toggle-password" style="cursor:pointer;">
+                        <i class="fas fa-eye"></i>
+                    </span>
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm Password:</label>
+                    <input type="password"
+                           id="confirmPassword"
+                           name="confirmPassword"
+                           placeholder="Confirm password"
+                           required />
+                </div>
+                <!-- Spinner element for loading feedback -->
+                <div class="spinner" style="display:none;">Loading...</div>
+                <!-- Signup button with id and button-text -->
+                <button type="submit" id="signupButton">
+                    <span class="button-text">Register</span>
+                </button>
+            </form>
         </div>
-        <div class="form-group">
-          <label for="company_name">Company Name:</label>
-          <input
-            type="text"
-            id="company_name"
-            name="company_name"
-            placeholder="Enter company name"
-            required
-          />
-        </div>
-        <div class="form-group">
-          <label for="email">Email Address:</label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            placeholder="Enter email address"
-            required
-          />
-        </div>
-        <div class="form-group">
-          <label for="phone">Phone Number:</label>
-          <input
-            type="tel"
-            id="phone"
-            name="phone"
-            placeholder="Enter phone number"
-            required
-          />
-        </div>
-        <div class="form-group">
-          <label for="shop_address">Shop Address:</label>
-          <textarea
-            id="shop_address"
-            name="shop_address"
-            placeholder="Enter shop address"
-            required
-          ></textarea>
-        </div>
-        <div class="form-group">
-          <label for="pincode">Pincode:</label>
-          <input
-            type="text"
-            id="pincode"
-            name="pincode"
-            placeholder="Enter pincode"
-            required
-          />
-        </div>
-        <!-- Password fields for Firebase signup -->
-        <div class="form-group">
-          <label for="password">Password:</label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            placeholder="Enter password"
-            required
-          />
-          <span class="toggle-password" style="cursor:pointer;">
-            <i class="fas fa-eye"></i>
-          </span>
-        </div>
-        <div class="form-group">
-          <label for="confirmPassword">Confirm Password:</label>
-          <input
-            type="password"
-            id="confirmPassword"
-            name="confirmPassword"
-            placeholder="Confirm password"
-            required
-          />
-        </div>
-        <!-- Spinner element for loading feedback -->
-        <div class="spinner" style="display:none;">Loading...</div>
-        <!-- Signup button with id and button-text -->
-        <button type="submit" id="signupButton">
-          <span class="button-text">Register</span>
-        </button>
-      </form>
-    </div>
-  </body>
+    </body>
 </html>

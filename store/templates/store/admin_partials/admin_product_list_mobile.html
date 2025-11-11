@@ -1,101 +1,124 @@
 <!-- Product Card Grid -->
-
 <div id="productListMobile" class="block md:hidden grid grid-cols-1 gap-4">
     {% for product in products %}
-    <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200" x-data="{ showActions: false }" data-category="{{ product.category }}"
-        data-price="{{ product.price }}">
-        <div class="flex items-start p-4">
-            <div class="relative w-24 h-24 mr-4 shrink-0">
-                <img src="{{ product.image_url }}" alt="{{ product.name }}" class="w-full h-full object-cover rounded-lg shadow-sm border border-gray-200">
-                <button data-product-id="{{ product.id }}" 
-                   data-image-urls="{{ product.image_url }}{% if product.image_url2 %},{{ product.image_url2 }}{% endif %}{% if product.image_url3 %},{{ product.image_url3 }}{% endif %}{% if product.image_url4 %},{{ product.image_url4 }}{% endif %}"
-                   onclick="showImagesModal(this)" 
-                   class="absolute bottom-0 right-0 bg-white/80 backdrop-blur-sm p-1 rounded-tl-lg rounded-br-lg shadow-sm">
-                    <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                </button>
-            </div>
-            <div class="flex-grow">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <h3 class="font-medium text-lg text-gray-900">{{ product.name }}</h3>
-                        <span class="inline-block px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full text-xs my-1">
-                            {{ product.category }}
-                        </span>
-                    </div>
-                    <button @click="showActions = !showActions" class="p-1 text-gray-500 focus:outline-none">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+        <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200"
+             x-data="{ showActions: false }"
+             data-category="{{ product.category }}"
+             data-price="{{ product.price }}">
+            <div class="flex items-start p-4">
+                <div class="relative w-24 h-24 mr-4 shrink-0">
+                    <img src="{{ product.image_url }}"
+                         alt="{{ product.name }}"
+                         class="w-full h-full object-cover rounded-lg shadow-sm border border-gray-200">
+                    <button data-product-id="{{ product.id }}"
+                            data-image-urls="{{ product.image_url }}{% if product.image_url2 %},{{ product.image_url2 }}{% endif %}{% if product.image_url3 %},{{ product.image_url3 }}{% endif %}{% if product.image_url4 %},{{ product.image_url4 }}{% endif %}"
+                            onclick="showImagesModal(this)"
+                            class="absolute bottom-0 right-0 bg-white/80 backdrop-blur-sm p-1 rounded-tl-lg rounded-br-lg shadow-sm">
+                        <svg class="w-4 h-4 text-indigo-600"
+                             fill="none"
+                             stroke="currentColor"
+                             viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                         </svg>
                     </button>
                 </div>
-                <div class="flex items-baseline space-x-2 mt-1">
-                    <span class="font-bold text-lg">₹{{ product.price }}</span>
-                    <span class="text-sm text-gray-500 line-through">₹{{ product.original_price }}</span>
+                <div class="flex-grow">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="font-medium text-lg text-gray-900">{{ product.name }}</h3>
+                            <span class="inline-block px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full text-xs my-1">
+                                {{ product.category }}
+                            </span>
+                        </div>
+                        <button @click="showActions = !showActions"
+                                class="p-1 text-gray-500 focus:outline-none">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="flex items-baseline space-x-2 mt-1">
+                        <span class="font-bold text-lg">₹{{ product.price }}</span>
+                        <span class="text-sm text-gray-500 line-through">₹{{ product.original_price }}</span>
+                    </div>
+                    <div class="flex items-center mt-2">
+                        <span class="text-sm text-gray-600 mr-4">Stock: <span class="font-medium" id="stock-value-{{ product.id }}">{{ product.stock }}</span></span>
+                        <button onclick="showStockEditModal('{{ product.id }}', {{ product.stock }})"
+                                class="text-blue-600 p-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
-                <div class="flex items-center mt-2">
-                    <span class="text-sm text-gray-600 mr-4">Stock: <span class="font-medium" id="stock-value-{{ product.id }}">{{ product.stock }}</span></span>
-                    <button onclick="showStockEditModal('{{ product.id }}', {{ product.stock }})" class="text-blue-600 p-1">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            </div>
+            <!-- Description Section (Expandable) -->
+            <div x-data="{ expanded: false }">
+                <div class="px-4 pb-2">
+                    <div x-show="!expanded" class="text-sm text-gray-600 truncate">{{ product.description }}</div>
+                    <div x-show="expanded" class="text-sm text-gray-600">{{ product.description }}</div>
+                    <button @click="expanded = !expanded" class="text-xs text-blue-600 mt-1">
+                        <span x-show="!expanded">Read more</span>
+                        <span x-show="expanded">Show less</span>
+                    </button>
+                </div>
+            </div>
+            <!-- Action Menu (Slide Down) -->
+            <div x-show="showActions"
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 -translate-y-2"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="opacity-100 translate-y-0"
+                 x-transition:leave-end="opacity-0 -translate-y-2"
+                 class="bg-gray-50 border-t px-4 py-3">
+                <div class="flex justify-around">
+                    <a href="{% url 'admin_update' product.id %}"
+                       class="flex flex-col items-center p-2 text-indigo-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                         </svg>
+                        <span class="text-xs mt-1">Edit</span>
+                    </a>
+                    <button onclick="showDeleteModal('{{ product.id }}')"
+                            class="flex flex-col items-center p-2 text-rose-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        <span class="text-xs mt-1">Delete</span>
+                    </button>
+                    <button onclick="showStockEditModal('{{ product.id }}', {{ product.stock }})"
+                            class="flex flex-col items-center p-2 text-amber-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                        </svg>
+                        <span class="text-xs mt-1">Update Stock</span>
                     </button>
                 </div>
             </div>
         </div>
-        
-        <!-- Description Section (Expandable) -->
-        <div x-data="{ expanded: false }">
-            <div class="px-4 pb-2">
-                <div x-show="!expanded" class="text-sm text-gray-600 truncate">{{ product.description }}</div>
-                <div x-show="expanded" class="text-sm text-gray-600">{{ product.description }}</div>
-                <button @click="expanded = !expanded" class="text-xs text-blue-600 mt-1">
-                    <span x-show="!expanded">Read more</span>
-                    <span x-show="expanded">Show less</span>
-                </button>
-            </div>
-        </div>
-        
-        <!-- Action Menu (Slide Down) -->
-        <div x-show="showActions" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2" class="bg-gray-50 border-t px-4 py-3">
-            <div class="flex justify-around">
-                <a href="{% url 'admin_update' product.id %}" class="flex flex-col items-center p-2 text-indigo-600">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                    </svg>
-                    <span class="text-xs mt-1">Edit</span>
-                </a>
-                <button onclick="showDeleteModal('{{ product.id }}')" class="flex flex-col items-center p-2 text-rose-600">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                    <span class="text-xs mt-1">Delete</span>
-                </button>
-                <button onclick="showStockEditModal('{{ product.id }}', {{ product.stock }})" class="flex flex-col items-center p-2 text-amber-600">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                    </svg>
-                    <span class="text-xs mt-1">Update Stock</span>
-                </button>
-            </div>
-        </div>
-    </div>
     {% empty %}
-    <div class="bg-white rounded-xl shadow p-8 text-center">
-        <div class="flex flex-col items-center justify-center space-y-3">
-            <svg class="w-16 h-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
-            </svg>
-            <p class="text-gray-500 font-medium">No products found</p>
-            <a href="{% url 'add_product_view' %}" class="mt-2 inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg shadow-sm hover:bg-indigo-700 transition-colors">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        <div class="bg-white rounded-xl shadow p-8 text-center">
+            <div class="flex flex-col items-center justify-center space-y-3">
+                <svg class="w-16 h-16 text-gray-300"
+                     fill="none"
+                     stroke="currentColor"
+                     viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
                 </svg>
-                Add First Product
-            </a>
+                <p class="text-gray-500 font-medium">No products found</p>
+                <a href="{% url 'add_product_view' %}"
+                   class="mt-2 inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg shadow-sm hover:bg-indigo-700 transition-colors">
+                    <svg class="w-4 h-4 mr-2"
+                         fill="none"
+                         stroke="currentColor"
+                         viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Add First Product
+                </a>
+            </div>
         </div>
-    </div>
     {% endfor %}
 </div>

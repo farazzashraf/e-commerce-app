@@ -107,5 +107,78 @@ body {
 }
 
 #filterStatusBar {
-    display: none; /* Hide by default */
+    display: none;
+    /* Hide by default */
+}
+
+.product-row {
+    transition: all 0.2s ease;
+}
+
+.product-row:hover {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.variant-row {
+    max-height: 0;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.variant-row.open {
+    max-height: 1000px;
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 9999px;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin: 0.125rem;
+}
+
+.price-label {
+    position: relative;
+}
+
+.discount-badge {
+    position: absolute;
+    top: -10px;
+    right: -15px;
+    font-size: 0.65rem;
+    padding: 0.1rem 0.35rem;
+}
+
+.gallery-preview {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+}
+
+.gallery-preview::-webkit-scrollbar {
+    height: 4px;
+}
+
+.gallery-preview::-webkit-scrollbar-thumb {
+    background-color: rgba(156, 163, 175, 0.5);
+    border-radius: 4px;
+}
+
+.thumbnail {
+    transition: transform 0.2s;
+}
+
+.thumbnail:hover {
+    transform: scale(1.05);
+}
+
+.table-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }

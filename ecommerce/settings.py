@@ -31,18 +31,18 @@ env = environ.Env()
 env.read_env(os.path.join(Path(__file__).resolve().parent.parent, ".env"))  # Ensure .env is in the root directory
 
 # Load Supabase credentials
-SUPABASE_URL = env("SUPABASE_URL", default=None)
-SUPABASE_ANON_KEY = env("SUPABASE_ANON_KEY", default=None)
+SUPABASE_URL = env("SUPABASE_URL")
+SUPABASE_ANON_KEY = env("SUPABASE_ANON_KEY")
 
 # Debugging
 print("Loaded SUPABASE_URL:", SUPABASE_URL)
 print("Loaded SUPABASE_ANON_KEY:", SUPABASE_ANON_KEY)
 
-user=env("supabase_user", default=None)
-password=env("supabase_password", default=None) 
-host=env("supabase_host", default=None)
-port=env("supabase_port", default=None)
-dbname=env("supabase_dbname", default=None)
+user=env("supabase_user")
+password=env("supabase_password") 
+host=env("supabase_host")
+port=env("supabase_port")
+dbname=env("supabase_dbname")
 
 # Connect to the database
 try:
@@ -147,11 +147,11 @@ WSGI_APPLICATION = "ecommerce.wsgi.application"
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': env('supabase_name', default=None),  # Default database name
-        'USER': env("supabase_user", default=None),  # Supabase database user
-        'PASSWORD': env("supabase_password", default=None),  # Supabase password
-        'HOST': env('supabase_host', default=None),  # Supabase host
-        'PORT': env('supabase_port', default=None),
+        'NAME': env('supabase_name'),  # Default database name
+        'USER': env("supabase_user"),  # Supabase database user
+        'PASSWORD': env("supabase_password"),  # Supabase password
+        'HOST': env('supabase_host'),  # Supabase host
+        'PORT': env('supabase_port'),
         'OPTIONS': {
             'sslmode': 'require',  # Enforce SSL
         },
@@ -231,6 +231,19 @@ LOGGING = {
         'level': 'INFO',
     },
 }
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379/1',  # Adjust host, port, and DB number as needed
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
+    }
+}
+
+# Optionally set a default cache timeout (in seconds)
+CACHE_TTL = 60 * 15  # 15 minutes
 
 # settings.py
 

@@ -410,11 +410,21 @@ document.addEventListener('DOMContentLoaded', function () {
             const productPrice = card.querySelector('.current-price').textContent;
             const productImage = card.querySelector('img').src;
 
+            // Fetch store name from the product card
+            const storeNameElement = card.querySelector('.store-name');
+            let productStoreName = "Unknown Store";
+            if (storeNameElement) {
+                // If the text is prefixed with "Store:" remove it.
+                productStoreName = storeNameElement.textContent.replace('Store:', '').trim();
+            }
+
             document.querySelector('.product-title').textContent = productTitle;
             document.querySelector('.product-category').textContent = productCategory;
             document.querySelector('.product-description').textContent = productDescription;
             document.querySelector('.product-current-price').textContent = productPrice;
             document.getElementById('main-product-image').src = productImage;
+            // Update store name in overlay
+            document.querySelector('#product-store-name').textContent = productStoreName;
 
             // Show the overlay
             overlay.style.display = 'flex';
@@ -456,3 +466,69 @@ document.addEventListener('DOMContentLoaded', function () {
 //         // productCard.innerHTML += `<p><strong>Date Added:</strong> ${dateAdded}</p>`;
 //     });
 // });
+
+// Initialize Swiper for category banner
+document.addEventListener('DOMContentLoaded', function () {
+    new Swiper('.category-swiper', {
+        slidesPerView: 2.5,
+        spaceBetween: 10,
+        centeredSlides: false,
+        loop: true,
+        autoplay: {
+            delay: 3000,
+            disableOnInteraction: false,
+        },
+        pagination: {
+            el: '.swiper-pagination',
+            clickable: true,
+        },
+        breakpoints: {
+            480: {
+                slidesPerView: 3.5,
+                spaceBetween: 15,
+            },
+            768: {
+                slidesPerView: 5,
+                spaceBetween: 20,
+            },
+            1024: {
+                slidesPerView: 7,
+                spaceBetween: 25,
+            },
+            1280: {
+                slidesPerView: 8,
+                spaceBetween: 30,
+            }
+        }
+    });
+
+    // Handle subcategory dropdown accessibility
+    const filterCategories = document.querySelectorAll('.filter-category');
+    filterCategories.forEach(category => {
+        // Add keyboard navigation
+        category.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                const dropdown = this.querySelector('.subcategories');
+                if (dropdown) {
+                    dropdown.style.display = dropdown.style.display === 'flex' ? 'none' : 'flex';
+                    e.preventDefault();
+                }
+            }
+        });
+
+        // Add focus handling
+        category.addEventListener('focusin', function () {
+            this.classList.add('focused');
+        });
+
+        category.addEventListener('focusout', function (e) {
+            if (!this.contains(e.relatedTarget)) {
+                this.classList.remove('focused');
+                const dropdown = this.querySelector('.subcategories');
+                if (dropdown) {
+                    dropdown.style.display = 'none';
+                }
+            }
+        });
+    });
+});

@@ -111,15 +111,41 @@ class Product(models.Model):
     is_verified = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)  # Add this line
     is_deleted = models.BooleanField(default=False)  # New field for soft deletion
-    stock = models.IntegerField(default=0)
+    stock = models.IntegerField(default=1)
     
     def __str__(self):
-        return f"Product {self.id} - {self.name} ({self.admin_id.name if hasattr(self.admin_id, 'name') else 'No Admin'})"
+        return f"Product {self.id} - {self.name} ({self.admin_id.company_name if self.admin_id else 'No Admin'})"
+    
+    def delete(self, *args, **kwargs):
+        """Soft delete instead of actual deletion."""
+        self.is_deleted = True
+        self.save()
+    class Meta:
+        ordering = ["-created_at"]  # Show latest products first
 
+class ProductVariant(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="variants")
+    color = models.CharField(max_length=50)
+    size = models.CharField(max_length=10, blank=True, null=True)
+    fit = models.CharField(max_length=100, blank=True)  # e.g. "Slim fit", "Regular fit"
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    stock = models.PositiveIntegerField(default=0)
+    image_url = models.URLField(max_length=500, blank=True, null=True)  # Main variant image
+    # Field to store additional image URLs (as a JSON array)
+    additional_image_urls = models.JSONField(blank=True, null=True)
 
+    def __str__(self):
+        return f"{self.product.name} - {self.color} ({self.size or 'Standard'})"
+    
 class Order(models.Model):
     id = models.AutoField(primary_key=True)
     user_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders', to_field="id", db_column="user_id")
+    # New field: Reference to the seller (admin store)
+    admin = models.ForeignKey(
+        AdminStore, 
+        on_delete=models.CASCADE, 
+        related_name='orders'
+    )
     payment_method = models.TextField(null=True, blank=True)
     status = models.TextField(default='pending')
     address = models.JSONField(null=True, blank=True)  # Stores JSON data for the address
@@ -129,9 +155,10 @@ class Order(models.Model):
     total_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
     def __str__(self):
-        # Use user_id to access the related User instance.
-        return f"Order {self.id} - {self.user_id.name if self.user_id.name else self.user_id.email}"
-
+        # Display admin's company name for clarity
+        admin_name = self.admin.company_name if self.admin else "Unknown Store"
+        user_name = self.user_id.name if self.user_id.name else self.user_id.email
+        return f"Order {self.id} - {user_name} (Store: {admin_name})"
 
 
 class OrderItem(models.Model):
@@ -143,9 +170,17 @@ class OrderItem(models.Model):
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
     created_at = models.DateTimeField(auto_now_add=True)
     name = models.TextField(null=True, blank=True)
+    # Optional: add the seller for this particular order item.
+    admin = models.ForeignKey(
+        AdminStore, 
+        on_delete=models.CASCADE, 
+        related_name='order_items', 
+        null=True, 
+        blank=True
+    )
 
     def __str__(self):
-        return f"Item {self.id} - {self.name}"
+        return f"Item {self.id} - {self.name} (Store: {self.admin.company_name if self.admin else 'Unknown'})"
 
 
 class Cart(models.Model):

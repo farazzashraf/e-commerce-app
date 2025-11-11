@@ -1,0 +1,108 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Our Sellers</title>
+        <!-- Bootstrap CSS -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+              rel="stylesheet" />
+        <!-- Bootstrap Icons -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+              rel="stylesheet" />
+        <style>
+      .seller-card {
+        transition: transform 0.3s ease;
+        cursor: pointer;
+      }
+      .seller-card:hover {
+        transform: translateY(-5px);
+      }
+      .seller-logo {
+        width: 100%;
+        max-height: 200px;
+        object-fit: cover;
+      }
+        </style>
+    </head>
+    <body>
+        <!-- Navbar -->
+        <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
+            <div class="container">
+                <a class="navbar-brand" href="{% url 'home' %}">
+                    <img src="{% static 'images/logo2.webp' %}" alt="Our Logo" height="50" />
+                </a>
+                <button class="navbar-toggler"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#mainNavbar"
+                        aria-controls="mainNavbar"
+                        aria-expanded="false"
+                        aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="mainNavbar">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'home' %}">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="{% url 'seller_page' %}">Sellers</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'about_us' %}">Contact</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        <!-- Sellers List -->
+        <main class="container my-5">
+            <h1 class="mb-4 text-center">Our Sellers</h1>
+            <div class="row g-4">
+                {% for seller in sellers %}
+                    <div class="col-md-4">
+                        <div class="card seller-card h-100 shadow-sm">
+                            <img src="{{ seller.company_logo }}"
+                                 class="card-img-top seller-logo"
+                                 alt="{{ seller.company_name }} Logo"
+                                 onerror="this.src='{% static 'images/placeholder.png' %}'" />
+                            <div class="card-body">
+                                <h5 class="card-title">{{ seller.company_name }}</h5>
+                                <p class="card-text">{{ seller.shop_address|truncatewords:20 }}</p>
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item">
+                                        <i class="bi bi-telephone-fill me-2"></i>{{ seller.phone }}
+                                    </li>
+                                    <li class="list-group-item">
+                                        <i class="bi bi-envelope-fill me-2"></i>{{ seller.email }}
+                                    </li>
+                                    <li class="list-group-item">
+                                        <i class="bi bi-pin-map-fill me-2"></i>{{ seller.pincode }}
+                                    </li>
+                                </ul>
+                                <a href="{% url 'seller_details' seller.id %}"
+                                   class="btn btn-primary mt-3">
+                                    View Store <i class="bi bi-arrow-right"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="col-12">
+                        <p class="text-center">No sellers found.</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </main>
+        <!-- Footer -->
+        <footer class="bg-light py-4">
+            <div class="container text-center">
+                <p class="mb-0">&copy; 2025 Your Company Name. All rights reserved.</p>
+            </div>
+        </footer>
+        <!-- Bootstrap JS Bundle -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    </body>
+</html>

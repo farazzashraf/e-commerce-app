@@ -86,6 +86,8 @@ function loadCart() {
                 <div class="item-details">
                     <h3>${product.name}</h3>
                     <p class="item-category">${product.category}</p>
+                    <p class="seller-details">Store: ${product.seller_name}</p>
+
                     <p class="item-unit-price">Price: ₹${product.price}</p>
                     <div class="quantity-controls">
                         <button class="quantity-btn decrease" data-id="${key}">

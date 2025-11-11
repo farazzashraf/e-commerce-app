@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Help & Support | Thrift Shop</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Help & Support | Thrift Shop</title>
+        <link rel="stylesheet"
+              href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+        <style>
         :root {
             --primary-color: #2A2A72;
             --secondary-color: #FFA400;
@@ -101,7 +102,7 @@
             border-radius: 12px;
             font-size: 1rem;
             transition: all 0.3s ease;
-            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path fill="%23999" d="M23.707 22.293l-5.969-5.969a10.016 10.016 0 1 0-1.414 1.414l5.969 5.969a1 1 0 0 0 1.414-1.414zM10 18a8 8 0 1 1 8-8 8.009 8.009 0 0 1-8 8z"/></svg>') no-repeat 1rem center;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path fill="%23999" d="M23.707 22.293l-5.969-5.969a10.016 10.016 0 1 0-1.414 1.414l5.969 5.969a1 1 0 0 0 1.414-1.414zM10 18a8 8 0 1 1 8-8 8.009 8.009 0 0 1-8 8z" /></svg>') no-repeat 1rem center;
         }
 
         .search-bar:focus {
@@ -230,58 +231,71 @@
         .help-section {
             animation: fadeIn 0.4s ease-out;
         }
-    </style>
-</head>
-<body>
-    <div class="help-container">
-        <!-- Desktop Sidebar -->
-        <nav class="sidebar">
-            <div class="search-container">
-                <input type="text" class="search-bar" placeholder="Search help articles...">
-            </div>
-            <ul>
-                <li class="nav-item active"><i class="fas fa-question-circle"></i> FAQs</li>
-                <li class="nav-item"><i class="fas fa-box"></i> Orders & Shipping</li>
-                <li class="nav-item"><i class="fas fa-undo"></i> Returns</li>
-                <li class="nav-item"><i class="fas fa-credit-card"></i> Payments</li>
-                <li class="nav-item"><i class="fas fa-store"></i> Seller Support</li>
-            </ul>
-        </nav>
-
-        <!-- Main Content -->
-        <main class="content">
-            <section class="help-section active" id="faq">
-                <h1 class="section-title">Frequently Asked Questions</h1>
-                <div class="faq-item">
-                    <div class="faq-question">
-                        <span>How do I track my order?</span>
-                        <i class="fas fa-chevron-down faq-icon"></i>
-                    </div>
-                    <div class="faq-answer">
-                        <p>You can track your order through our tracking portal...</p>
-                    </div>
+        </style>
+    </head>
+    <body>
+        <div class="help-container">
+            <!-- Desktop Sidebar -->
+            <nav class="sidebar">
+                <div class="search-container">
+                    <input type="text" class="search-bar" placeholder="Search help articles...">
                 </div>
-                <!-- More FAQ items -->
-            </section>
-
-            <!-- Other sections -->
-        </main>
-
-        <!-- Mobile Bottom Navigation -->
-        <nav class="mobile-nav">
-            <div class="nav-item active"><i class="fas fa-question"></i>FAQ</div>
-            <div class="nav-item"><i class="fas fa-box"></i>Orders</div>
-            <div class="nav-item"><i class="fas fa-comments"></i>Chat</div>
-            <div class="nav-item"><i class="fas fa-user"></i>Account</div>
-        </nav>
-    </div>
-
-    <!-- Floating Chat Button -->
-    <div class="chat-button">
-        <i class="fas fa-comment-dots fa-lg"></i>
-    </div>
-
-    <script>
+                <ul>
+                    <li class="nav-item active">
+                        <i class="fas fa-question-circle"></i> FAQs
+                    </li>
+                    <li class="nav-item">
+                        <i class="fas fa-box"></i> Orders & Shipping
+                    </li>
+                    <li class="nav-item">
+                        <i class="fas fa-undo"></i> Returns
+                    </li>
+                    <li class="nav-item">
+                        <i class="fas fa-credit-card"></i> Payments
+                    </li>
+                    <li class="nav-item">
+                        <i class="fas fa-store"></i> Seller Support
+                    </li>
+                </ul>
+            </nav>
+            <!-- Main Content -->
+            <main class="content">
+                <section class="help-section active" id="faq">
+                    <h1 class="section-title">Frequently Asked Questions</h1>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <span>How do I track my order?</span>
+                            <i class="fas fa-chevron-down faq-icon"></i>
+                        </div>
+                        <div class="faq-answer">
+                            <p>You can track your order through our tracking portal...</p>
+                        </div>
+                    </div>
+                    <!-- More FAQ items -->
+                </section>
+                <!-- Other sections -->
+            </main>
+            <!-- Mobile Bottom Navigation -->
+            <nav class="mobile-nav">
+                <div class="nav-item active">
+                    <i class="fas fa-question"></i>FAQ
+                </div>
+                <div class="nav-item">
+                    <i class="fas fa-box"></i>Orders
+                </div>
+                <div class="nav-item">
+                    <i class="fas fa-comments"></i>Chat
+                </div>
+                <div class="nav-item">
+                    <i class="fas fa-user"></i>Account
+                </div>
+            </nav>
+        </div>
+        <!-- Floating Chat Button -->
+        <div class="chat-button">
+            <i class="fas fa-comment-dots fa-lg"></i>
+        </div>
+        <script>
         // Enhanced Interactions
         document.querySelectorAll('.faq-question').forEach(question => {
             question.addEventListener('click', () => {
@@ -311,6 +325,6 @@
         }
         window.addEventListener('resize', updateNavigation);
         updateNavigation();
-    </script>
-</body>
+        </script>
+    </body>
 </html>

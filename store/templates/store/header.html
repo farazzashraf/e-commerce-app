@@ -1,252 +1,228 @@
 {% load static %}
-
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Landing Page</title>
-    <link rel="stylesheet" href="{% static 'css/header.css' %}?v={{ timestamp }}">
-    <script src="{% static 'js/header.js' %}?v={{ timestamp }}" defer></script>
-    <script src="{% static 'js/cart.js' %}?v={{ timestamp }}" defer></script>
-    <script type="module" src="{% static 'js/logout.js' %}" defer></script>
-
-
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
-        rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-
-
-</head>
-
-<body>
-    <!-- Header Section -->
-    <header>
-        <div class="header-container">
-            <div class="hamburger" id="menuToggle">
-                <i class="fas fa-bars"></i>
-            </div>
-
-            <div class="logo">
-                <a href="/">
-                    <img src="{% static 'images/logo2.webp' %} ?v={{ timestamp }}" alt="MyStore Logo">
-                </a>
-            </div>
-
-            <div class="header-right-icons">
-                <div class="search-container">
-                    <i class="fas fa-search search-icon" id="searchToggle"></i>
-                    <div class="search-bar" id="searchBar">
-                        <input type="text" class="search-input" id="searchInput" placeholder="Search products...">
-                        <i class="fas fa-times close-search" id="closeSearch"></i>
-                    </div>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Landing Page</title>
+        <link rel="stylesheet"
+              href="{% static 'css/header.css' %}?v={{ timestamp }}" />
+        <script src="{% static 'js/header.js' %}?v={{ timestamp }}" defer></script>
+        <script src="{% static 'js/cart.js' %}?v={{ timestamp }}" defer></script>
+        <script type="module" src="{% static 'js/logout.js' %}" defer></script>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+              rel="stylesheet" />
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+              rel="stylesheet" />
+        <link rel="stylesheet"
+              href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    </head>
+    <body>
+        <!-- Header Section -->
+        <header>
+            <div class="header-container">
+                <div class="hamburger" id="menuToggle">
+                    <i class="fas fa-bars"></i>
                 </div>
-                
-
-
-                <a href="/cart_view" class="cart">
-                    <i class="fas fa-shopping-cart"></i>
-                    <span class="cart-count">0</span>
-                </a>
-
-                <!-- Replace the current user profile section with this updated version -->
-                <div class="user-profile-container">
-                    {% if request.session.uid %}
-                    <!-- User is logged in, show dropdown menu -->
-                    <div class="user-profile-dropdown">
-                        <div class="profile-toggle">
-                            <i class="fas fa-user"></i>
-                            <span class="username">{{ user_name|title }}</span>
-                            <i class="fas fa-chevron-down"></i>
+                <div class="logo">
+                    <a href="/">
+                        <img src="{% static 'images/logo2.webp' %} ?v={{ timestamp }}"
+                             alt="MyStore Logo" />
+                    </a>
+                </div>
+                <div class="header-right-icons">
+                    <div class="search-container">
+                        <i class="fas fa-search search-icon" id="searchToggle"></i>
+                        <div class="search-bar" id="searchBar">
+                            <input type="text"
+                                   class="search-input"
+                                   id="searchInput"
+                                   placeholder="Search products..." />
+                            <i class="fas fa-times close-search" id="closeSearch"></i>
                         </div>
-                        <div class="dropdown-menu">
-                            <div class="dropdown-header">
-                                <span>Welcome, {{ user_name|title }}</span>
+                    </div>
+                    <a href="/cart_view" class="cart">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span class="cart-count">0</span>
+                    </a>
+                    <!-- Replace the current user profile section with this updated version -->
+                    <div class="user-profile-container">
+                        {% if request.session.uid %}
+                            <!-- User is logged in, show dropdown menu -->
+                            <div class="user-profile-dropdown">
+                                <div class="profile-toggle">
+                                    <i class="fas fa-user"></i>
+                                    <span class="username">{{ user_name|title }}</span>
+                                    <i class="fas fa-chevron-down"></i>
+                                </div>
+                                <div class="dropdown-menu">
+                                    <div class="dropdown-header">
+                                        <span>Welcome, {{ user_name|title }}</span>
+                                    </div>
+                                    <a href="{% url 'orders' %}" class="dropdown-item">
+                                        <i class="fas fa-box"></i>
+                                        <span>My Orders</span>
+                                    </a>
+                                    <a href="{% url 'seller_page' %}" class="dropdown-item">
+                                        <i class="fas fa-store"></i>
+                                        <span>Stores</span>
+                                    </a>
+                                    <a href="{% url 'admin_signup' %}" class="dropdown-item">
+                                        <i class="fas fa-store"></i>
+                                        <span>Wanna Sell Products?</span>
+                                    </a>
+                                    <div class="dropdown-divider"></div>
+                                    <a href="{% url 'logout' %}" class="dropdown-item logout">
+                                        <i class="fas fa-sign-out-alt"></i>
+                                        <span>Logout</span>
+                                    </a>
+                                </div>
                             </div>
-                            <a href="{% url 'orders' %}" class="dropdown-item">
-                                <i class="fas fa-box"></i>
-                                <span>My Orders</span>
-                            </a>
-                            <a href="{% url 'admin_signup' %}" class="dropdown-item">
-                                <i class="fas fa-store"></i>
-                                <span>Wanna Sell Products?</span>
-                            </a>
-                            <div class="dropdown-divider"></div>
-                            <a href="{% url 'logout' %}" class="dropdown-item logout">
-                                <i class="fas fa-sign-out-alt"></i>
-                                <span>Logout</span>
-                            </a>
-                        </div>
+                        {% else %}
+                            <!-- Show login link if user is not logged in -->
+                            <a href="{% url 'login' %}" class="user-profile"><i class="fas fa-user"></i></a>
+                        {% endif %}
                     </div>
-                    {% else %}
-                    <!-- Show login link if user is not logged in -->
-                    <a href="{% url 'login' %}" class="user-profile">
-                        <i class="fas fa-user"></i>
-                    </a>
-                    {% endif %}
-                </div>
-
-                <!-- <a href="{% url 'login' %}" class="user-profile">
+                    <!--   <a href="{% url 'login' %}" class="user-profile">
                     <i class="fas fa-user"></i>
-                </a> -->
+                </a>   -->
+                </div>
             </div>
-        </div>
-    </header>
-
-    <!-- Sidebar Menu -->
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <!-- <div class="logo">
+        </header>
+        <!-- Sidebar Menu -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <!--   <div class="logo">
                 <img src="{% static 'images/logo2.webp' %}" alt="MyStore Logo">
-            </div> -->
-            <i class="fas fa-times sidebar-close" id="sidebarClose"></i>
-        </div>
-
-        <!-- User Info Section -->
-        <div class="user-info">
-            <div class="user-avatar">
-                <i class="fas fa-user"></i>
+            </div>   -->
+                <i class="fas fa-times sidebar-close" id="sidebarClose"></i>
             </div>
-            <div class="user-name">{{ user_name|title }}</div>
-            <div class="user-email">{{ user_email }}</div>
-        </div>
-
-        <!-- Categories Section -->
-        <div class="category-section">
-            <div class="section-title">
-                Categories
-                <i class="fas fa-chevron-down dropdown-toggle" id="categoryToggle"></i>
+            <!-- User Info Section -->
+            <div class="user-info">
+                <div class="user-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="user-name">{{ user_name|title }}</div>
+                <div class="user-email">{{ user_email }}</div>
             </div>
-            <div class="category-dropdown" id="categoryDropdown">
-                <ul class="category-list">
-                    <li class="category-item {% if not selected_category %}active{% endif %}">
-                        <a href="{% url 'home' %}" class="category-link">
-                            <i class="fas fa-th-large"></i> All Items
-                        </a>
+            <!-- Categories Section -->
+            <div class="category-section">
+                <div class="section-title">
+                    Categories
+                    <i class="fas fa-chevron-down dropdown-toggle" id="categoryToggle"></i>
+                </div>
+                <div class="category-dropdown" id="categoryDropdown">
+                    <ul class="category-list">
+                        <li class="category-item {% if not selected_category %}active{% endif %}">
+                            <a href="{% url 'home' %}" class="category-link"><i class="fas fa-th-large"></i> All Items</a>
+                        </li>
+                        <li class="category-item {% if selected_category == 'jackets' %}active{% endif %}">
+                            <a href="{% url 'home' %}?category=jackets" class="category-link">
+                                <i class="fas fa-vest"></i> Jackets
+                                <span class="badge badge-primary">New</span>
+                            </a>
+                        </li>
+                        <li class="category-item {% if selected_category == 'pants' %}active{% endif %}">
+                            <a href="{% url 'home' %}?category=pants" class="category-link"><i class="fas fa-socks"></i> Pants</a>
+                        </li>
+                        <li class="category-item {% if selected_category == 'shirts' %}active{% endif %}">
+                            <a href="{% url 'home' %}?category=shirts" class="category-link"><i class="fas fa-tshirt"></i> Shirts</a>
+                        </li>
+                        <li class="category-item {% if selected_category == 'tshirts' %}active{% endif %}">
+                            <a href="{% url 'home' %}?category=tshirts" class="category-link"><i class="fas fa-tshirt"></i> T-Shirts</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <!-- Orders & Shopping Section -->
+            <div class="category-section">
+                <div class="section-title">
+                    My Account
+                    <i class="fas fa-chevron-down dropdown-toggle" id="accountToggle"></i>
+                </div>
+                <div class="category-dropdown" id="accountDropdown">
+                    <ul class="category-list">
+                        <li class="category-item">
+                            <a href="/orders" class="category-item"><i class="fas fa-box"></i> My Orders</a>
+                        </li>
+                        <li class="category-item">
+                            <i class="fas fa-heart"></i> Wishlist
+                        </li>
+                        <li class="category-item">
+                            <a href="/cart_view" class="category-item cart">
+                                <i class="fas fa-shopping-cart"></i> My Cart
+                                <span class="badge badge-primary cart-count" id="cartCount">0</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <!-- Stores Section -->
+            <div class="category-section">
+                <div class="section-title">
+                    Stores
+                    <i class="fas fa-chevron-down dropdown-toggle" id="storesToggle"></i>
+                </div>
+                <div class="category-dropdown" id="storesDropdown">
+                    <ul class="category-list">
+                        {% for seller in sellers %}
+                            <li class="category-item">
+                                <a href="{% url 'seller_details' seller.id %}" class="category-link"><i class="fas fa-store"></i> {{ seller.company_name }}</a>
+                            </li>
+                        {% empty %}
+                            <li class="category-item">
+                                <span class="category-link">No stores found.</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            <!-- Navigation Links -->
+            <div class="nav-section">
+                <ul class="nav-list">
+                    <li class="nav-item">
+                        <a href="/" class="nav-link"><i class="fas fa-home"></i> Home</a>
                     </li>
-                    <li class="category-item {% if selected_category == 'jackets' %}active{% endif %}">
-                        <a href="{% url 'home' %}?category=jackets" class="category-link">
-                            <i class="fas fa-vest"></i> Jackets
-                            <span class="badge badge-primary">New</span>
-                        </a>
+                    <li class="nav-item">
+                        <a href="/shop" class="nav-link"><i class="fas fa-store"></i> Shop</a>
                     </li>
-                    <li class="category-item {% if selected_category == 'pants' %}active{% endif %}">
-                        <a href="{% url 'home' %}?category=pants" class="category-link">
-                            <i class="fas fa-socks"></i> Pants
-                        </a>
+                    <li class="nav-item">
+                        <a href="/help_support" class="nav-link"><i class="fas fa-headset"></i> Help & Support</a>
                     </li>
-                    <li class="category-item {% if selected_category == 'shirts' %}active{% endif %}">
-                        <a href="{% url 'home' %}?category=shirts" class="category-link">
-                            <i class="fas fa-tshirt"></i> Shirts
-                        </a>
-                    </li>
-                    <li class="category-item {% if selected_category == 'tshirts' %}active{% endif %}">
-                        <a href="{% url 'home' %}?category=tshirts" class="category-link">
-                            <i class="fas fa-tshirt"></i> T-Shirts
-                        </a>
-                    </li>
-
                 </ul>
+                <div class="divider"></div>
+                <!-- Authentication Buttons -->
+                {% if request.session.uid %}
+                    <!-- User is logged in, show logout button -->
+                    <a href="{% url 'logout' %}" class="btn-primary"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                {% else %}
+                    <!-- User is not logged in, show login and signup buttons -->
+                    <a href="{% url 'login' %}" class="btn-primary"><i class="fas fa-sign-in-alt"></i> Login</a>
+                    <a href="{% url 'signup' %}" class="btn-outline"><i class="fas fa-user-plus"></i> Sign Up</a>
+                {% endif %}
             </div>
         </div>
-
-
-        <!-- Orders & Shopping Section -->
-        <div class="category-section">
-            <div class="section-title">
-                My Account
-                <i class="fas fa-chevron-down dropdown-toggle" id="accountToggle"></i>
-            </div>
-            <div class="category-dropdown" id="accountDropdown">
-                <ul class="category-list">
-                    <li class="category-item">
-                        <a href="/orders" class="category-item">
-                            <i class="fas fa-box"></i> My Orders
-                        </a>
-                    </li>
-                    <li class="category-item">
-                        <i class="fas fa-heart"></i> Wishlist
-                    </li>
-                    <li class="category-item">
-                        <a href="/cart_view" class="category-item cart">
-                            <i class="fas fa-shopping-cart"></i> My Cart
-                            <span class="badge badge-primary cart-count" id="cartCount">0</span>
-                        </a>
-
-                    </li>
-                </ul>
-            </div>
-        </div>
-
-        <!-- Navigation Links -->
-        <div class="nav-section">
-            <ul class="nav-list">
-                <li class="nav-item">
-                    <a href="/" class="nav-link">
-                        <i class="fas fa-home"></i> Home
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="/shop" class="nav-link">
-                        <i class="fas fa-store"></i> Shop
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="/help_support" class="nav-link">
-                        <i class="fas fa-headset"></i> Help & Support
-                    </a>
-                </li>
-            </ul>
-
-            <div class="divider"></div>
-
-            <!-- Authentication Buttons -->
-            {% if request.session.uid %}
-            <!-- User is logged in, show logout button -->
-            <a href="{% url 'logout' %}" class="btn-primary">
-                <i class="fas fa-sign-out-alt"></i> Logout
-            </a>
-            {% else %}
-            <!-- User is not logged in, show login and signup buttons -->
-            <a href="{% url 'login' %}" class="btn-primary">
-                <i class="fas fa-sign-in-alt"></i> Login
-            </a>
-            <a href="{% url 'signup' %}" class="btn-outline">
-                <i class="fas fa-user-plus"></i> Sign Up
-            </a>
-            {% endif %}
-        </div>
-    </div>
-
-    <!-- Overlay -->
-    <div class="overlay" id="overlay"></div>
-
-    <script>
-        const searchInput = document.getElementById("searchInput");
-        searchInput.addEventListener("keypress", function (event) {
-            if (event.key === "Enter") {
-                let query = searchInput.value.trim();
-                if (query) {
-                    // Now the URL tag will be processed correctly
-                    window.location.href = "{% url 'home' %}?q=" + encodeURIComponent(query);
-                }
-            }
-        });
-    </script>
-
-
-    <!-- Landing Page Content
+        <!-- Overlay -->
+        <div class="overlay" id="overlay"></div>
+        <script>
+      const searchInput = document.getElementById('searchInput')
+      searchInput.addEventListener('keypress', function (event) {
+        if (event.key === 'Enter') {
+          let query = searchInput.value.trim()
+          if (query) {
+            // Now the URL tag will be processed correctly
+            window.location.href = "{% url 'home' %}?q=" + encodeURIComponent(query)
+          }
+        }
+      })
+        </script>
+        <!--   Landing Page Content
     <section class="hero">
         <h1>Welcome to Our Dress Shop</h1>
         <p>Your one-stop shop for all things fashionable!</p>
         <button><a href="/shop">Shop Now</a></button>
-    </section> -->
-</body>
-
+    </section>   -->
+    </body>
 </html>

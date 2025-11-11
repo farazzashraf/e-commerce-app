@@ -154,6 +154,15 @@ document.addEventListener("DOMContentLoaded", function () {
         accountToggle.classList.toggle('open');
     });
 
+    // Account dropdown toggle
+    const storesToggle = document.getElementById('storesToggle');
+    const storesDropdown = document.getElementById('storesDropdown');
+
+    storesToggle.addEventListener('click', () => {
+        storesDropdown.classList.toggle('open');
+        storesToggle.classList.toggle('open');
+    });
+
     // Category item selection
     const categoryItems = document.querySelectorAll('.category-item');
 

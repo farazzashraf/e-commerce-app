@@ -1,5 +1,4 @@
-from store.models import Product, User, Cart, PromoCode, Order, OrderItem, AdminStore, Category, Subcategory
-import logging
+from store.models import Product, User, Cart, PromoCode, Order, OrderItem, AdminStore, Category, Subcategory, ProductVariant
 from django.core.files.storage import default_storage
 from datetime import datetime
 import re
@@ -17,8 +16,18 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 import traceback
 import json
+import sys
+import logging
+from django.core.cache import cache
+
 
 logger = logging.getLogger(__name__)
+
+logging.basicConfig(
+    level=logging.ERROR,
+    stream=sys.stderr,  # Ensure logging uses stderr
+    encoding="utf-8"  # Force UTF-8 encoding
+)
 
 # Get the base directory
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -75,15 +84,24 @@ def get_all_products():
             'id',
             'name',
             'category',
+            'category__name',
+            'category__slug',
+            'subcategory',
+            'subcategory__name',
+            'subcategory__slug',
             'price',
             'original_price',
             'description',
+            'sizes',
+            'fit',
             'created_at',
             'image_url',
             'image_url2',
             'image_url3',
             'image_url4',
-            'stock'
+            'stock',
+            'admin_id',
+            'admin_id__company_name'
         ))
 
         # Convert image URLs to public URLs
@@ -156,7 +174,7 @@ def upload_image(image_file):
         return None
 
 
-def orm_add_product(name, category_id, subcategory_id, price, original_price, description, sizes, fit, image_file, additional_image_files, admin_store_id, stock):
+def orm_add_product(name, category_id, subcategory_id, price, original_price, description, sizes, fit, image_file, additional_image_files, admin_store_id, stock, request):
     """
     Add a new product using Django ORM.
     The admin_id is stored as a TextField.
@@ -216,6 +234,46 @@ def orm_add_product(name, category_id, subcategory_id, price, original_price, de
 
     # Save the updates if any additional images were set after creation
     product.save()
+    
+    # -------------------------------
+    # Process Product Variants
+    # -------------------------------
+    # Expecting variant data in request.POST and request.FILES
+    # The variant fields use keys like: variants[1][color], variants[1][price], etc.
+    for key in request.POST:
+        if key.startswith('variants[') and key.endswith('][color]'):
+            # Extract the variant index from the key (e.g., variants[1][color] --> index = 1)
+            index = key.split('[')[1].split(']')[0]
+            color = request.POST.get(f"variants[{index}][color]")
+            variant_size = request.POST.get(f"variants[{index}][size]")
+            variant_fit = request.POST.get(f"variants[{index}][fit]")
+            variant_price = request.POST.get(f"variants[{index}][price]")
+            variant_stock = request.POST.get(f"variants[{index}][stock]")
+            variant_image_file = request.FILES.get(f"variants[{index}][image]")
+            
+            # Upload the main variant image to Supabase
+            variant_image_url = upload_image(variant_image_file)
+            
+            # Process additional images for this variant
+            additional_variant_urls = []
+            additional_files = request.FILES.getlist(f"variants[{index}][additional_images][]")
+            for file in additional_files:
+                url = upload_image(file)
+                if url:
+                    additional_variant_urls.append(url)
+            
+            # Create the ProductVariant record.
+            # Assuming ProductVariant model exists with fields: product, color, size, fit, price, stock, image_url, additional_image_urls (JSONField)
+            variant_instance = ProductVariant.objects.create(
+                product=product,
+                color=color,
+                size=variant_size,
+                fit=variant_fit,
+                price=variant_price,
+                stock=variant_stock,
+                image_url=variant_image_url,
+                additional_image_urls=additional_variant_urls if additional_variant_urls else None
+            )
 
     return product
 
@@ -224,10 +282,13 @@ def fetch_all_products():
     """
     Fetch all products using Django ORM and convert stored image keys into public URLs.
     """
+    
     try:
-        # Fetch all products ordered by creation date (newest first)
-        products_queryset = Product.objects.filter(
-            is_deleted=False).order_by("-created_at")
+        # Use prefetch_related to fetch variants in one go.
+        products_queryset = Product.objects.filter(is_deleted=False).order_by("-created_at")\
+            .select_related("category", "subcategory")\
+            .prefetch_related("variants")
+
         products = []
 
         # Iterate over each product and convert it into a dict
@@ -235,7 +296,8 @@ def fetch_all_products():
             product_data = {
                 "id": product.id,
                 "name": product.name,
-                "category": product.category,
+                "category": product.category.name if product.category else None,
+                "subcategory": product.subcategory.name if product.subcategory else None,
                 "price": product.price,
                 "original_price": product.original_price,
                 "description": product.description,
@@ -247,15 +309,40 @@ def fetch_all_products():
                 "image_url4": supabase.storage.from_("product-image").get_public_url(product.image_url4) if product.image_url4 else None,
                 "is_active": product.is_active,
                 "stock": product.stock,
+                "sizes": product.sizes if product.sizes else "N/A",
+                "fit": product.fit if product.fit else "N/A",
             }
+            
+            # Process variants for this product
+            variants_list = []
+            for variant in product.variants.all():
+                variant_data = {
+                    "color": variant.color,
+                    "size": variant.size,
+                    "fit": variant.fit,
+                    "price": variant.price,
+                    "stock": variant.stock,
+                    # Convert the main variant image using Supabase's API
+                    "image_url": supabase.storage.from_("product-image").get_public_url(variant.image_url) if variant.image_url else None,
+                    # Process additional images stored as a JSON list of keys
+                    "additional_image_urls": (
+                        [supabase.storage.from_("product-image").get_public_url(url) for url in variant.additional_image_urls]
+                        if variant.additional_image_urls else []
+                    )
+                }
+                variants_list.append(variant_data)
+            
+            product_data["variants"] = variants_list
+            
             products.append(product_data)
 
-        logger.info(f"✅ Fetched Products with images: {products}")
+        logger.info(f"Fetched Products with images and variants: {products}")
         return products
 
     except Exception as e:
-        logger.error(f"❌ Error fetching products: {str(e)}")
+        logger.error(f"Error fetching products: {str(e)}")
         return []
+
 
 
 def delete_product(request, product_id):
@@ -301,7 +388,7 @@ def delete_product(request, product_id):
     except Exception as e:
         messages.error(request, f"Error deleting product: {str(e)}")
 
-    return redirect("admin_dashboard")
+    return redirect("admin_products")
 
 
 def fetch_product_details_orm(product_id):
@@ -334,17 +421,21 @@ def fetch_product_details_orm(product_id):
         "id": product.id,
         "name": product.name,
         "category": product.category,
+        "subcategory": product.subcategory,
         "price": product.price,
         "original_price": product.original_price,
         "description": product.description,
+        "fit": product.fit,
+        "sizes": product.sizes,
+        "stock": product.stock,
         "image_url": main_image_url,
         "additional_images": additional_images,
     }
     return product_details
 
 
-def orm_update_product(product_id, name=None, category=None, price=None, original_price=None,
-                       description=None, image_file=None, additional_images=None):
+def orm_update_product(product_id, name=None, category=None, subcategory=None, price=None, original_price=None,
+                       description=None, sizes=None, fit=None, stock=None, image_file=None, additional_images=None):
     """
     Update an existing product using Django ORM.
     Image files are uploaded to Supabase storage via upload_image, and any replaced images are removed.
@@ -364,8 +455,11 @@ def orm_update_product(product_id, name=None, category=None, price=None, origina
         product.name = name
         updated_fields.append("name")
     if category is not None:
-        product.category = category
-        updated_fields.append("category")
+        product.category_id = int(category)
+        updated_fields.append("category_id")
+    if subcategory is not None:
+        product.subcategory_id = int(subcategory)
+        updated_fields.append("subcategory_id")
     if price is not None:
         product.price = float(price)
         updated_fields.append("price")
@@ -375,6 +469,18 @@ def orm_update_product(product_id, name=None, category=None, price=None, origina
     if description is not None:
         product.description = description
         updated_fields.append("description")
+    if sizes is not None:
+        product.sizes = sizes
+        updated_fields.append("sizes")
+    if fit is not None:
+        product.fit = fit
+        updated_fields.append("fit")
+    if stock is not None:
+        try:
+            product.stock = int(stock)
+        except ValueError:
+            product.stock = 0
+        updated_fields.append("stock")
 
     # Handle main image update
     if image_file:
@@ -547,7 +653,8 @@ class CartService:
                 'name',
                 'price',
                 'image_url',
-                'category'
+                'category',
+                'product_id__admin_id__company_name'  # Seller details
             ))
         except User.DoesNotExist:
             return []
@@ -611,6 +718,8 @@ def get_products_by_ids(product_ids):
             "price": product.price,
             "original_price": product.original_price,
             "description": product.description,
+            # Add seller (store) name from the related AdminStore model
+            "seller_name": product.admin_id.company_name if product.admin_id else "Unknown Store"
             # If you have additional fields, include them here as needed.
         }
         # Convert the main image URL to a public URL if it exists
@@ -625,7 +734,7 @@ def get_products_by_ids(product_ids):
     return products
 
 
-def create_order(user_id, total_price, payment_method, address_data, shipping, discount):
+def create_order(user_id, total_price, payment_method, address_data, shipping, discount, order_admin):
     """
     Create an Order record using Django ORM.
     The address_data is serialized to JSON for storage.
@@ -636,7 +745,8 @@ def create_order(user_id, total_price, payment_method, address_data, shipping, d
 
         # Create the order.
         order = Order.objects.create(
-            user_id=user,  # Assuming Order has a ForeignKey field 'user'
+            user_id=user,
+            admin=order_admin,# Assuming Order has a ForeignKey field 'user'
             total_price=total_price,
             payment_method=payment_method,
             # Storing address as a JSON string
@@ -685,7 +795,8 @@ def create_order_items(order_id, cart):
                 # Assuming price is stored as Decimal
                 price=item.get("price"),
                 quantity=requested_qty,
-                total_price=requested_qty * item.get("price")
+                total_price=requested_qty * item.get("price"),
+                admin=product.admin_id
             )
 
             # Deduct stock

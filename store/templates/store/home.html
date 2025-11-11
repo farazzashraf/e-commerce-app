@@ -1,28 +1,17 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <link rel="stylesheet" href="{% static 'css/home.css' %}">
-
-    <script src="{% static 'js/home.js' %}" defer></script>
-
-    <title>Home - Thrift Shop</title>
-
-</head>
-
-<body>
-
-    <!-- Include Header -->
-    {% include 'store/header.html' %}
-
-    {% include "store/product_list.html" with products=products %}
-
-    {% include "store/footer.html" %}
-
-</body>
-
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="{% static 'css/home.css' %}">
+        <script src="{% static 'js/home.js' %}" defer></script>
+        <title>Home - Thrift Shop</title>
+    </head>
+    <body>
+        <!-- Include Header -->
+        {% include 'store/header.html' %}
+        {% include "store/product_list.html" with products=products %}
+        {% include "store/footer.html" %}
+    </body>
 </html>

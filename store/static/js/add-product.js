@@ -152,12 +152,12 @@ async function fetchSubcategories(categoryId) {
 // Function to populate the category dropdown
 function populateCategoryDropdown(categories) {
     const categorySelect = document.getElementById('category');
-    
+
     // Clear existing options except the first one
     while (categorySelect.options.length > 1) {
         categorySelect.remove(1);
     }
-    
+
     // Add new options
     categories.forEach(category => {
         const option = document.createElement('option');
@@ -170,10 +170,10 @@ function populateCategoryDropdown(categories) {
 // Function to populate the subcategory dropdown
 function populateSubcategoryDropdown(subcategories) {
     const subcategorySelect = document.getElementById('subcategory');
-    
+
     // Clear existing options
     subcategorySelect.innerHTML = '';
-    
+
     // Add default option
     const defaultOption = document.createElement('option');
     defaultOption.value = '';
@@ -181,7 +181,7 @@ function populateSubcategoryDropdown(subcategories) {
     defaultOption.disabled = true;
     defaultOption.selected = true;
     subcategorySelect.appendChild(defaultOption);
-    
+
     // Add new options
     subcategories.forEach(subcategory => {
         const option = document.createElement('option');
@@ -196,11 +196,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Get the category and subcategory select elements
     const categorySelect = document.getElementById('category');
     const subcategorySelect = document.getElementById('subcategory');
-    
+
     // Fetch and populate categories
     const categories = await fetchCategories();
     populateCategoryDropdown(categories);
-    
+
     // Add event listener for category change
     categorySelect.addEventListener('change', async (event) => {
         const categoryId = event.target.value;
@@ -208,7 +208,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Fetch and populate subcategories based on selected category
             const subcategories = await fetchSubcategories(categoryId);
             populateSubcategoryDropdown(subcategories);
-            
+
             // Enable subcategory select
             subcategorySelect.disabled = false;
         } else {
@@ -216,5 +216,72 @@ document.addEventListener('DOMContentLoaded', async () => {
             subcategorySelect.innerHTML = '<option value="" disabled selected>Select a Category First</option>';
             subcategorySelect.disabled = true;
         }
+    });
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    const variantsContainer = document.getElementById('variantsContainer');
+    const addVariantBtn = document.getElementById('addVariantBtn');
+    let variantCount = 0;
+
+    addVariantBtn.addEventListener('click', () => {
+        variantCount++;
+        const variantDiv = document.createElement('div');
+        variantDiv.className = 'variant-block border border-gray-700 p-4 mb-4 relative rounded';
+        variantDiv.innerHTML = `
+          <div class="flex justify-between items-center mb-2">
+            <h4 class="font-semibold text-gray-300">Variant ${variantCount}</h4>
+            <button type="button" class="delete-variant text-red-500 text-sm">Delete</button>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-gray-300 mb-1">Color:</label>
+              <input type="text" name="variants[${variantCount}][color]" required class="bg-navy-light border border-gray-700 p-2 w-full rounded text-white focus:outline-none focus:ring focus:ring-blue-500">
+            </div>
+            <div>
+              <label class="block text-gray-300 mb-1">Size:</label>
+              <input type="text" name="variants[${variantCount}][size]" placeholder="e.g. S, M, L, XL" class="bg-navy-light border border-gray-700 p-2 w-full rounded text-white focus:outline-none focus:ring focus:ring-blue-500">
+            </div>
+            <div>
+              <label class="block text-gray-300 mb-1">Fit:</label>
+              <input type="text" name="variants[${variantCount}][fit]" placeholder="e.g. Slim, Regular" class="bg-navy-light border border-gray-700 p-2 w-full rounded text-white focus:outline-none focus:ring focus:ring-blue-500">
+            </div>
+            <div>
+              <label class="block text-gray-300 mb-1">Price (₹):</label>
+              <input type="number" name="variants[${variantCount}][price]" step="0.01" required class="bg-navy-light border border-gray-700 p-2 w-full rounded text-white focus:outline-none focus:ring focus:ring-blue-500">
+            </div>
+            <div>
+              <label class="block text-gray-300 mb-1">Stock:</label>
+              <input type="number" name="variants[${variantCount}][stock]" min="0" required class="bg-navy-light border border-gray-700 p-2 w-full rounded text-white focus:outline-none focus:ring focus:ring-blue-500">
+            </div>
+            <div>
+              <label class="block text-gray-300 mb-1">Main Variant Image:</label>
+              <input type="file" name="variants[${variantCount}][image]" accept="image/*" required class="bg-navy-light border border-gray-700 p-2 w-full rounded text-white focus:outline-none focus:ring focus:ring-blue-500">
+            </div>
+            <div class="col-span-2">
+              <label class="block text-gray-300 mb-1">Additional Variant Images:</label>
+              <div id="variantAdditionalImagesContainer-${variantCount}" class="space-y-2"></div>
+              <button type="button" class="add-additional-image text-blue-400 mt-2 hover:text-blue-300" data-variant="${variantCount}">
+                Add Additional Image
+              </button>
+            </div>
+          </div>
+        `;
+        // Delete functionality for this variant block
+        variantDiv.querySelector('.delete-variant').addEventListener('click', () => {
+            variantDiv.remove();
+        });
+        // Event listener for adding additional images for this variant
+        variantDiv.querySelector('.add-additional-image').addEventListener('click', (e) => {
+            const currentVariant = e.target.getAttribute('data-variant');
+            const container = document.getElementById(`variantAdditionalImagesContainer-${currentVariant}`);
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.name = `variants[${currentVariant}][additional_images][]`;
+            input.accept = 'image/*';
+            input.className = 'bg-navy-light border border-gray-700 p-2 w-full rounded text-white focus:outline-none focus:ring focus:ring-blue-500';
+            container.appendChild(input);
+        });
+        variantsContainer.appendChild(variantDiv);
     });
 });

@@ -151,6 +151,12 @@ class ProductOverlay {
                 "This premium product offers excellent quality and value.";
         }
 
+        const storeNameElement = productCard.querySelector('.store-name');
+        let storeName = 'Unknown Store';
+        if (storeNameElement) {
+            storeName = storeNameElement.textContent.replace('Store:', '').trim();
+        }
+
         // === Updated image extraction logic ===
         let images = [];
         if (productCard.dataset.images) {
@@ -185,7 +191,8 @@ class ProductOverlay {
             discountPercentage: discountPercentage,
             description: description,
             images: this.productImages,
-            stock: stock
+            stock: stock,
+            storeName: storeName // Added store name property
         };
 
         // ✅ Update overlay content only if images exist
@@ -205,6 +212,9 @@ class ProductOverlay {
         // Set product details
         this.overlay.querySelector('.product-title').textContent = this.currentProduct.name;
         this.overlay.querySelector('.product-category').textContent = this.currentProduct.category;
+
+        // ===== NEW: Set store name in the overlay =====
+        this.overlay.querySelector('.product-store-name').textContent = this.currentProduct.storeName;
 
         // Set pricing
         const originalPriceEl = this.overlay.querySelector('.product-original-price');

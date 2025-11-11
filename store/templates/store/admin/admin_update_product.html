@@ -1,92 +1,162 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Update Product</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/admin.css' %}">
-
-    <script src="{% static 'js/admin-update-product.js' %}" defer></script>
-</head>
-
-<body>
-    <div class="container mx-auto px-4 py-8">
-        <h2 class="text-2xl font-bold mb-4">Update Product</h2>
-        <form id="updateProductForm" method="POST" action="{% url 'admin_update' product.id %}"
-            enctype="multipart/form-data" class="bg-white p-6 rounded shadow-md">
-
-            {% csrf_token %}
-            <label class="block mb-2">Name:</label>
-            <input type="text" name="name" value="{{ product.name }}" class="w-full p-2 border rounded mb-4">
-
-            <div class="mb-4">
-                <label for="category" class="block text-gray-700">Category:</label>
-                <select id="category" name="category" required class="border border-gray-300 p-2 w-full">
-                    <option value="" disabled>Select a category</option>
-                    <option value="Jackets" {% if product.category == "Jackets" %}selected{% endif %}>Jackets</option>
-                    <option value="Pants" {% if product.category == "Pants" %}selected{% endif %}>Pants</option>
-
-                </select>
-            </div>
-
-            <label class="block mb-2">Price:</label>
-            <input type="text" name="price" value="{{ product.price }}" class="w-full p-2 border rounded mb-4">
-
-            <label class="block mb-2">Original Price:</label>
-            <input type="text" name="originalprice" value="{{ product.original_price }}"
-                class="w-full p-2 border rounded mb-4">
-
-            <label class="block mb-2">Description:</label>
-            <textarea name="description" class="w-full p-2 border rounded mb-4">{{ product.description }}</textarea>
-
-            <!-- ✅ Show Current Main Image -->
-            <label class="block mb-2">Current Main Image:</label>
-            {% if product.image_url %}
-            <img src="{{ product.image_url }}" alt="{{ product.name }}" class="w-32 h-32 object-cover mb-4">
-            {% else %}
-            <p>No image available</p>
-            {% endif %}
-
-            <!-- ✅ Upload New Main Image -->
-            <label class="block mb-2">Upload New Main Image:</label>
-            <input type="file" name="image" class="w-full p-2 border rounded mb-4">
-
-            <!-- ✅ Show Current Additional Images -->
-            <label class="block mb-2">Current Additional Images:</label>
-            <div class="flex gap-2 mb-4">
-                {% if product.additional_images %}
-                {% for img_url in product.additional_images %}
-                <div class="relative">
-                    <img src="{{ img_url }}" alt="Additional Image" class="w-20 h-20 object-cover border rounded">
-
-                    <input type="file" name="additional_image_{{ forloop.counter }}" class="text-sm">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Update Product</title>
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"
+              rel="stylesheet" />
+        <link rel="stylesheet" href="{% static 'css/admin.css' %}" />
+        <script type="module" src="{% static 'js/admin-update-product.js' %}" defer></script>
+    </head>
+    <body class="bg-gray-100">
+        <nav class="bg-white shadow-md">
+            <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+                <h1 class="text-xl font-bold">Update Product</h1>
+                <div class="flex space-x-4">
+                    <a href="{% url 'admin_dashboard' %}"
+                       class="bg-blue-500 text-white px-4 py-2 rounded">Dashboard</a>
+                    <a href="{% url 'admin_login' %}"
+                       class="bg-red-500 text-white px-4 py-2 rounded">Logout</a>
                 </div>
-                {% endfor %}
-                {% else %}
-                <p>No additional images available</p>
-                {% endif %}
             </div>
-
-            <!-- Error container for client-side validation -->
-            <div id="errorContainer" class="text-red-600 mt-2" style="display: none;"></div>
-
-            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Update</button>
-            <a href="{% url 'admin_dashboard' %}" class="ml-4 text-gray-600">Cancel</a>
-        </form>
-    </div>
-
-    <!-- Loading Spinner Overlay -->
-    <div id="loadingOverlay" class="overlay">
-        <div class="spinner"></div>
-    </div>
-
-    <!-- Success Message -->
-    <div id="successMessage" class="success-message">
-        Product updated successfully!
-    </div>
-</body>
-
+        </nav>
+        <div class="max-w-7xl mx-auto px-4 py-8">
+            <form id="updateProductForm"
+                  method="POST"
+                  action="{% url 'admin_update' product.id %}"
+                  enctype="multipart/form-data"
+                  class="bg-white rounded-lg shadow-md p-6">
+                {% csrf_token %}
+                <!-- Product Name -->
+                <div class="mb-4">
+                    <label for="name" class="block text-gray-700">Product Name:</label>
+                    <input type="text"
+                           id="name"
+                           name="name"
+                           value="{{ product.name }}"
+                           required
+                           class="border border-gray-300 p-2 w-full" />
+                </div>
+                <!-- Dynamic Category Selection -->
+                <div class="mb-4">
+                    <label for="category" class="block text-gray-700">Category:</label>
+                    <select id="category"
+                            name="category"
+                            required
+                            class="border border-gray-300 p-2 w-full"
+                            data-selected="{{ product.category.id }}">
+                        <option value="" disabled>Select a Category</option>
+                    </select>
+                </div>
+                <!-- Dynamic Subcategory Selection -->
+                <div class="mb-4">
+                    <label for="subcategory" class="block text-gray-700">Subcategory:</label>
+                    <select id="subcategory"
+                            name="subcategory"
+                            required
+                            class="border border-gray-300 p-2 w-full"
+                            data-selected="{{ product.subcategory.id }}">
+                        <option value="" disabled>Select a Category First</option>
+                    </select>
+                </div>
+                <!-- Price & Original Price -->
+                <div class="mb-4">
+                    <label for="price" class="block text-gray-700">Price:</label>
+                    <input type="number"
+                           id="price"
+                           name="price"
+                           value="{{ product.price }}"
+                           required
+                           class="border border-gray-300 p-2 w-full"
+                           step="0.01" />
+                </div>
+                <div class="mb-4">
+                    <label for="originalprice" class="block text-gray-700">Original Price:</label>
+                    <input type="number"
+                           id="originalprice"
+                           name="originalprice"
+                           value="{{ product.original_price }}"
+                           required
+                           class="border border-gray-300 p-2 w-full"
+                           step="0.01" />
+                </div>
+                <!-- Description -->
+                <div class="mb-4">
+                    <label for="description" class="block text-gray-700">Description:</label>
+                    <textarea id="description"
+                              name="description"
+                              required
+                              class="border border-gray-300 p-2 w-full">{{ product.description }}</textarea>
+                </div>
+                <!-- Variants -->
+                <div class="mb-4">
+                    <label class="block text-gray-700">Current Variants:</label>
+                    <div id="variantsContainer">
+                        {% for variant in product.variants %}
+                            <div class="variant-entry mb-2 p-2 border rounded">
+                                <label>Size:</label>
+                                <input type="text"
+                                       name="variant_size_{{ forloop.counter }}"
+                                       value="{{ variant.size }}"
+                                       class="border border-gray-300 p-2 w-full" />
+                                <label>Color:</label>
+                                <input type="text"
+                                       name="variant_color_{{ forloop.counter }}"
+                                       value="{{ variant.color }}"
+                                       class="border border-gray-300 p-2 w-full" />
+                                <label>Stock:</label>
+                                <input type="number"
+                                       name="variant_stock_{{ forloop.counter }}"
+                                       value="{{ variant.stock }}"
+                                       class="border border-gray-300 p-2 w-full" />
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <button type="button" id="addVariant" class="mt-2 text-blue-600">Add New Variant</button>
+                </div>
+                <!-- Stock -->
+                <div class="mb-4">
+                    <label for="stock" class="block text-gray-700">Stock:</label>
+                    <input type="number"
+                           id="stock"
+                           name="stock"
+                           value="{{ product.stock }}"
+                           min="0"
+                           required
+                           class="border border-gray-300 p-2 w-full" />
+                </div>
+                <!-- Main Image -->
+                <div class="mb-4">
+                    <label class="block text-gray-700">Current Main Image:</label>
+                    {% if product.image_url %}
+                        <img src="{{ product.image_url }}"
+                             alt="{{ product.name }}"
+                             class="w-32 h-32 object-cover mb-4" />
+                    {% else %}
+                        <p>No image available</p>
+                    {% endif %}
+                </div>
+                <div class="mb-4">
+                    <label for="image" class="block text-gray-700">Upload New Main Image:</label>
+                    <input type="file"
+                           id="image"
+                           name="image"
+                           accept="image/*"
+                           class="border border-gray-300 p-2 w-full" />
+                </div>
+                <!-- Error container for client-side validation -->
+                <div id="errorContainer" class="text-red-600 mt-2" style="display: none;"></div>
+                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Update Product</button>
+                <a href="{% url 'admin_dashboard' %}" class="ml-4 text-gray-600">Cancel</a>
+            </form>
+        </div>
+        <!-- Loading Spinner Overlay -->
+        <div id="loadingOverlay" class="overlay">
+            <div class="spinner"></div>
+        </div>
+        <!-- Success Message -->
+        <div id="successMessage" class="success-message">Product updated successfully!</div>
+    </body>
 </html>

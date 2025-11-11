@@ -1,88 +1,86 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shopping Cart - Thrift Shop</title>
-    <link rel="stylesheet" href="{% static 'css/cart.css' %}">
-    <script src="{% static 'js/cart.js' %}" defer></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="icon" href="{% static 'images/favicon.ico' %}">
-
-</head>
-
-<body>
-    <div id="toast-message" class="toast-message"></div>
-    <div class="cart-container">
-        <div class="cart-header">
-            <h1>Shopping Cart</h1>
-            <span class="item-count">0 Items</span>
-        </div>
-
-        <div class="cart-content">
-            <div class="cart-items">
-                {% for key, product in cart.items %}
-                <div class="cart-item">
-                    <div class="item-image">
-                        <img src="{{ product.image_url }}" alt="{{ product.name }}">
-                    </div>
-                    <div class="item-details">
-                        <h3>{{ product.name }}</h3>
-                        <p class="item-category">{{ product.category }}</p>  <!-- ✅ Added Category -->
-                        <p class="item-unit-price">Price: ₹{{ product.price }}</p>
-                        <div class="quantity-controls">
-                            <button class="quantity-btn decrease" data-id="{{ key }}">
-                                <i class="fas fa-minus"></i>
-                            </button>
-                            <span class="quantity">{{ product.quantity }}</span>
-                            <button class="quantity-btn increase" data-id="{{ key }}">
-                                <i class="fas fa-plus"></i>
-                            </button>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Shopping Cart - Thrift Shop</title>
+        <link rel="stylesheet" href="{% static 'css/cart.css' %}">
+        <script src="{% static 'js/cart.js' %}" defer></script>
+        <link rel="stylesheet"
+              href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+        <link rel="icon" href="{% static 'images/favicon.ico' %}">
+    </head>
+    <body>
+        <div id="toast-message" class="toast-message"></div>
+        <div class="cart-container">
+            <div class="cart-header">
+                <h1>Shopping Cart</h1>
+                <span class="item-count">0 Items</span>
+            </div>
+            <div class="cart-content">
+                <div class="cart-items">
+                    {% for key, product in cart.items %}
+                        <div class="cart-item">
+                            <div class="item-image">
+                                <img src="{{ product.image_url }}" alt="{{ product.name }}">
+                            </div>
+                            <div class="item-details">
+                                <h3>{{ product.name }}</h3>
+                                <p class="item-category">{{ product.category }}</p>
+                                <!-- ✅ Added Category -->
+                                <!-- New line for seller details -->
+                                <p class="seller-details">Store: {{ product.seller_name }}</p>
+                                <p class="item-unit-price">Price: ₹{{ product.price }}</p>
+                                <div class="quantity-controls">
+                                    <button class="quantity-btn decrease" data-id="{{ key }}">
+                                        <i class="fas fa-minus"></i>
+                                    </button>
+                                    <span class="quantity">{{ product.quantity }}</span>
+                                    <button class="quantity-btn increase" data-id="{{ key }}">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="item-price">
+                                <p class="price">Total: ₹{{ product.price|floatformat:2 }}</p>
+                                <button class="remove-item" data-id="{{ key }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
                         </div>
+                    {% empty %}
+                        <p>Your cart is empty.</p>
+                    {% endfor %}
+                </div>
+                <div class="cart-summary">
+                    <h2>Order Summary</h2>
+                    <div class="summary-item">
+                        <span>Subtotal</span>
+                        <span class="subtotal">₹0</span>
                     </div>
-                    <div class="item-price">
-                        <p class="price">Total: ₹{{ product.price|floatformat:2 }}</p>
-                        <button class="remove-item" data-id="{{ key }}">
-                            <i class="fas fa-trash"></i>
-                        </button>
+                    <div class="summary-item">
+                        <span>Shipping</span>
+                        <span>₹99</span>
                     </div>
+                    <div class="summary-item discount">
+                        <span>Discount</span>
+                        <span>-₹0</span>
+                    </div>
+                    <div class="promo-code">
+                        <input type="text" id="promo-code" placeholder="Enter promo code">
+                        <button id="apply-promo-btn">Apply</button>
+                        <button id="cancel-promo-btn" style="display: none;">Cancel</button>
+                        <!-- ✅ Cancel Button -->
+                    </div>
+                    <div class="total">
+                        <span>Total</span>
+                        <span>₹99</span>
+                    </div>
+                    <button class="checkout-btn">Proceed to Checkout</button>
+                    <a href="/" class="continue-shopping">Continue Shopping</a>
                 </div>
-                {% empty %}
-                <p>Your cart is empty.</p>
-                {% endfor %}
-            </div>
-
-
-            <div class="cart-summary">
-                <h2>Order Summary</h2>
-                <div class="summary-item">
-                    <span>Subtotal</span>
-                    <span class="subtotal">₹0</span>
-                </div>
-                <div class="summary-item">
-                    <span>Shipping</span>
-                    <span>₹99</span>
-                </div>
-                <div class="summary-item discount">
-                    <span>Discount</span>
-                    <span>-₹0</span>
-                </div>
-                <div class="promo-code">
-                    <input type="text" id="promo-code" placeholder="Enter promo code">
-                    <button id="apply-promo-btn">Apply</button>
-                    <button id="cancel-promo-btn" style="display: none;">Cancel</button> <!-- ✅ Cancel Button -->
-                </div>                  
-                <div class="total">
-                    <span>Total</span>
-                    <span>₹99</span>
-                </div>
-                <button class="checkout-btn">Proceed to Checkout</button>
-                <a href="/" class="continue-shopping">Continue Shopping</a>
             </div>
         </div>
-    </div>
-</body>
-
+    </body>
 </html>

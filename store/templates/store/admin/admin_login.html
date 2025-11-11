@@ -1,50 +1,52 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Login</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'css/admin.css' %}">
-    <script type="module" src="{% static 'js/admin-login.js' %}" defer></script>
-</head>
-
-<body class="bg-gray-100">
-    <div class="min-h-screen flex items-center justify-center">
-        <div class="bg-white p-8 rounded-lg shadow-md w-96">
-            <h2 class="text-2xl font-bold mb-6 text-center">Admin Login</h2>
-
-            <div id="errorContainer" role="alert"></div>
-
-            <form id="adminLoginForm" class="space-y-4">
-                {% csrf_token %}
-                <div>
-                    <label for="emailInput" class="block text-gray-700 mb-2">Email</label>
-                    <input type="email" id="emailInput" required
-                        class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Enter your email">
-                </div>
-                <div class="relative">
-                    <label for="passwordInput" class="block text-gray-700 mb-2">Password</label>
-                    <input type="password" id="passwordInput" required
-                        class="w-full p-2 pr-10 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Enter your password">
-                    <button type="button" id="togglePassword"
-                        class="absolute top-1/2 -translate-y-1/2 right-3 text-gray-600">
-                        <i class="fas fa-eye text-sm"></i>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Admin Login</title>
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"
+              rel="stylesheet">
+        <link rel="stylesheet"
+              href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+        <link rel="stylesheet" href="{% static 'css/admin.css' %}">
+        <script type="module" src="{% static 'js/admin-login.js' %}" defer></script>
+    </head>
+    <body class="bg-gray-100">
+        <div class="min-h-screen flex items-center justify-center">
+            <div class="bg-white p-8 rounded-lg shadow-md w-96">
+                <h2 class="text-2xl font-bold mb-6 text-center">Admin Login</h2>
+                <div id="errorContainer" role="alert"></div>
+                <form id="adminLoginForm" class="space-y-4">
+                    {% csrf_token %}
+                    <div>
+                        <label for="emailInput" class="block text-gray-700 mb-2">Email</label>
+                        <input type="email"
+                               id="emailInput"
+                               required
+                               class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                               placeholder="Enter your email">
+                    </div>
+                    <div class="relative">
+                        <label for="passwordInput" class="block text-gray-700 mb-2">Password</label>
+                        <input type="password"
+                               id="passwordInput"
+                               required
+                               class="w-full p-2 pr-10 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                               placeholder="Enter your password">
+                        <button type="button"
+                                id="togglePassword"
+                                class="absolute top-1/2 -translate-y-1/2 right-3 text-gray-600">
+                            <i class="fas fa-eye text-sm"></i>
+                        </button>
+                    </div>
+                    <button type="submit"
+                            id="submitButton"
+                            class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50">
+                        Login
                     </button>
-                </div>
-
-                <button type="submit" id="submitButton"
-                    class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50">
-                    Login
-                </button>
-            </form>
+                </form>
+            </div>
         </div>
-    </div>
-</body>
-
+    </body>
 </html>

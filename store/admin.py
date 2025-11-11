@@ -20,7 +20,7 @@
 # admin.site.register(AdminStore, AdminStoreAdmin)
 
 from django.contrib import admin
-from .models import Category, Subcategory, Product, AdminStore
+from .models import Category, Subcategory, Product, AdminStore, Order, OrderItem
 
 # Admin for Category
 class CategoryAdmin(admin.ModelAdmin):
@@ -84,14 +84,26 @@ class ProductAdmin(admin.ModelAdmin):
         updated = queryset.update(is_active=False)
         self.message_user(request, f"{updated} product(s) deactivated successfully.")
     deactivate_selected.short_description = "Deactivate selected products"
+    
+class OrderInline(admin.TabularInline):
+    model = Order
+    fields = ('id', 'user_id', 'total_price', 'status', 'created_at')
+    readonly_fields = ('id', 'user_id', 'total_price', 'status', 'created_at')
+    extra = 0
+
+class OrderItemInline(admin.TabularInline):
+    model = OrderItem
+    fields = ('product_id', 'name', 'quantity', 'price', 'total_price', 'created_at')
+    readonly_fields = ('product_id', 'name', 'quantity', 'price', 'total_price', 'created_at')
+    extra = 0
 
 # Admin for Vendor Management
 class AdminStoreAdmin(admin.ModelAdmin):
     list_display = ('company_name', 'email', 'phone', 'is_approved')
     list_filter = ('is_approved',)
     search_fields = ('company_name', 'email')
-    actions = ['approve_selected', 'disapprove_selected']
-
+    inlines = [OrderInline]
+    
     def approve_selected(self, request, queryset):
         updated = queryset.update(is_approved=True)
         self.message_user(request, f"{updated} seller(s) approved successfully.")
@@ -102,8 +114,16 @@ class AdminStoreAdmin(admin.ModelAdmin):
         self.message_user(request, f"{updated} seller(s) disapproved successfully.")
     disapprove_selected.short_description = "Disapprove selected sellers"
 
+class OrderAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user_id', 'total_price', 'status', 'admin', 'created_at')
+    list_filter = ('status', 'admin')
+    search_fields = ('id', 'user_id__name', 'admin__company_name')
+    inlines = [OrderItemInline]
+
+
 # Register all models with their admin classes
 admin.site.register(Category, CategoryAdmin)
 admin.site.register(Subcategory, SubcategoryAdmin)
 admin.site.register(Product, ProductAdmin)
 admin.site.register(AdminStore, AdminStoreAdmin)
+admin.site.register(Order, OrderAdmin)

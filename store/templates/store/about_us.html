@@ -1,13 +1,13 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lumiere - Our Journey Begins</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <style>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Lumiere - Our Journey Begins</title>
+        <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+              rel="stylesheet">
+        <style>
         :root {
             --primary-color: #FF5E4C;
             --secondary-color: #4A90E2;
@@ -49,151 +49,136 @@
             /* This will help maintain the aspect ratio if the image isn't square */
         }
 
-    </style>
-</head>
-
-<body class="text-gray-800">
-    <nav class="container mx-auto px-4 py-4 flex justify-between items-center max-w-6xl">
-        <div class="logo">
-            <a href="/">
-                <img src="{% static 'images/logo2.webp' %}?v={{ timestamp }}" alt="Lumiere Logo" class="h-16 w-auto">
-            </a>
-        </div>
-        <div class="nav-links flex space-x-6">
-            <!-- <a href="#" class="text-gray-700 hover:text-red-500 transition">Home</a> -->
-            <a href="#" class="text-gray-700 hover:text-red-500 transition">Shop</a>
-            <!-- <a href="#" class="text-gray-700 hover:text-red-500 transition">About</a> -->
-            <a href="#" class="text-gray-700 hover:text-red-500 transition">Contact</a>
-        </div>
-    </nav>
-
-    <div class="container mx-auto px-4 py-12">
-        <section class="text-center mb-16">
-            <h1 class="text-5xl font-bold mb-6 gradient-text">Lumiere</h1>
-            <p class="text-xl text-gray-600 max-w-3xl mx-auto">
-                Reimagining Fashion, One Garment at a Time
-            </p>
-        </section>
-
-        <section class="max-w-4xl mx-auto mb-16">
-            <div class="grid md:grid-cols-2 gap-12 items-center">
-                <div>
-                    <h2 class="text-3xl font-semibold mb-6 text-gray-800">Our Story</h2>
-                    <p class="text-lg text-gray-700 leading-relaxed mb-4">
-                        Born in the vibrant ecosystem of Bangalore, Lumiere is more than just a thrift clothing store.
-                        We're a vision of sustainable fashion, starting with a simple belief: great style shouldn't cost
-                        the earth.
-                    </p>
-                    <p class="text-lg text-gray-700 leading-relaxed">
-                        Our journey began with a passion to challenge fast fashion and create a more conscious approach
-                        to clothing consumption.
-                    </p>
-                </div>
-                <div class="flex items-center justify-center">
-                    <div class="bg-white rounded-lg shadow-xl p-6">
-                        <img src="{% static 'images/logo2.webp' %}?v={{ timestamp }}" alt="Lumiere Founders" class="rounded-lg">
-                    </div>
-                </div>
+        </style>
+    </head>
+    <body class="text-gray-800">
+        <nav class="container mx-auto px-4 py-4 flex justify-between items-center max-w-6xl">
+            <div class="logo">
+                <a href="/">
+                    <img src="{% static 'images/logo2.webp' %}?v={{ timestamp }}"
+                         alt="Lumiere Logo"
+                         class="h-16 w-auto">
+                </a>
             </div>
-        </section>
-
-        <div class="section-divider"></div>
-
-        <section class="max-w-4xl mx-auto mb-16">
-            <h2 class="text-3xl font-semibold mb-8 text-center">Our Core Values</h2>
-            <div class="grid md:grid-cols-3 gap-8">
-                <div class="bg-white rounded-lg shadow-md p-6 text-center">
-                    <div class="text-5xl mb-4">♻️</div>
-                    <h3 class="text-xl font-semibold mb-3">Sustainability</h3>
-                    <p class="text-gray-600">
-                        We believe in giving clothing a second life, reducing waste and environmental impact.
-                    </p>
-                </div>
-                <div class="bg-white rounded-lg shadow-md p-6 text-center">
-                    <div class="text-5xl mb-4">💡</div>
-                    <h3 class="text-xl font-semibold mb-3">Innovation</h3>
-                    <p class="text-gray-600">
-                        Leveraging technology and creativity to make second-hand shopping exciting and accessible.
-                    </p>
-                </div>
-                <div class="bg-white rounded-lg shadow-md p-6 text-center">
-                    <div class="text-5xl mb-4">🤝</div>
-                    <h3 class="text-xl font-semibold mb-3">Community</h3>
-                    <p class="text-gray-600">
-                        Building a community of conscious consumers who care about style and sustainability.
-                    </p>
-                </div>
+            <div class="nav-links flex space-x-6">
+                <!-- <a href="#" class="text-gray-700 hover:text-red-500 transition">Home</a> -->
+                <a href="#" class="text-gray-700 hover:text-red-500 transition">Shop</a>
+                <!-- <a href="#" class="text-gray-700 hover:text-red-500 transition">About</a> -->
+                <a href="#" class="text-gray-700 hover:text-red-500 transition">Contact</a>
             </div>
-        </section>
-
-        <div class="section-divider"></div>
-
-        <section class="max-w-4xl mx-auto mb-16">
-            <h2 class="text-3xl font-semibold mb-8 text-center">Our Startup Journey</h2>
-            <div class="bg-white rounded-lg shadow-md p-8">
-                <div class="grid md:grid-cols-2 gap-6">
+        </nav>
+        <div class="container mx-auto px-4 py-12">
+            <section class="text-center mb-16">
+                <h1 class="text-5xl font-bold mb-6 gradient-text">Lumiere</h1>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">Reimagining Fashion, One Garment at a Time</p>
+            </section>
+            <section class="max-w-4xl mx-auto mb-16">
+                <div class="grid md:grid-cols-2 gap-12 items-center">
                     <div>
-                        <h3 class="text-2xl font-semibold mb-4 text-gray-800">Where We Are</h3>
-                        <ul class="space-y-4 text-gray-700">
-                            <li class="flex items-center">
-                                <span class="mr-3 text-green-500">✓</span>
-                                Concept Development Complete
-                            </li>
-                            <li class="flex items-center">
-                                <span class="mr-3 text-green-500">✓</span>
-                                Initial Inventory Sourcing
-                            </li>
-                            <li class="flex items-center">
-                                <span class="mr-3 text-yellow-500">⏳</span>
-                                Website Development
-                            </li>
-                            <li class="flex items-center">
-                                <span class="mr-3 text-yellow-500">⏳</span>
-                                Marketing Strategy
-                            </li>
-                        </ul>
+                        <h2 class="text-3xl font-semibold mb-6 text-gray-800">Our Story</h2>
+                        <p class="text-lg text-gray-700 leading-relaxed mb-4">
+                            Born in the vibrant ecosystem of Bangalore, Lumiere is more than just a thrift clothing store.
+                            We're a vision of sustainable fashion, starting with a simple belief: great style shouldn't cost
+                            the earth.
+                        </p>
+                        <p class="text-lg text-gray-700 leading-relaxed">
+                            Our journey began with a passion to challenge fast fashion and create a more conscious approach
+                            to clothing consumption.
+                        </p>
                     </div>
-                    <div>
-                        <h3 class="text-2xl font-semibold mb-4 text-gray-800">Our Roadmap</h3>
-                        <ul class="space-y-4 text-gray-700">
-                            <li class="flex items-center">
-                                <span class="mr-3">🚀</span>
-                                Soft Launch in Bangalore
-                            </li>
-                            <li class="flex items-center">
-                                <span class="mr-3">🌍</span>
-                                Expand to Other Metro Cities
-                            </li>
-                            <li class="flex items-center">
-                                <span class="mr-3">💻</span>
-                                Full E-commerce Platform
-                            </li>
-                            <li class="flex items-center">
-                                <span class="mr-3">🤝</span>
-                                Sustainable Brand Partnerships
-                            </li>
-                        </ul>
+                    <div class="flex items-center justify-center">
+                        <div class="bg-white rounded-lg shadow-xl p-6">
+                            <img src="{% static 'images/logo2.webp' %}?v={{ timestamp }}"
+                                 alt="Lumiere Founders"
+                                 class="rounded-lg">
+                        </div>
                     </div>
                 </div>
-            </div>
-        </section>
-
-        <section class="text-center bg-gray-100 py-16 rounded-lg">
-            <h2 class="text-3xl font-semibold mb-6 gradient-text">Join Our Fashion Revolution</h2>
-            <p class="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
-                We're just getting started, and we invite you to be part of our sustainable fashion journey.
-            </p>
-            <button
-                class="bg-red-500 text-white px-8 py-3 rounded-full text-lg font-semibold hover:bg-red-600 transition">
-                Stay Updated
-            </button>
-        </section>
-
-        <footer class="text-center mt-12 text-gray-600">
-            <p>📍 Based in Bangalore, Karnataka</p>
-            <p>© 2024 Lumiere. All rights reserved.</p>
-        </footer>
-    </div>
-</body>
-
+            </section>
+            <div class="section-divider"></div>
+            <section class="max-w-4xl mx-auto mb-16">
+                <h2 class="text-3xl font-semibold mb-8 text-center">Our Core Values</h2>
+                <div class="grid md:grid-cols-3 gap-8">
+                    <div class="bg-white rounded-lg shadow-md p-6 text-center">
+                        <div class="text-5xl mb-4">♻️</div>
+                        <h3 class="text-xl font-semibold mb-3">Sustainability</h3>
+                        <p class="text-gray-600">We believe in giving clothing a second life, reducing waste and environmental impact.</p>
+                    </div>
+                    <div class="bg-white rounded-lg shadow-md p-6 text-center">
+                        <div class="text-5xl mb-4">💡</div>
+                        <h3 class="text-xl font-semibold mb-3">Innovation</h3>
+                        <p class="text-gray-600">Leveraging technology and creativity to make second-hand shopping exciting and accessible.</p>
+                    </div>
+                    <div class="bg-white rounded-lg shadow-md p-6 text-center">
+                        <div class="text-5xl mb-4">🤝</div>
+                        <h3 class="text-xl font-semibold mb-3">Community</h3>
+                        <p class="text-gray-600">Building a community of conscious consumers who care about style and sustainability.</p>
+                    </div>
+                </div>
+            </section>
+            <div class="section-divider"></div>
+            <section class="max-w-4xl mx-auto mb-16">
+                <h2 class="text-3xl font-semibold mb-8 text-center">Our Startup Journey</h2>
+                <div class="bg-white rounded-lg shadow-md p-8">
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="text-2xl font-semibold mb-4 text-gray-800">Where We Are</h3>
+                            <ul class="space-y-4 text-gray-700">
+                                <li class="flex items-center">
+                                    <span class="mr-3 text-green-500">✓</span>
+                                    Concept Development Complete
+                                </li>
+                                <li class="flex items-center">
+                                    <span class="mr-3 text-green-500">✓</span>
+                                    Initial Inventory Sourcing
+                                </li>
+                                <li class="flex items-center">
+                                    <span class="mr-3 text-yellow-500">⏳</span>
+                                    Website Development
+                                </li>
+                                <li class="flex items-center">
+                                    <span class="mr-3 text-yellow-500">⏳</span>
+                                    Marketing Strategy
+                                </li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-semibold mb-4 text-gray-800">Our Roadmap</h3>
+                            <ul class="space-y-4 text-gray-700">
+                                <li class="flex items-center">
+                                    <span class="mr-3">🚀</span>
+                                    Soft Launch in Bangalore
+                                </li>
+                                <li class="flex items-center">
+                                    <span class="mr-3">🌍</span>
+                                    Expand to Other Metro Cities
+                                </li>
+                                <li class="flex items-center">
+                                    <span class="mr-3">💻</span>
+                                    Full E-commerce Platform
+                                </li>
+                                <li class="flex items-center">
+                                    <span class="mr-3">🤝</span>
+                                    Sustainable Brand Partnerships
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <section class="text-center bg-gray-100 py-16 rounded-lg">
+                <h2 class="text-3xl font-semibold mb-6 gradient-text">Join Our Fashion Revolution</h2>
+                <p class="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
+                    We're just getting started, and we invite you to be part of our sustainable fashion journey.
+                </p>
+                <button class="bg-red-500 text-white px-8 py-3 rounded-full text-lg font-semibold hover:bg-red-600 transition">
+                    Stay Updated
+                </button>
+            </section>
+            <footer class="text-center mt-12 text-gray-600">
+                <p>📍 Based in Bangalore, Karnataka</p>
+                <p>© 2024 Lumiere. All rights reserved.</p>
+            </footer>
+        </div>
+    </body>
 </html>

@@ -15,6 +15,7 @@ import os
 from dotenv import load_dotenv
 from decimal import Decimal
 import datetime
+from django.utils import timezone
 from django.contrib import messages
 from functools import wraps
 import logging
@@ -29,6 +30,10 @@ from .services.orm_queries import CartService
 import difflib
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.db.models import Prefetch
+from django.conf.urls.static import static
+from django.db.models import Sum, Count, Avg
+
 
 import traceback
 # Ensure your Order model is correctly imported
@@ -43,6 +48,7 @@ from django.db.models import Q
 from django.template.loader import render_to_string
 from django.contrib.auth import authenticate
 from django.contrib.auth import authenticate, login
+from django.core.cache import cache
 
 # Load environment variables from .env file
 # load_dotenv()
@@ -67,6 +73,11 @@ ADMIN_EMAIL = os.getenv("ADMIN_EMAIL")
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD")
 ADMIN_UID = os.getenv("ADMIN_UID")
 
+
+def clear_products_cache():
+    cache.delete("all_products_with_variants")
+
+
 def seller_approved_required(view_func):
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
@@ -79,7 +90,8 @@ def seller_approved_required(view_func):
                     "message": "Your seller account is pending approval. Please wait for an admin to approve your account."
                 })
         except AdminStore.DoesNotExist:
-            messages.error(request, "Seller account not found. Please sign up as a seller.")
+            messages.error(
+                request, "Seller account not found. Please sign up as a seller.")
             return redirect("seller_signup")
         return view_func(request, *args, **kwargs)
     return _wrapped_view
@@ -147,7 +159,7 @@ def check_email(request):
             if email and is_email_registered(email):
                 return JsonResponse({"success": False, "error": "Email is already registered."}, status=400)
             else:
-                return JsonResponse({"success": True})
+                return JsonResponse({"success": True, 'message': 'Email checked'})
 
         except Exception as e:
             return JsonResponse({"success": False, "error": str(e)}, status=500)
@@ -221,6 +233,7 @@ def firebase_auth(request):
         logger.error(f"Error in firebase_auth: {str(e)}")
         return JsonResponse({"success": False, "error": str(e)}, status=500)
 
+
 def fuzzy_search(query, text, threshold=0.5):
     """
     Returns True if the query approximately matches any word in text.
@@ -234,6 +247,7 @@ def fuzzy_search(query, text, threshold=0.5):
             return True
     return False
 
+
 def home(request):
     """Home Page - Allow all users to browse, require login only on interaction"""
     uid = request.session.get("uid")
@@ -243,19 +257,33 @@ def home(request):
     user = get_user_by_uid(uid) if uid else None
     user_name = user.name if user else None
     user_email = user.email if user else None
-    
-    
-    # Fetch all products
-    products = get_all_products()
-    
-    """Display products based on category or search query"""
-    category = request.GET.get("category", "").strip().lower()
 
-    
-    if category:  # Only filter if a category is explicitly selected
-        products = [p for p in products if p.get("category", "").lower() == category]
-        
-    # Search query across all relevant fields with fuzzy matching
+    # Fetch all products (assumed to include keys like category__slug, etc.)
+    products = get_all_products()
+
+    # Get selected filters from query parameters (using slugs)
+    selected_category = request.GET.get('category')
+    selected_subcategory = request.GET.get('subcategory')
+
+    # Fetch active categories with their subcategories
+    categories = Category.objects.filter(is_active=True).prefetch_related(
+        Prefetch('subcategories',
+                 queryset=Subcategory.objects.filter(is_active=True))
+    )
+
+    if selected_category:
+        products = [
+            p for p in products
+            if p.get("category__slug", "").lower() == selected_category.lower()
+        ]
+
+    if selected_subcategory:
+        products = [
+            p for p in products
+            if p.get("subcategory__slug", "").lower() == selected_subcategory.lower()
+        ]
+
+    # Search query across relevant fields (adjust field names if needed)
     query = request.GET.get("q", "").strip()
     if query:
         query = query.lower()
@@ -263,39 +291,45 @@ def home(request):
             p for p in products if any(
                 fuzzy_search(query, str(p[field]).lower())
                 for field in [
-                    "name", "category", "description", "price", "original_price", "created_at",
-                    "image_url", "image_url2", "image_url3", "image_url4"
+                    "name", "category__name", "description", "price",
+                    "original_price", "created_at", "image_url",
+                    "image_url2", "image_url3", "image_url4"
                 ] if p.get(field)
             )
         ]
-        
-     # Retrieve sort option from the query parameters, default to 'featured'
+
+    # Retrieve and apply sort option
     sort_option = request.GET.get("sort", "featured")
-    
-    # Sort the products list based on the sort_option
     if sort_option == "price-low":
         products.sort(key=lambda p: p.get("price", 0))
     elif sort_option == "price-high":
         products.sort(key=lambda p: p.get("price", 0), reverse=True)
     elif sort_option == "newest":
-        # Assuming 'created_at' is in a sortable format (e.g., ISO date string or datetime object)
         products.sort(key=lambda p: p.get("created_at", ""), reverse=True)
-    # Otherwise, 'featured' or any other default ordering can be handled here
-        
+    # For 'featured' or any other sort, you can add additional sorting logic here
+
+    # --- Fetch all approved sellers (stores) ---
+    sellers = AdminStore.objects.filter(
+        is_approved=True).order_by('company_name')
+    logger.debug(f"Sellers count: {sellers.count()}")
+
+    context = {
+        "products": products,
+        "user_name": user_name,
+        "user_email": user_email,
+        "query": query,
+        "sort_option": sort_option,
+        "categories": categories,
+        "selected_category": selected_category,
+        "selected_subcategory": selected_subcategory,
+        "sellers": sellers,  # Pass the sellers queryset here.
+    }
 
     return render(
         request,
         "store/home.html",
-        {
-            "products": products,
-            "user_name": user_name,
-            "user_email": user_email,
-            "selected_category": category,
-            "query": query,
-            'sort_option': sort_option  
-        }
+        context
     )
-
 
 
 def api_products(request):
@@ -513,7 +547,8 @@ def cart_view(request):
                     'category': item['category'],
                     'price': float(item['price']),
                     'image_url': item['image_url'],
-                    'quantity': item['quantity']
+                    'quantity': item['quantity'],
+                    'seller_name': item.get('product_id__admin_id__company_name', 'Unknown Seller')
                 }
                 for item in items
             }
@@ -626,6 +661,7 @@ def admin_required(view_func):
         return view_func(request, *args, **kwargs)
     return wrapper
 
+
 @csrf_exempt
 def admin_login(request):
     if request.method == "GET":
@@ -649,7 +685,8 @@ def admin_login(request):
             decoded_token = auth.verify_id_token(id_token)
             uid = decoded_token.get("uid")
             email = decoded_token.get("email")
-            logger.info(f"✅ Firebase authentication successful: {email} ({uid})")
+            logger.info(
+                f"✅ Firebase authentication successful: {email} ({uid})")
         except auth.InvalidIdTokenError:
             logger.error("❌ Invalid Firebase ID token")
             return JsonResponse({"error": "Invalid token"}, status=401)
@@ -686,12 +723,16 @@ def admin_login(request):
         return JsonResponse({"error": "Internal server error"}, status=500)
 
 # API endpoint to get all active categories
+
+
 @require_http_methods(["GET"])
 def get_categories(request):
     categories = Category.objects.filter(is_active=True).values('id', 'name')
     return JsonResponse(list(categories), safe=False)
 
 # API endpoint to get subcategories for a specific category
+
+
 @require_http_methods(["GET"])
 def get_subcategories(request, category_id):
     subcategories = Subcategory.objects.filter(
@@ -699,6 +740,7 @@ def get_subcategories(request, category_id):
         is_active=True
     ).values('id', 'name')
     return JsonResponse(list(subcategories), safe=False)
+
 
 @admin_required
 @csrf_exempt
@@ -716,21 +758,21 @@ def add_product_view(request):
         sizes = request.POST.get('sizes', '')
         fit = request.POST.get('fit', '')
         stock = request.POST.get('stock')
-        
 
         # Get the main image and additional images (as a list)
         image = request.FILES.get('image')
         additional_images = request.FILES.getlist('additional_images')
-        
+
         # Validate required fields
         if not all([name, category_id, subcategory_id, price, original_price, description]):
             return JsonResponse({'error': 'Missing required fields'}, status=400)
-        
+
         # # Check if category and subcategory exist and are related
         # category = get_object_or_404(Category, id=category_id)
         # subcategory = get_object_or_404(Subcategory, id=subcategory_id, category=category)
 
-        firebase_uid = request.session.get('admin_uid')  # This is the Firebase UID
+        firebase_uid = request.session.get(
+            'admin_uid')  # This is the Firebase UID
         print(f"🔹 Firebase UID from session: {firebase_uid}")
 
         if not firebase_uid:
@@ -741,7 +783,7 @@ def add_product_view(request):
             admin_store = AdminStore.objects.get(firebase_uid=firebase_uid)
             admin_store_id = str(admin_store.id)  # Convert UUID to string
             print(f"🔹 Resolved AdminStore ID: {admin_store_id}")
-            
+
             # Correctly ordered parameters when calling orm_add_product:
             product = orm_add_product(
                 name,
@@ -755,12 +797,17 @@ def add_product_view(request):
                 image,
                 additional_images,
                 admin_store_id,
-                stock
+                stock,
+                request
             )
-            
+
             if isinstance(product, dict) and not product.get("success"):
-                return JsonResponse(product, status=400)  # Return the error message properly
+                # Return the error message properly
+                return JsonResponse(product, status=400)
             if product:
+                # Invalidate the cache after a successful product addition.
+                clear_products_cache()
+
                 messages.success(request, "Product added successfully!")
                 return JsonResponse({"success": True}, status=200)
             else:
@@ -783,9 +830,13 @@ def update_product_view(request, product_id):
         # ... handle the update logic as before ...
         name = request.POST.get("name")
         category = request.POST.get("category")
+        subcategory = request.POST.get("subcategory")
         price = request.POST.get("price")
         originalPrice = request.POST.get("originalprice")
         description = request.POST.get("description")
+        sizes = request.POST.get("sizes")
+        fit = request.POST.get("fit")
+        stock = request.POST.get("stock")
         image_file = request.FILES.get("image")
 
         # Safer approach to handle additional image files
@@ -810,9 +861,13 @@ def update_product_view(request, product_id):
             product_id,
             name=name,
             category=category,
+            subcategory=subcategory,
             price=price,
             original_price=originalPrice,
             description=description,
+            sizes=sizes,
+            fit=fit,
+            stock=stock,
             image_file=image_file,
             additional_images=additional_images_files
         )
@@ -821,152 +876,167 @@ def update_product_view(request, product_id):
             messages.error(request, update_response["error"])
             return JsonResponse({"error": update_response["error"]}, status=400)
         else:
+            # Invalidate the cache after updating
+            clear_products_cache()
+
             messages.success(request, "Product updated successfully!")
             return JsonResponse({"success": "Product updated successfully!"}, status=200)
 
     return render(request, "store/admin/admin_update_product.html", {"product": product_details})
 
 
+# @admin_required
+# def admin_dashboard(request):
+#     email = request.session.get("admin_email")
+#     if not email:
+#         messages.error(request, "No email found for your account. Please sign up as a seller.")
+#         return redirect("admin_signup")
+
+#     try:
+#         seller = AdminStore.objects.get(email=email)
+#         print("Seller approval status:", seller.is_approved)
+#     except AdminStore.DoesNotExist:
+#         messages.error(request, "Seller account not found. Please sign up as a seller.")
+#         return redirect("admin_signup")
+
+#     # Build a basic context that always includes the seller.
+#     context = {'seller': seller}
+
+#     if not seller.is_approved:
+#         context = {"message": "Your account is pending approval. Please wait for an admin to approve your account."}
+#         return render(request, "store/admin/admin_dashboard.html", context)
+
+#     # If seller is approved, check for an approval message in the session.
+#     approval_message = request.session.get("approval_message")
+#     if approval_message:
+#         context["approval_message"] = approval_message
+#         # Remove the message so it only shows once.
+#         del request.session["approval_message"]
+
+#     try:
+#         query = request.GET.get('q', '').strip()
+#         category = request.GET.get('category', '')
+#         min_price = request.GET.get('min_price', '')
+#         max_price = request.GET.get('max_price', '')
+#         status = request.GET.get('status', '')
+#         stock_status = request.GET.get('stock_status', '')
+
+#         # products = fetch_all_products()  # Fetch all products from Supabase
+
+#         cache_key = "all_products_with_variants"
+#         products = cache.get(cache_key)
+
+#         if products is None:
+#             print("Cache miss. Fetching from Supabase...")
+#             products = fetch_all_products()  # Fetch from Supabase
+#             cache.set(cache_key, products, timeout=60 * 15)  # Cache for 15 mins
+#             print("Cache set successfully:", cache.get(cache_key))  # Debugging
+#         else:
+#             print("Cache hit. Using cached products.")
+
+#         if query:
+#             query = query.lower()
+#             products = [
+#                 p for p in products if any(
+#                     fuzzy_search(query, str(p[field]).lower())
+#                     for field in ["id", "name", "category", "description"] if p.get(field)
+#                 )
+#             ]
+
+#         # Filter by category
+#         if category:
+#             products = [p for p in products if p.get('category') == category]
+
+#         # Filter by price range
+#         if min_price and min_price.isdigit():
+#             products = [p for p in products if float(p.get('price', 0)) >= float(min_price)]
+
+#         if max_price and max_price.isdigit():
+#             products = [p for p in products if float(p.get('price', 0)) <= float(max_price)]
+
+#         # Filter by availability status
+#         if status:
+#             if status == 'available':
+#                 products = [p for p in products if p.get('is_active', False)]
+#             elif status == 'sold':
+#                 products = [p for p in products if not p.get('is_active', True)]
+
+#         # Filter by stock level
+#         if stock_status:
+#             if stock_status == 'low':
+#                 products = [p for p in products if int(p.get('stock', 0)) <= 10]
+#             elif stock_status == 'out':
+#                 products = [p for p in products if int(p.get('stock', 0)) == 0]
+#             elif stock_status == 'in':
+#                 products = [p for p in products if int(p.get('stock', 0)) > 10]
+
+#         # Get unique categories for filter dropdown
+#         all_categories = sorted(set(p.get('category') for p in fetch_all_products() if p.get('category')))
+
+#         # Existing filter code...
+#         sort_by = request.GET.get('sort_by', 'id_asc')
+
+#         # Apply sorting after all filters
+#         if sort_by:
+#             if sort_by == 'id_asc':
+#                 products = sorted(products, key=lambda p: int(p.get('id', 0)))
+#             elif sort_by == 'id_desc':
+#                 products = sorted(products, key=lambda p: int(p.get('id', 0)), reverse=True)
+#             elif sort_by == 'price_asc':
+#                 products = sorted(products, key=lambda p: float(p.get('price', 0)))
+#             elif sort_by == 'price_desc':
+#                 products = sorted(products, key=lambda p: float(p.get('price', 0)), reverse=True)
+#             elif sort_by == 'stock_asc':
+#                 products = sorted(products, key=lambda p: int(p.get('stock', 0)))
+#             elif sort_by == 'stock_desc':
+#                 products = sorted(products, key=lambda p: int(p.get('stock', 0)), reverse=True)
+
+#         # ✅ If AJAX request, return both `#productListDesktop` and `#productListMobile` content
+#         if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+#             html_desktop = render_to_string("store/admin_partials/admin_product_list_desktop.html", {"products": products, "is_mobile": False}, request)
+#             html_mobile = render_to_string("store/admin_partials/admin_product_list_mobile.html", {"products": products, "is_mobile": True}, request)
+
+#             print(f"DEBUG: AJAX Response - Desktop HTML: {len(html_desktop)} chars, Mobile HTML: {len(html_mobile)} chars")
+
+#             return JsonResponse({"html_desktop": html_desktop, "html_mobile": html_mobile})
+
+#         # Add additional keys to the context for approved sellers
+#         context.update({
+#             'products': products,
+#             'query': query,
+#             'categories': all_categories,
+#             'selected_filters': {
+#                 'category': category,
+#                 'min_price': min_price,
+#                 'max_price': max_price,
+#                 'status': status,
+#                 'stock_status': stock_status,
+#                 'sort_by': sort_by
+#             }
+#         })
+
+#         print("Dashboard context:", context)
+
+#         return render(request, 'store/admin/admin_dashboard.html', context)
+
+#     except Exception as e:
+#         error_message = f"Error fetching products: {str(e)}"
+#         traceback.print_exc()  # Print full error in console
+
+#         # ✅ Return JSON response if it's an AJAX request
+#         if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+#             return JsonResponse({"error": error_message}, status=500)
+
+#         # Otherwise, render the HTML page with an error message
+#         messages.error(request, error_message)
+#         return render(request, 'store/admin/admin_dashboard.html', {'products': [], 'query': query})
+
 
 @admin_required
-def admin_dashboard(request):
-    email = request.session.get("admin_email")
-    if not email:
-        messages.error(request, "No email found for your account. Please sign up as a seller.")
-        return redirect("admin_signup")
-    
-    try:
-        seller = AdminStore.objects.get(email=email)
-        print("Seller approval status:", seller.is_approved)
-    except AdminStore.DoesNotExist:
-        messages.error(request, "Seller account not found. Please sign up as a seller.")
-        return redirect("admin_signup")
-    
-    # Build a basic context that always includes the seller.
-    context = {'seller': seller}
-    
-    if not seller.is_approved:
-        context = {"message": "Your account is pending approval. Please wait for an admin to approve your account."}
-        return render(request, "store/admin/admin_dashboard.html", context)
-    
-    # If seller is approved, check for an approval message in the session.
-    approval_message = request.session.get("approval_message")
-    if approval_message:
-        context["approval_message"] = approval_message
-        # Remove the message so it only shows once.
-        del request.session["approval_message"]
-        
-    try:
-        query = request.GET.get('q', '').strip()
-        category = request.GET.get('category', '')
-        min_price = request.GET.get('min_price', '')
-        max_price = request.GET.get('max_price', '')
-        status = request.GET.get('status', '')
-        stock_status = request.GET.get('stock_status', '')
-        
-        products = fetch_all_products()  # Fetch all products from Supabase
-        
-        if query:
-            query = query.lower()
-            products = [
-                p for p in products if any(
-                    fuzzy_search(query, str(p[field]).lower())
-                    for field in ["id", "name", "category", "description"] if p.get(field)
-                )
-            ]
-        
-        # Filter by category
-        if category:
-            products = [p for p in products if p.get('category') == category]
-            
-        # Filter by price range
-        if min_price and min_price.isdigit():
-            products = [p for p in products if float(p.get('price', 0)) >= float(min_price)]
-            
-        if max_price and max_price.isdigit():
-            products = [p for p in products if float(p.get('price', 0)) <= float(max_price)]
-            
-        # Filter by availability status
-        if status:
-            if status == 'available':
-                products = [p for p in products if p.get('is_active', False)]
-            elif status == 'sold':
-                products = [p for p in products if not p.get('is_active', True)]
-                
-        # Filter by stock level
-        if stock_status:
-            if stock_status == 'low':
-                products = [p for p in products if int(p.get('stock', 0)) <= 10]
-            elif stock_status == 'out':
-                products = [p for p in products if int(p.get('stock', 0)) == 0]
-            elif stock_status == 'in':
-                products = [p for p in products if int(p.get('stock', 0)) > 10]
-            
-        # Get unique categories for filter dropdown
-        all_categories = sorted(set(p.get('category') for p in fetch_all_products() if p.get('category')))
-        
-        # Existing filter code...
-        sort_by = request.GET.get('sort_by', 'id_asc')
-        
-        # Apply sorting after all filters
-        if sort_by:
-            if sort_by == 'id_asc':
-                products = sorted(products, key=lambda p: int(p.get('id', 0)))
-            elif sort_by == 'id_desc':
-                products = sorted(products, key=lambda p: int(p.get('id', 0)), reverse=True)
-            elif sort_by == 'price_asc':
-                products = sorted(products, key=lambda p: float(p.get('price', 0)))
-            elif sort_by == 'price_desc':
-                products = sorted(products, key=lambda p: float(p.get('price', 0)), reverse=True)
-            elif sort_by == 'stock_asc':
-                products = sorted(products, key=lambda p: int(p.get('stock', 0)))
-            elif sort_by == 'stock_desc':
-                products = sorted(products, key=lambda p: int(p.get('stock', 0)), reverse=True)
-            
-        # ✅ If AJAX request, return both `#productListDesktop` and `#productListMobile` content
-        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-            html_desktop = render_to_string("store/admin_partials/admin_product_list_desktop.html", {"products": products, "is_mobile": False}, request)
-            html_mobile = render_to_string("store/admin_partials/admin_product_list_mobile.html", {"products": products, "is_mobile": True}, request)
-
-            print(f"DEBUG: AJAX Response - Desktop HTML: {len(html_desktop)} chars, Mobile HTML: {len(html_mobile)} chars")
-
-            return JsonResponse({"html_desktop": html_desktop, "html_mobile": html_mobile})
-        
-        # Add additional keys to the context for approved sellers
-        context.update({
-            'products': products, 
-            'query': query,
-            'categories': all_categories,
-            'selected_filters': {
-                'category': category,
-                'min_price': min_price,
-                'max_price': max_price,
-                'status': status,
-                'stock_status': stock_status,
-                'sort_by': sort_by
-            }
-        })
-        
-        print("Dashboard context:", context)
-
-        return render(request, 'store/admin/admin_dashboard.html', context)
-
-    except Exception as e:
-        error_message = f"Error fetching products: {str(e)}"
-        traceback.print_exc()  # Print full error in console
-
-        # ✅ Return JSON response if it's an AJAX request
-        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-            return JsonResponse({"error": error_message}, status=500)
-
-        # Otherwise, render the HTML page with an error message
-        messages.error(request, error_message)
-        return render(request, 'store/admin/admin_dashboard.html', {'products': [], 'query': query})
-
-
-
 def delete_product_view(request, product_id):
-    return delete_product(request, product_id)
+    response = delete_product(request, product_id)
+    clear_products_cache()  # Clear cache after deletion
+    return response
 
 
 def about_us(request):
@@ -1016,6 +1086,7 @@ def checkout(request):
             'quantity': item['quantity'],
             # Convert to float
             'total_price': float(product['price'] * item['quantity']),
+            'seller_name': product.get('seller_name', 'Unknown Store')
         }
         for item, product in zip(cart_items, products)
     }
@@ -1108,9 +1179,19 @@ def place_order(request):
                 "country": country,
             }
 
+            # Retrieve the admin/store from the first product in the cart.
+            first_product_key = list(cart.keys())[0]
+            try:
+                product = Product.objects.get(id=int(first_product_key))
+                # Assuming the Product model's FK is named admin_id.
+                order_admin = product.admin_id
+            except Exception as e:
+                order_admin = None
+                print("Warning: Could not retrieve admin/store for the order", e)
+
             # Create order
             order_id, error = create_order(
-                user_id, total_price, payment_method, address_data, shipping=shipping, discount=discount)
+                user_id, total_price, payment_method, address_data, shipping=shipping, discount=discount, order_admin=order_admin)
             if not order_id:
                 return JsonResponse({"error": "Order creation failed", "details": str(error)}, status=500)
 
@@ -1171,23 +1252,53 @@ def send_confirmation_email(user_id, order_id, address, total_price):
 
 
 def send_rejection_email(user_id, order_id):
+    # Send email to the customer
     user_email = get_user_email(user_id)
-
     if not user_email:
-        return None  # If email could not be fetched, return None
+        return None  # If user email could not be fetched, do nothing
 
-    subject = f"Order Rejected - Order #{order_id}"
-    message = f"Dear Customer,\n\nWe regret to inform you that your order #{order_id} has been rejected by our admin. " \
-        f"Please feel free to contact us for further information.\n\n" \
+    subject_customer = f"Order Rejected - Order #{order_id}"
+    message_customer = (
+        f"Dear Customer,\n\n"
+        f"We regret to inform you that your order #{order_id} has been rejected by our admin. "
+        f"Please feel free to contact us for further information.\n\n"
         f"Contact Us for Support: support@yourstore.com"
+    )
+    send_mail(subject_customer, message_customer,
+              settings.DEFAULT_FROM_EMAIL, [user_email])
 
-    send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user_email])
+    # Send confirmation email to the seller (admin) who rejected the order.
+    try:
+        order_obj = Order.objects.get(id=order_id)
+        seller_email = order_obj.admin.email if order_obj.admin and order_obj.admin.email else None
+        print("Seller email for rejection confirmation:", seller_email)
+    except Exception as e:
+        print("Error fetching seller email:", str(e))
+        seller_email = None
+
+    if seller_email:
+        subject_seller = f"Order Rejection Confirmation - Order #{order_id}"
+        message_seller = (
+            f"Dear {order_obj.admin.company_name},\n\n"
+            f"This is a confirmation that you have rejected order #{order_id}.\n\n"
+            f"Thank you for taking prompt action.\n\n"
+            f"Regards,\nYour Store Team"
+        )
+        send_mail(subject_seller, message_seller,
+                  settings.DEFAULT_FROM_EMAIL, [seller_email])
 
 
 def send_admin_notification_email(request, order_id, user_id, address, total_price):
     # Retrieve admin's email from settings or environment variables
-    # Make sure you define ADMIN_EMAIL in settings.py
-    admin_email = settings.ADMIN_EMAIL
+    try:
+        # Retrieve the order to get the seller (admin) information.
+        order_obj = Order.objects.get(id=order_id)
+        # Get the admin email from the order's related AdminStore record.
+        admin_email = order_obj.admin.email if order_obj.admin and order_obj.admin.email else settings.DEFAULT_FROM_EMAIL
+        print("Order admin email:", admin_email)
+    except Exception as e:
+        print("Error fetching admin email:", str(e))
+        admin_email = settings.DEFAULT_FROM_EMAIL
 
     # Generate action URLs
     approval_url = request.build_absolute_uri(
@@ -1304,7 +1415,7 @@ def admin_approve_order(request, order_id, action):
                     product.stock += order_item.quantity  # Restore stock
                     product.is_active = True  # Ensure product is active again
                     product.save()
-                    
+
                 send_rejection_email(order.user_id.id, order_id)
                 return redirect('admin_orders')
             else:
@@ -1482,7 +1593,7 @@ def cancel_order(request, order_id):
             request, "This order cannot be cancelled at this stage.")
         # Replace with the appropriate orders view name
         return redirect("orders")
-    
+
     # Restore stock for each product in the order
     order_items = OrderItem.objects.filter(order_id=order)  # Fixed field name
     for order_item in order_items:
@@ -1503,15 +1614,25 @@ def cancel_order(request, order_id):
 
 
 def send_cancellation_email(user_id, order_id):
-    # Your function to fetch the user's email
+    # Retrieve the customer's email.
     user_email = get_user_email(user_id)
-    # Ensure you have ADMIN_EMAIL in settings
-    admin_email = getattr(settings, "ADMIN_EMAIL", None)
+
+    # Retrieve the main admin email from settings.
+    main_admin_email = getattr(settings, "ADMIN_EMAIL", None)
+
+    # Retrieve the seller's (order's admin) email.
+    seller_admin_email = None
+    try:
+        order_obj = Order.objects.get(id=order_id)
+        seller_admin_email = order_obj.admin.email if order_obj.admin and order_obj.admin.email else None
+        print("Order seller admin email:", seller_admin_email)
+    except Exception as e:
+        print("Error fetching order admin email:", str(e))
 
     if not user_email:
-        return None  # If user email is not available, do nothing
+        return None  # If user email is not available, do nothing.
 
-    # Email to the customer
+    # Email to the customer.
     subject_user = f"Order Cancellation - Order #{order_id}"
     message_user = (
         f"Dear Customer,\n\n"
@@ -1522,8 +1643,15 @@ def send_cancellation_email(user_id, order_id):
     send_mail(subject_user, message_user,
               settings.DEFAULT_FROM_EMAIL, [user_email])
 
-    # Email to the admin (if available)
-    if admin_email:
+    # Build list of admin recipients: include main admin and seller's email.
+    admin_recipients = []
+    if main_admin_email:
+        admin_recipients.append(main_admin_email)
+    if seller_admin_email and seller_admin_email not in admin_recipients:
+        admin_recipients.append(seller_admin_email)
+
+    # Email to the admins.
+    if admin_recipients:
         subject_admin = f"Order Cancellation Notification - Order #{order_id}"
         message_admin = (
             f"Dear Admin,\n\n"
@@ -1532,37 +1660,42 @@ def send_cancellation_email(user_id, order_id):
             f"Regards,\nYour Store System"
         )
         send_mail(subject_admin, message_admin,
-                  settings.DEFAULT_FROM_EMAIL, [admin_email])
-        
+                  settings.DEFAULT_FROM_EMAIL, admin_recipients)
+
+
 def help_support(request):
     return render(request, 'store/help_support.html')
+
 
 @require_POST
 def update_stock(request):
     try:
         product_id = int(request.POST.get('product_id'))
         new_stock = int(request.POST.get('new_stock'))
-        
+
         product = Product.objects.get(id=product_id)
-        
+
         # Update stock
         product.stock = new_stock
-        
+
         # Ensure is_active is True when stock is available
-        product.is_active = new_stock > 0  
-        
+        product.is_active = new_stock > 0
+
         product.save()
-        
+
         # Refresh from the database to ensure changes are reflected
         product.refresh_from_db()
-        
-        print(f"✅ Product {product_id} updated: Stock = {product.stock}, is_active = {product.is_active}")
-        
-        return redirect("admin_dashboard")  # Replace with actual dashboard URL name
-        
+
+        print(
+            f"✅ Product {product_id} updated: Stock = {product.stock}, is_active = {product.is_active}")
+
+        # Replace with actual dashboard URL name
+        return redirect("admin_dashboard")
+
     except (Product.DoesNotExist, ValueError, TypeError) as e:
         print(f"❌ Error updating stock: {str(e)}")
         return JsonResponse({'success': False})
+
 
 @csrf_exempt
 def admin_signup(request):
@@ -1587,10 +1720,11 @@ def admin_signup(request):
             admin_record = create_admin_store_record(
                 uid, company_logo, company_name, email, phone, shop_address, pincode
             )
-            
+
             # Send an email to notify the superadmin about the new pending signup.
             # Either use a hardcoded email or use a value from settings.
-            SUPERADMIN_EMAIL = getattr(settings, "SUPERADMIN_EMAIL", "farazashraf413@gmail.com")
+            SUPERADMIN_EMAIL = getattr(
+                settings, "SUPERADMIN_EMAIL", "farazashraf413@gmail.com")
             subject = "New Admin Signup Pending Approval"
             message = (
                 f"A new admin signup has been submitted.\n\n"
@@ -1599,8 +1733,9 @@ def admin_signup(request):
                 f"Phone: {phone}\n\n"
                 "Please review the signup in the Django admin panel and approve if valid."
             )
-            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [SUPERADMIN_EMAIL])
-            
+            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL,
+                      [SUPERADMIN_EMAIL])
+
             # Return a JSON response indicating the signup is pending approval.
             return JsonResponse({"success": True, "message": "Your signup is pending approval. Please wait."})
         except Exception as e:
@@ -1638,8 +1773,11 @@ def seller_login(request):
 #     return render(request, "store/admin/super_admin.html")
 
 # Helper to restrict access to superadmins.
+
+
 def superadmin_required(user):
     return user.is_superuser
+
 
 @login_required
 @user_passes_test(superadmin_required)
@@ -1648,21 +1786,740 @@ def approve_admin_signup(request, seller_id):
     if request.method == "POST":
         seller.is_approved = True
         seller.save()
-        
+
         # Retrieve seller email from the AdminStore record
         seller_email = seller.email
-        
+
         subject = "Your Seller Account Has Been Approved"
         message = (
             f"Congratulations!\n\nYour seller account for {seller.company_name} has been approved. "
             "You can now log in and start selling on our platform."
         )
-        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [seller_email])
-        
+        send_mail(subject, message,
+                  settings.DEFAULT_FROM_EMAIL, [seller_email])
+
         messages.success(request, "Seller approved and notified via email.")
-        
+
         request.session["approval_message"] = "Approved by the ADMIN"
-        return redirect("pending_seller_signups")  # Redirect to a page listing pending signups.
+        # Redirect to a page listing pending signups.
+        return redirect("pending_seller_signups")
     else:
         # Optionally, render a confirmation page.
         return render(request, "store/admin/admin_dashboard.html", {"seller": seller})
+
+
+def seller_page(request):
+    """
+    View to fetch and display all approved sellers.
+    """
+    # Fetch all approved sellers ordered by company name
+    sellers = AdminStore.objects.filter(
+        is_approved=True).order_by('company_name')
+    logger.debug(f"Sellers count: {sellers.count()}")
+
+    # Generate public URLs for company logos
+    for seller in sellers:
+        if seller.company_logo:
+            try:
+                seller.company_logo = supabase.storage.from_(
+                    "product-image").get_public_url(seller.company_logo)
+                logger.debug(f"Company logo public URL: {seller.company_logo}")
+            except Exception as e:
+                logger.error(
+                    f"Error generating public URL for company logo: {e}")
+                seller.company_logo = static('images/placeholder.png')
+        else:
+            seller.company_logo = static('images/placeholder.png')
+
+    context = {
+        'sellers': sellers,
+    }
+    return render(request, 'store/seller.html', context)
+
+
+def seller_details(request, adminstore_id):
+    """
+    View to fetch a single seller's details along with their products.
+    Uses the AdminStore's id (UUID) to look up the seller.
+    """
+    # Get the seller by AdminStore id or return a 404 if not found.
+    seller = get_object_or_404(AdminStore, id=adminstore_id)
+
+    # Generate public URL for the company logo
+    if seller.company_logo:
+        try:
+            # Assuming company logos are stored in the same bucket as product images
+            seller.company_logo_url = supabase.storage.from_(
+                "product-image").get_public_url(seller.company_logo)
+            logger.debug(f"Company logo public URL: {seller.company_logo_url}")
+        except Exception as e:
+            logger.error(f"Error generating public URL for company logo: {e}")
+            seller.company_logo_url = static('images/placeholder.png')
+    else:
+        seller.company_logo_url = static('images/placeholder.png')
+
+    # Fetch products that belong to this seller, are active and not deleted
+    products = seller.products.filter(
+        is_active=True, is_deleted=False).order_by('-created_at')
+
+    # Generate public URLs for product images
+    for product in products:
+        if product.image_url:
+            try:
+                product.main_image_url = supabase.storage.from_(
+                    "product-image").get_public_url(product.image_url)
+                logger.debug(f"Product image URL: {product.main_image_url}")
+            except Exception as e:
+                logger.error(
+                    f"Error generating public URL for product image: {e}")
+                product.main_image_url = static('images/placeholder.png')
+        else:
+            product.main_image_url = static('images/placeholder.png')
+
+    context = {
+        'seller': seller,
+        'products': products,
+    }
+
+    # Remove the duplicate return statement
+    return render(request, "store/seller_details.html", context)
+
+
+def seller_product_details(request, product_id):
+    """
+    View to fetch a single product's details and return its public image URLs.
+    Always fetch the main image (image_url). If it's not available, optionally use
+    the first additional image as fallback.
+    """
+    product = get_object_or_404(Product, id=product_id)
+
+    images = []
+    # Always attempt to fetch the main image (image_url)
+    if product.image_url:
+        main_url = supabase.storage.from_(
+            "product-image").get_public_url(product.image_url)
+        logger.debug(f"Main image public URL: {main_url}")
+        images.append(main_url)
+    else:
+        # Optionally: fallback to first additional image if main is missing.
+        if product.image_url2:
+            main_url = supabase.storage.from_(
+                "product-image").get_public_url(product.image_url2)
+            logger.debug(f"Fallback main image from image_url2: {main_url}")
+            images.append(main_url)
+
+    # Fetch additional images if they exist; avoid duplicate if already added.
+    if product.image_url2:
+        url2 = supabase.storage.from_(
+            "product-image").get_public_url(product.image_url2)
+        if url2 not in images:
+            logger.debug(f"Additional image 2 URL: {url2}")
+            images.append(url2)
+    if product.image_url3:
+        url3 = supabase.storage.from_(
+            "product-image").get_public_url(product.image_url3)
+        logger.debug(f"Additional image 3 URL: {url3}")
+        images.append(url3)
+    if product.image_url4:
+        url4 = supabase.storage.from_(
+            "product-image").get_public_url(product.image_url4)
+        logger.debug(f"Additional image 4 URL: {url4}")
+        images.append(url4)
+
+    # If no images were found, use a default placeholder image.
+    if not images:
+        # Ensure this static file exists.
+        placeholder = "{% static 'images/placeholder.png' %}"
+        logger.debug("No images found; using placeholder.")
+        images.append(placeholder)
+
+    context = {
+        'product': product,
+        # List of public URLs for each image field that exists.
+        'images': images,
+    }
+    return render(request, 'store/product_detail.html', context)
+
+
+def seller_order_analytics(request):
+    """
+    Returns analytics data for the currently logged-in seller.
+    """
+    # Get the admin UID from the session (set when the admin logs in)
+    admin_uid = request.session.get('admin_uid')
+    if not admin_uid:
+        return JsonResponse({"error": "Admin not authenticated"}, status=401)
+
+    try:
+        # Fetch the AdminStore instance from the database
+        admin_store = AdminStore.objects.get(firebase_uid=admin_uid)
+    except AdminStore.DoesNotExist:
+        return JsonResponse({"error": "Admin store not found"}, status=404)
+
+    # Filter orders and order items by the retrieved admin_store
+    orders = Order.objects.filter(admin=admin_store)
+    total_orders = orders.count()
+
+    revenue_data = orders.aggregate(total_revenue=Sum('total_price'))
+    total_revenue = revenue_data.get('total_revenue') or 0
+
+    avg_order_value = orders.aggregate(
+        avg_value=Avg('total_price')).get('avg_value') or 0
+
+    items_data = OrderItem.objects.filter(
+        admin=admin_store).aggregate(total_items=Sum('quantity'))
+    total_items_sold = items_data.get('total_items') or 0
+
+    orders_by_status = orders.values('status').annotate(count=Count('id'))
+
+    top_products = OrderItem.objects.filter(admin=admin_store).values('product_id__name').annotate(
+        total_quantity=Sum('quantity'),
+        total_revenue=Sum('total_price')
+    ).order_by('-total_quantity')[:5]
+
+    data = {
+        'total_orders': total_orders,
+        'total_revenue': float(total_revenue),
+        'avg_order_value': float(avg_order_value),
+        'total_items_sold': total_items_sold,
+        # e.g. [{'status': 'pending', 'count': 10}, ...]
+        'orders_by_status': list(orders_by_status),
+        # e.g. [{'product_id__name': 'T-shirt', 'total_quantity': 25, 'total_revenue': 1500}, ...]
+        'top_products': list(top_products),
+    }
+    return JsonResponse(data)
+
+
+def admin_required(view_func):
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not request.session.get('admin_authenticated'):
+            return redirect(reverse('admin_login'))
+        return view_func(request, *args, **kwargs)
+    return wrapper
+
+
+@csrf_exempt
+def admin_login(request):
+    if request.method == "GET":
+        return render(request, "store/admin/admin_login.html")
+
+    if request.method != "POST":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+
+    try:
+        data = json.loads(request.body)
+        id_token = data.get("token")
+
+        if not id_token:
+            logger.warning("❌ No token provided in request")
+            return JsonResponse({"error": "No token provided"}, status=400)
+
+        logger.info(f"🔑 Received Firebase ID Token: {id_token[:50]}...")
+
+        # Verify Firebase ID token
+        try:
+            decoded_token = auth.verify_id_token(id_token)
+            uid = decoded_token.get("uid")
+            email = decoded_token.get("email")
+            logger.info(
+                f"✅ Firebase authentication successful: {email} ({uid})")
+        except auth.ExpiredIdTokenError:
+            logger.error("❌ Expired Firebase ID token")
+            return JsonResponse({"error": "Expired token"}, status=401)
+        except auth.InvalidIdTokenError:
+            logger.error("❌ Invalid Firebase ID token")
+            return JsonResponse({"error": "Invalid token"}, status=401)
+        except Exception as e:
+            logger.error(f"❌ Firebase Auth error: {str(e)}")
+            return JsonResponse({"error": "Authentication failed"}, status=401)
+
+        # Look up the admin user by email from your AdminStore model
+        try:
+            admin_user = AdminStore.objects.get(email=email)
+        except AdminStore.DoesNotExist:
+            logger.warning(f"❌ No admin account found for {email}")
+            return JsonResponse({"error": "Unauthorized access"}, status=403)
+
+        # # Check if the seller's account is approved
+        # if not admin_user.is_approved:
+        #     logger.warning(f"❌ Admin account for {email} is pending approval")
+        #     return JsonResponse({"error": "Your account is pending approval. Please wait for an admin to approve your account."}, status=403)
+
+        # If approved, set the session and allow access
+        request.session["admin_authenticated"] = True
+        request.session["admin_uid"] = uid
+        request.session["admin_email"] = email
+        return JsonResponse({"success": True, "redirect": "/store-admin/dashboard/"})
+
+    except json.JSONDecodeError:
+        logger.error("❌ Invalid JSON format in request body")
+        return JsonResponse({"error": "Invalid JSON format"}, status=400)
+    except Exception as e:
+        logger.error(f"❌ Unexpected error in admin_login: {str(e)}")
+        return JsonResponse({"error": "Internal server error"}, status=500)
+
+
+def admin_dashboard(request, admin_id=None):
+    """
+    View function for the admin dashboard of VendorHub
+    """
+    # Check for the current admin/store
+    try:
+        if admin_id:
+            admin = AdminStore.objects.get(id=admin_id)
+        else:
+            admin_email = request.session.get(
+                "admin_email")  # Get email from session
+            if not admin_email:
+                messages.error(request, "No admin email found. Please log in.")
+                # Redirect to login if no email in session
+                return redirect(reverse('admin_login'))
+
+            admin = AdminStore.objects.get(
+                email=admin_email)  # Fetch using session email
+    except AdminStore.DoesNotExist:
+        messages.error(
+            request, "Admin account not found. Please sign up as an admin.")
+        return redirect(reverse('admin_signup'))  # Redirect if admin not found
+
+    # Get the public URL for the main image if it exists
+    company_logo_url = (
+        supabase.storage.from_(
+            "product-image").get_public_url(admin.company_logo)
+        if admin.company_logo
+        else None
+    )
+    print("Company logo URL:", company_logo_url)
+
+    # Get today's date
+    today = timezone.now().date()
+    yesterday = today - datetime.timedelta(days=1)
+
+    # Get today's sales
+    today_sales = Order.objects.filter(
+        admin=admin,
+        created_at__date=today
+    ).aggregate(
+        total=Sum('total_price', default=0)
+    )['total'] or 0
+
+    # Get yesterday's sales for comparison
+    yesterday_sales = Order.objects.filter(
+        admin=admin,
+        created_at__date=yesterday
+    ).aggregate(
+        total=Sum('total_price', default=0)
+    )['total'] or 0
+
+    # Calculate percentage change
+    if yesterday_sales > 0:
+        sales_percentage = (
+            (today_sales - yesterday_sales) / yesterday_sales) * 100
+    else:
+        sales_percentage = 100 if today_sales > 0 else 0
+
+    # Get pending orders
+    pending_orders = Order.objects.filter(
+        admin=admin,
+        status='pending'
+    ).count()
+
+    # Get orders that need attention (you can define what needs attention)
+    # For example, orders that have been pending for more than 24 hours
+    attention_needed = Order.objects.filter(
+        admin=admin,
+        status='pending',
+        created_at__lt=timezone.now() - datetime.timedelta(hours=24)
+    ).count()
+
+    # Get current month's earnings
+    first_day_of_month = today.replace(day=1)
+    monthly_earnings = Order.objects.filter(
+        admin=admin,
+        created_at__date__gte=first_day_of_month,
+        created_at__date__lte=today
+    ).exclude(status__in=['rejected', 'pending', 'canceled']).aggregate(
+        total=Sum('total_price', default=0)
+    )['total'] or 0
+
+    # Calculate store visitors (this would typically come from analytics)
+    # In a real app, you might integrate with Google Analytics or similar
+    # For demonstration, we'll use a placeholder based on orders
+    week_ago = today - datetime.timedelta(days=7)
+    current_week_orders = Order.objects.filter(
+        admin=admin,
+        created_at__date__gte=week_ago
+    ).count()
+
+    previous_week_orders = Order.objects.filter(
+        admin=admin,
+        created_at__date__gte=week_ago - datetime.timedelta(days=7),
+        created_at__date__lt=week_ago
+    ).count()
+
+    # Simulate visitor count based on orders
+    visitors = current_week_orders * 50  # assumption: 50 visitors per order
+
+    if previous_week_orders > 0:
+        visitors_percentage = (
+            (current_week_orders - previous_week_orders) / previous_week_orders) * 100
+    else:
+        visitors_percentage = 100 if current_week_orders > 0 else 0
+
+    # Get recent orders
+    recent_orders = Order.objects.filter(
+        admin=admin
+    ).order_by('-created_at')[:5]
+
+    # Format recent orders for display
+    recent_orders_display = []
+    for order in recent_orders:
+        items_count = OrderItem.objects.filter(order_id=order).count()
+        status_class = "green" if order.status == "delivered" else "yellow"
+
+        recent_orders_display.append({
+            'order_number': f"#ORD-{order.id}",
+            'items_count': items_count,
+            'total_price': order.total_price,
+            'status': order.status.capitalize(),
+            'status_class': status_class
+        })
+
+    # Get products with low stock
+    low_stock_products = Product.objects.filter(
+        admin_id=admin,
+        is_active=True,
+        is_deleted=False,
+        stock__lte=5
+    ).order_by('id').distinct('id')[:5]
+
+    # Debug: print product IDs
+    print("Low stock product IDs:")
+    for p in low_stock_products:
+        print(p.id)
+
+    # Format low stock products for display
+    low_stock_display = []
+    for product in low_stock_products:
+        low_stock_display.append({
+            'id': product.id,
+            'name': product.name,
+            'stock': product.stock
+        })
+
+    context = {
+        'admin': admin,
+        'company_logo': company_logo_url,
+        'today_sales': today_sales,
+        'sales_percentage': round(sales_percentage, 1),
+        'pending_orders': pending_orders,
+        'attention_needed': attention_needed,
+        'monthly_earnings': monthly_earnings,
+        'visitors': visitors,
+        'visitors_percentage': round(visitors_percentage, 1),
+        'recent_orders': recent_orders_display,
+        'low_stock_products': low_stock_display,
+        'active_page': 'dashboard',
+        # Add announcements - in a real app, these might come from a database
+        'announcements': [
+            {
+                'icon': 'bullhorn',
+                'icon_class': 'blue-400',
+                'title': 'New Feature Release',
+                'message': 'Check out our new inventory management system launching next week!'
+            },
+            {
+                'icon': 'clock',
+                'icon_class': 'yellow-400',
+                'title': 'Upcoming Maintenance',
+                'message': f'System maintenance scheduled for {(today + datetime.timedelta(days=7)).strftime("%B %d, %Y")} at 2:00 AM EST'
+            }
+        ]
+    }
+
+    return render(request, 'store/admin/admin_dashboard.html', context)
+
+
+def admin_orders(request):
+    # query = request.GET.get('q', '').strip()
+    orders = get_all_orders_for_admin()
+
+    context = {
+        'active_page': 'orders',
+        'orders': orders
+    }
+
+    return render(request, 'store/admin/admin_orders.html', context)
+
+
+def order_details(request, order_id):
+    try:
+        order = Order.objects.get(id=order_id)
+        items = OrderItem.objects.filter(order_id=order).select_related(
+            'product_id')  # Corrected filter
+        items_data = [
+            {
+                "product_id": item.product_id.id,  # Return the product's ID as a primitive value
+                "product_name": item.product_id.name,
+                "quantity": item.quantity,
+                "price": item.price,
+                "product_rate": item.product_id.price
+            }
+            for item in items
+        ]
+        # Example calculation
+        selling_price = sum(float(item.price) *
+                            item.quantity for item in items)
+        response_data = {
+            "items": items_data,
+            "discount_rate": order.discount_rate,
+            "shipping_rate": order.shipping_rate,
+            "order_total": order.total_price,
+            "selling_price": selling_price  # Add if using Option 1
+        }
+        return JsonResponse(response_data)
+    except Order.DoesNotExist:
+        logger.error(f"Order with ID {order_id} not found.")
+        return JsonResponse({"error": "Order not found"}, status=404)
+    except Exception as e:
+        logger.exception("Unexpected error in order_details view:")
+        return JsonResponse({"error": "Unexpected error"}, status=500)
+
+
+@require_POST
+@admin_required
+def restock_product(request):
+    """
+    Processes a restock request from the admin dashboard.
+    Expects a POST with 'product_id' and 'quantity' and updates only that product.
+    """
+    product_id = request.POST.get('product_id')
+    quantity_value = request.POST.get('quantity')
+
+    try:
+        quantity = int(quantity_value)
+    except (ValueError, TypeError):
+        messages.error(request, "Invalid quantity provided.")
+        return redirect(reverse('admin_dashboard'))
+
+    if quantity <= 0:
+        messages.error(request, "Quantity must be greater than zero.")
+        return redirect(reverse('admin_dashboard'))
+
+    # Debug: log the received product id and quantity
+    print("Restocking product_id:", product_id, "by quantity:", quantity)
+
+    # Retrieve the specific product based on the product_id
+    product = get_object_or_404(Product, id=product_id)
+    original_stock = product.stock
+    product.stock += quantity
+    product.save()
+
+    messages.success(
+        request, f"Successfully restocked {product.name} from {original_stock} to {product.stock} units.")
+    return redirect(reverse('admin_dashboard'))
+
+
+def clear_products_cache():
+    cache.delete("all_products_with_variants")
+
+
+@admin_required
+@csrf_exempt
+def add_product_view(request):
+    if request.method == 'GET':
+        return render(request, 'store/admin/add_product.html')
+
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        category_id = request.POST.get('category')
+        subcategory_id = request.POST.get('subcategory')
+        price = float(request.POST.get('price'))
+        original_price = float(request.POST.get('originalprice'))
+        description = request.POST.get('description')
+        sizes = request.POST.get('sizes', '')
+        fit = request.POST.get('fit', '')
+        stock = request.POST.get('stock')
+
+        # Get the main image and additional images (as a list)
+        image = request.FILES.get('image')
+        additional_images = request.FILES.getlist('additional_images')
+
+        # Validate required fields
+        if not all([name, category_id, subcategory_id, price, original_price, description]):
+            return JsonResponse({'error': 'Missing required fields'}, status=400)
+
+        # # Check if category and subcategory exist and are related
+        # category = get_object_or_404(Category, id=category_id)
+        # subcategory = get_object_or_404(Subcategory, id=subcategory_id, category=category)
+
+        firebase_uid = request.session.get(
+            'admin_uid')  # This is the Firebase UID
+        print(f"🔹 Firebase UID from session: {firebase_uid}")
+
+        if not firebase_uid:
+            return JsonResponse({"error": "Admin is not authenticated."}, status=400)
+
+        try:
+            # Fetch the AdminStore record using Firebase UID
+            admin_store = AdminStore.objects.get(firebase_uid=firebase_uid)
+            admin_store_id = str(admin_store.id)  # Convert UUID to string
+            print(f"🔹 Resolved AdminStore ID: {admin_store_id}")
+
+            # Correctly ordered parameters when calling orm_add_product:
+            product = orm_add_product(
+                name,
+                category_id,
+                subcategory_id,
+                price,
+                original_price,
+                description,
+                sizes,  # This maps to the `size` field in your function
+                fit,
+                image,
+                additional_images,
+                admin_store_id,
+                stock,
+                request
+            )
+
+            if isinstance(product, dict) and not product.get("success"):
+                # Return the error message properly
+                return JsonResponse(product, status=400)
+            if product:
+                # Invalidate the cache after a successful product addition.
+                clear_products_cache()
+
+                messages.success(request, "Product added successfully!")
+                return JsonResponse({"success": True}, status=200)
+            else:
+                return JsonResponse({"error": "Failed to add product."}, status=500)
+
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+
+    return JsonResponse({"error": "Invalid request method"}, status=405)
+
+
+def update_product_view(request, product_id):
+    product_details = fetch_product_details_orm(product_id)
+    if "error" in product_details:
+        messages.error(request, product_details["error"])
+        return JsonResponse({"error": product_details["error"]}, status=404)
+
+    if request.method == "POST":
+        name = request.POST.get("name")
+        category = request.POST.get("category")
+        subcategory = request.POST.get("subcategory")
+        price = request.POST.get("price")
+        original_price = request.POST.get("originalprice")
+        description = request.POST.get("description")
+        sizes = request.POST.get("sizes")
+        fit = request.POST.get("fit")
+        stock = request.POST.get("stock")
+        image_file = request.FILES.get("image")
+
+        additional_images_files = []
+        for key, file in request.FILES.items():
+            if key.startswith("additional_image_"):
+                try:
+                    index_part = key.split('_')[-1]
+                    if index_part.isdigit():
+                        additional_images_files.append((int(index_part), file))
+                except (ValueError, IndexError):
+                    continue
+        additional_images_files = [file for _,
+                                   file in sorted(additional_images_files)]
+
+        # Update product details
+        update_response = orm_update_product(
+            product_id,
+            name=name,
+            category=category,
+            subcategory=subcategory,
+            price=price,
+            original_price=original_price,
+            description=description,
+            sizes=sizes,
+            fit=fit,
+            stock=stock,
+            image_file=image_file,
+            additional_images=additional_images_files
+        )
+
+        if "error" in update_response:
+            messages.error(request, update_response["error"])
+            return JsonResponse({"error": update_response["error"]}, status=400)
+        else:
+            clear_products_cache()
+            messages.success(request, "Product updated successfully!")
+            return JsonResponse({"success": "Product updated successfully!"}, status=200)
+
+    return render(request, "store/admin/admin_update_product.html", {"product": product_details})
+
+
+# API endpoint to get all active categories
+@require_http_methods(["GET"])
+def get_categories(request):
+    categories = Category.objects.filter(is_active=True).values('id', 'name')
+    return JsonResponse(list(categories), safe=False)
+
+# API endpoint to get subcategories for a specific category
+
+
+@require_http_methods(["GET"])
+def get_subcategories(request, category_id):
+    subcategories = Subcategory.objects.filter(
+        category_id=category_id,
+        is_active=True
+    ).values('id', 'name')
+    return JsonResponse(list(subcategories), safe=False)
+
+
+def admin_products(request):
+    products = Product.objects.prefetch_related('variants').all()
+
+    context = {
+        'products': products,
+        'active_page': 'products',  # This marks "Products" as active
+        # include other context variables as needed
+    }
+
+    return render(request, 'store/admin/admin_products.html', context)
+
+
+def toggle_product_status(request, product_id):
+    # Only allow POST requests (or check permissions as needed)
+    product = get_object_or_404(Product, id=product_id)
+    product.is_active = not product.is_active
+    product.save()
+    status = "activated" if product.is_active else "deactivated"
+    messages.success(
+        request, f"Product '{product.name}' has been {status}.", extra_tags='product_messages')
+    return redirect('admin_products')
+
+
+@admin_required
+def delete_product_view(request, product_id):
+    response = delete_product(request, product_id)
+    clear_products_cache()  # Clear cache after deletion
+    messages.success(request, "Product deleted successfully",
+                     extra_tags='product_messages')
+    return response
+
+
+def admin_logout(request):
+    """
+    Logs out the admin user by clearing the session and redirects to the admin login page.
+    """
+    # Remove admin session keys safely
+    request.session.pop("admin_authenticated", None)
+    request.session.pop("admin_uid", None)
+    request.session.pop("admin_email", None)
+
+    # Optionally, you can clear the entire session:
+    # request.session.flush()
+
+    messages.success(request, "You have been logged out successfully.")
+    return redirect(reverse("admin_login"))

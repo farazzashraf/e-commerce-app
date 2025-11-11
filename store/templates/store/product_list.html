@@ -1,291 +1,268 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Products - Thrift Shop</title>
-    <link rel="stylesheet" href="{% static 'css/product_list.css' %}?v={{ timestamp }}">
-    <link rel="stylesheet" href="{% static 'css/product_list_overlay.css' %}?v={{ timestamp }}">
-
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-
-    <script src="{% static 'js/product_list.js' %}?v={{ timestamp }}" defer></script>
-    <script src="{% static 'js/product_list_overlay.js' %}?v={{ timestamp }}" defer></script>
-
-    <script src="{% static 'js/cart.js' %}?v={{ timestamp }}" defer></script>
-    <script src="{% static 'js/category_carousel.js' %}?v={{ timestamp }}" defer></script>
-    <script src="{% static 'js/product_list_filtering.js' %}?v={{ timestamp }}" defer></script>
-
-
-
-    <script src="https://cdn.jsdelivr.net/npm/vue@3.2.37/dist/vue.global.min.js"></script>
-    <!-- Swiper CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.css">
-    <!-- Swiper JS -->
-    <script src="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.js" defer></script>
-
-</head>
-
-<body>
-    <section class="products" id="product-list">
-        <div class="section-header">
-            <h2>Our Collection</h2>
-            <p>Discover unique treasures and one-of-a-kind finds at unbeatable prices</p>
-        </div>
-
-        <!-- Auto-scrolling Category Banner -->
-        <div class="category-banner">
-            <div class="swiper-container category-swiper">
-                <div class="swiper-wrapper">
-                    <div class="swiper-slide">
-                        <div class="category-item">
-                            <img src="{% static 'images/logo2.webp' %}" alt="Jackets">
-                            <span>Jackets</span>
-                        </div>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Products - Thrift Shop</title>
+        <link rel="stylesheet"
+              href="{% static 'css/product_list.css' %}?v={{ timestamp }}">
+        <link rel="stylesheet"
+              href="{% static 'css/product_list_overlay.css' %}?v={{ timestamp }}">
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+              rel="stylesheet">
+        <script src="{% static 'js/product_list.js' %}?v={{ timestamp }}" defer></script>
+        <script src="{% static 'js/product_list_overlay.js' %}?v={{ timestamp }}"
+                defer></script>
+        <script src="{% static 'js/cart.js' %}?v={{ timestamp }}" defer></script>
+        <script src="{% static 'js/category_carousel.js' %}?v={{ timestamp }}" defer></script>
+        <script src="{% static 'js/product_list_filtering.js' %}?v={{ timestamp }}"
+                defer></script>
+        <script src="https://cdn.jsdelivr.net/npm/vue@3.2.37/dist/vue.global.min.js"></script>
+        <!-- Swiper CSS -->
+        <link rel="stylesheet"
+              href="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.css">
+        <!-- Swiper JS -->
+        <script src="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.js" defer></script>
+    </head>
+    <body>
+        <section class="products" id="product-list">
+            <div class="section-header">
+                <h2>Our Collection</h2>
+                <p>Discover unique treasures and one-of-a-kind finds at unbeatable prices</p>
+            </div>
+            <!-- Dynamic Category Banner with improved UI -->
+            <!-- <div class="category-banner">
+                <div class="swiper-container category-swiper">
+                    <div class="swiper-wrapper">
+                        {% for category in categories %}
+                            <div class="swiper-slide">
+                                <a href="{% url 'home' %}?category={{ category.slug }}"
+                                   class="category-item">
+                                    {% if category.image %}
+                                        <img src="{{ product.image.url }}" alt="{{ category.name }}">
+                                    {% else %}
+                                        <img src="{% static 'images/placeholder.webp' %}"
+                                             alt="{{ category.name }}">
+                                    {% endif %}
+                                    <span>{{ category.name }}</span>
+                                </a>
+                            </div>
+                        {% endfor %}
                     </div>
-                    <div class="swiper-slide">
-                        <div class="category-item">
-                            <img src="{% static 'images/logo2.webp' %}" alt="Pants">
-                            <span>Pants</span>
+                    <div class="swiper-pagination"></div>
+                </div>
+            </div> -->
+            <!-- Enhanced Product Filter and Sort Controls -->
+            <div class="product-controls">
+                <div class="filter-options flex flex-wrap gap-4">
+                    <!-- "All Items" Button -->
+                    <a href="{% url 'home' %}"
+                       class="filter-button {% if not selected_category %}active{% endif %}">All Items</a>
+                    <!-- Loop through Categories -->
+                    {% for category in categories %}
+                        <div class="filter-category">
+                            <a href="{% url 'home' %}?category={{ category.slug }}"
+                               class="filter-button {% if selected_category == category.slug %}active{% endif %}">
+                                {{ category.name }}
+                            </a>
+                            <!-- Subcategories with improved dropdown behavior -->
+                            {% if category.subcategories.all %}
+                                <div class="subcategories-dropdown">
+                                    <div class="subcategories flex flex-wrap gap-2 mt-2">
+                                        {% for sub in category.subcategories.all %}
+                                            <a href="{% url 'home' %}?category={{ category.slug }}&subcategory={{ sub.slug }}"
+                                               class="filter-button subcategory {% if selected_subcategory == sub.slug %}active{% endif %}">
+                                                {{ sub.name }}
+                                            </a>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endif %}
                         </div>
-                    </div>
-                    <div class="swiper-slide">
-                        <div class="category-item">
-                            <img src="{% static 'images/logo2.webp' %}" alt="Home Decor">
-                            <span>Home Decor</span>
-                        </div>
-                    </div>
-                    <div class="swiper-slide">
-                        <div class="category-item">
-                            <img src="{% static 'images/logo2.webp' %}" alt="Vintage">
-                            <span>Vintage</span>
-                        </div>
-                    </div>
-                    <div class="swiper-slide">
-                        <div class="category-item">
-                            <img src="{% static 'images/logo2.webp' %}" alt="Accessories">
-                            <span>Accessories</span>
-                        </div>
-                    </div>
-                    <div class="swiper-slide">
-                        <div class="category-item">
-                            <img src="{% static 'images/logo2.webp' %}" alt="Shoes">
-                            <span>Shoes</span>
-                        </div>
-                    </div>
-                    <div class="swiper-slide">
-                        <div class="category-item">
-                            <img src="{% static 'images/logo2.webp' %}" alt="T-Shirts">
-                            <span>T-Shirts</span>
-                        </div>
-                    </div>
-                    <div class="swiper-slide">
-                        <div class="category-item">
-                            <img src="{% static 'images/logo2.webp' %}" alt="Sale">
-                            <span>Sale</span>
-                        </div>
-                    </div>
+                    {% endfor %}
+                </div>
+                <div class="sort-dropdown">
+                    <select id="sort-options" onchange="location = this.value;">
+                        <option value="{% url 'home' %}?sort=featured{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_subcategory %}&subcategory={{ selected_subcategory }}{% endif %}"
+                                {% if sort_option == 'featured' %}selected{% endif %}>Featured</option>
+                        <option value="{% url 'home' %}?sort=price-low{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_subcategory %}&subcategory={{ selected_subcategory }}{% endif %}"
+                                {% if sort_option == 'price-low' %}selected{% endif %}>Price: Low to High</option>
+                        <option value="{% url 'home' %}?sort=price-high{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_subcategory %}&subcategory={{ selected_subcategory }}{% endif %}"
+                                {% if sort_option == 'price-high' %}selected{% endif %}>Price: High to Low</option>
+                        <option value="{% url 'home' %}?sort=newest{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_subcategory %}&subcategory={{ selected_subcategory }}{% endif %}"
+                                {% if sort_option == 'newest' %}selected{% endif %}>Newest Arrivals</option>
+                    </select>
                 </div>
             </div>
-        </div>
-
-
-        <div class="product-controls">
-            <div class="filter-options">
-                <a href="{% url 'home' %}" class="filter-button {% if not selected_category %}active{% endif %}">All
-                    Items</a>
-                <a href="{% url 'home' %}?category=jackets"
-                    class="filter-button {% if selected_category == 'jackets' %}active{% endif %}">Jackets</a>
-                <a href="{% url 'home' %}?category=pants"
-                    class="filter-button {% if selected_category == 'pants' %}active{% endif %}">Pants</a>
-                <a href="{% url 'home' %}?category=shirts"
-                    class="filter-button {% if selected_category == 'shirts' %}active{% endif %}">Shirts</a>
-                <a href="{% url 'home' %}?category=t-shirts"
-                    class="filter-button {% if selected_category == 'T-Shirts' %}active{% endif %}">T-Shirts</a>
-            </div>
-            <div class="sort-dropdown">
-                <select id="sort-options" onchange="location = this.value;">
-                    <option value="{% url 'home' %}?sort=featured" {% if sort_option == 'featured' %}selected{% endif %}>
-                        Featured
-                    </option>
-                    <option value="{% url 'home' %}?sort=price-low" {% if sort_option == 'price-low' %}selected{% endif %}>
-                        Price: Low to High
-                    </option>
-                    <option value="{% url 'home' %}?sort=price-high" {% if sort_option == 'price-high' %}selected{% endif %}>
-                        Price: High to Low
-                    </option>
-                    <option value="{% url 'home' %}?sort=newest" {% if sort_option == 'newest' %}selected{% endif %}>
-                        Newest Arrivals
-                    </option>
-                </select>
-            </div>
-        </div>
-
-        {% if products %}
-        <div class="product-grid">
-            {% for product in products %}
-            <div class="product-card view-details" data-product-id="{{ product.id }}"
-                data-description="{{ product.description|escapejs }}"
-                data-added="{{ product.created_at|default:'N/A' }}" 
-                data-stock="{{ product.stock }}"
-                data-images="{{ product.image_url }}{% if product.image_url2 %},{{ product.image_url2 }}{% endif %}{% if product.image_url3 %},{{ product.image_url3 }}{% endif %}{% if product.image_url4 %},{{ product.image_url4 }}{% endif %}">
-                <img src="{{ product.image_url }}" alt="{{ product.name }}">
-                <!-- <p>Product ID: {{ product.id }}, Created At: "<strong>{{ product.created_at }}</strong>"</p> -->
-                <!-- Hover overlay for View Details -->
-                <!-- <div class="hover-overlay">
+            {% if products %}
+                <div class="product-grid">
+                    {% for product in products %}
+                        <div class="product-card view-details"
+                             data-product-id="{{ product.id }}"
+                             data-description="{{ product.description|escapejs }}"
+                             data-added="{{ product.created_at|default:'N/A' }}"
+                             data-stock="{{ product.stock }}"
+                             data-images="{{ product.image_url }}{% if product.image_url2 %},{{ product.image_url2 }}{% endif %}{% if product.image_url3 %},{{ product.image_url3 }}{% endif %}{% if product.image_url4 %},{{ product.image_url4 }}{% endif %}">
+                            <img src="{{ product.image_url }}" alt="{{ product.name }}">
+                            <!-- <p>Product ID: {{ product.id }}, Created At: "<strong>{{ product.created_at }}</strong>"</p> -->
+                            <!-- Hover overlay for View Details -->
+                            <!-- <div class="hover-overlay">
                     <button class="view-details">View Details</button>
                 </div> -->
-                <h3>{{ product.name }}</h3>
-                <p class="category">{{ product.category }}</p> <!-- ✅ Added Category -->
-                
-                <!-- <p class="description">{{ product.description }}</p> -->
-                <!-- You can choose to display or hide the description on the card -->
-                <p class="description" style="display:none;">{{ product.description }}</p>
-                <p class="price">
-                    {% if product.original_price and product.original_price > product.price %}
-                    <span class="original-price">₹{{ product.original_price }}</span>
-                    {% endif %}
-                    <span class="current-price">₹{{ product.price }}</span>
-                </p>
-                <!-- <div class="quantity">
+                            <h3>{{ product.name }}</h3>
+                            <!-- Added store name dynamically -->
+                            <p class="store-name">Store: {{ product.admin_id__company_name }}</p>
+                            <p class="category">{{ product.category__name }}</p>
+                            <!-- <p class="description">{{ product.description }}</p> -->
+                            <!-- You can choose to display or hide the description on the card -->
+                            <p class="description" style="display:none;">{{ product.description }}</p>
+                            <p class="price">
+                                {% if product.original_price and product.original_price > product.price %}
+                                    <span class="original-price">₹{{ product.original_price }}</span>
+                                {% endif %}
+                                <span class="current-price">₹{{ product.price }}</span>
+                            </p>
+                            <!-- <div class="quantity">
                     <button class="decrease">-</button>
                     <span class="qty-display">1</span>
                     <button class="increase">+</button>
                 </div>
                 <button class="add-to-cart">Add to Cart</button> -->
-            </div>
-            {% endfor %}
-        </div>
-        {% else %}
-        <p class="noo-products">No products available at the moment.</p>
-        {% endif %}
-
-        <!-- Product Detail Overlay -->
-        <div class="product-overlay" id="product-overlay">
-            <div id="toast-message" class="toast-message"></div>
-            <div class="product-overlay-content">
-                <button class="close-overlay"><i class="fas fa-times"></i></button>
-
-                <div class="product-overlay-grid">
-                    <!-- Left Column: Product Images Gallery -->
-                    <div class="product-gallery">
-                        <div class="main-image-container">
-                            <img src="" alt="" class="main-image" id="main-product-image">
-                            <div class="image-nav">
-                                <button class="image-nav-button prev"><i class="fas fa-chevron-left"></i></button>
-                                <button class="image-nav-button next"><i class="fas fa-chevron-right"></i></button>
-                            </div>
                         </div>
-                        <div class="thumbnail-container">
-                            <!-- Thumbnails will be dynamically generated -->
-                        </div>
-                    </div>
-
-                    <!-- Right Column: Product Details -->
-                    <div class="product-details">
-                        <div class="product-badges">
-                            <!-- <span class="badge new-badge">New</span> -->
-                            <span class="badge sale-badge">Sale</span>
-                        </div>
-
-                        <h2 class="product-title"></h2>
-                        <p class="product-category"></p>
-
-                        <div class="product-pricing">
-                            <span class="product-original-price"></span>
-                            <span class="product-current-price"></span>
-                            <span class="product-discount-percentage"></span>
-                        </div>
-
-                        <div class="product-description"></div>
-
-                        <div class="product-meta">
-                            <div class="meta-item">
-                                <i class="fas fa-box"></i>
-                                <span class="availability">
-                                    <span class="stock-quantity"></span>
-                                </span>
-                            </div>
-                            <div class="meta-item">
-                                <i class="fas fa-truck"></i>
-                                <span>Free shipping</span>
-                            </div>
-                        </div>
-
-                        <div class="product-actions">
-                            <div class="product-quantity">
-                                <span class="quantity-label">Quantity</span>
-                                <div class="quantity-controls">
-                                    <button class="quantity-btn decrease"><i class="fas fa-minus"></i></button>
-                                    <input type="number" min="1" value="1" class="quantity-input">
-                                    <button class="quantity-btn increase"><i class="fas fa-plus"></i></button>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="noo-products">No products available at the moment.</p>
+            {% endif %}
+            <!-- Product Detail Overlay -->
+            <div class="product-overlay" id="product-overlay">
+                <div id="toast-message" class="toast-message"></div>
+                <div class="product-overlay-content">
+                    <button class="close-overlay">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <div class="product-overlay-grid">
+                        <!-- Left Column: Product Images Gallery -->
+                        <div class="product-gallery">
+                            <div class="main-image-container">
+                                <img src="" alt="" class="main-image" id="main-product-image">
+                                <div class="image-nav">
+                                    <button class="image-nav-button prev">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </button>
+                                    <button class="image-nav-button next">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </button>
                                 </div>
                             </div>
-
-                            <div class="action-buttons">
-                                <button class="add-to-cart-btn"><i class="fas fa-shopping-cart"></i> Add to
-                                    Cart</button>
-                                <!-- <button class="wishlist-btn"><i class="far fa-heart"></i></button> -->
+                            <div class="thumbnail-container">
+                                <!-- Thumbnails will be dynamically generated -->
                             </div>
                         </div>
-
-                        <div class="product-additional-info">
-                            <div class="info-tabs">
-                                <button class="tab-button active" data-tab="details">Details</button>
-                                <button class="tab-button" data-tab="shipping">Shipping</button>
-                                <button class="tab-button" data-tab="reviews">Reviews</button>
+                        <!-- Right Column: Product Details -->
+                        <div class="product-details">
+                            <div class="product-badges">
+                                <!-- <span class="badge new-badge">New</span> -->
+                                <span class="badge sale-badge">Sale</span>
                             </div>
-
-                            <div class="tab-content">
-                                <div class="tab-panel active" id="details-panel">
-                                    <p>Product details will be displayed here.</p>
+                            <h2 class="product-title"></h2>
+                            <!-- New line to display the store name -->
+                            <p class="product-store-name">
+                                Store: <span id="product-store-name"></span>
+                            </p>
+                            <p class="product-category"></p>
+                            <div class="product-pricing">
+                                <span class="product-original-price"></span>
+                                <span class="product-current-price"></span>
+                                <span class="product-discount-percentage"></span>
+                            </div>
+                            <div class="product-description"></div>
+                            <div class="product-meta">
+                                <div class="meta-item">
+                                    <i class="fas fa-box"></i>
+                                    <span class="availability">
+                                        <span class="stock-quantity"></span>
+                                    </span>
                                 </div>
-                                <div class="tab-panel" id="shipping-panel">
-                                    <p>Shipping typically takes 2-3 business days. Free delivery on all orders above
-                                        ₹999.</p>
+                                <div class="meta-item">
+                                    <i class="fas fa-truck"></i>
+                                    <span>Free shipping</span>
                                 </div>
-                                <div class="tab-panel" id="reviews-panel">
-                                    <p>Customer reviews will be displayed here.</p>
+                            </div>
+                            <div class="product-actions">
+                                <div class="product-quantity">
+                                    <span class="quantity-label">Quantity</span>
+                                    <div class="quantity-controls">
+                                        <button class="quantity-btn decrease">
+                                            <i class="fas fa-minus"></i>
+                                        </button>
+                                        <input type="number" min="1" value="1" class="quantity-input">
+                                        <button class="quantity-btn increase">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="action-buttons">
+                                    <button class="add-to-cart-btn">
+                                        <i class="fas fa-shopping-cart"></i> Add to
+                                        Cart
+                                    </button>
+                                    <!-- <button class="wishlist-btn"><i class="far fa-heart"></i></button> -->
+                                </div>
+                            </div>
+                            <div class="product-additional-info">
+                                <div class="info-tabs">
+                                    <button class="tab-button active" data-tab="details">Details</button>
+                                    <button class="tab-button" data-tab="shipping">Shipping</button>
+                                    <button class="tab-button" data-tab="reviews">Reviews</button>
+                                </div>
+                                <div class="tab-content">
+                                    <div class="tab-panel active" id="details-panel">
+                                        <p>Product details will be displayed here.</p>
+                                    </div>
+                                    <div class="tab-panel" id="shipping-panel">
+                                        <p>
+                                            Shipping typically takes 2-3 business days. Free delivery on all orders above
+                                            ₹999.
+                                        </p>
+                                    </div>
+                                    <div class="tab-panel" id="reviews-panel">
+                                        <p>Customer reviews will be displayed here.</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-
-        <!-- Loading State -->
-        <div class="loader">
-            <i class="fas fa-spinner"></i>
-        </div>
-
-        <!-- Sticky Cart Button -->
-        <div class="sticky-cart-container">
-            <div class="sticky-cart-btn">
-                <i class="fas fa-shopping-cart"></i>
-                <span class="cart-count">0</span>
+            <!-- Loading State -->
+            <div class="loader">
+                <i class="fas fa-spinner"></i>
             </div>
-        </div>
-
-        <!-- Updated Error Modal -->
-        <div class="modal-overlay" id="cart-modal">
-            <div class="modal-content">
-                <button class="modal-close"><i class="fas fa-times"></i></button>
-                <h3><i class="fas fa-check-circle success-icon"></i> Item Added!</h3>
-                <p class="modal-message"></p>
-                <div class="modal-buttons">
-                    <button class="modal-button primary-button">View Cart</button>
-                    <button class="modal-button secondary-button">Continue Shopping</button>
+            <!-- Sticky Cart Button -->
+            <div class="sticky-cart-container">
+                <div class="sticky-cart-btn">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="cart-count">0</span>
                 </div>
             </div>
-        </div>
-
-    </section>
-
-
-
-</body>
-
+            <!-- Updated Error Modal -->
+            <div class="modal-overlay" id="cart-modal">
+                <div class="modal-content">
+                    <button class="modal-close">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <h3>
+                        <i class="fas fa-check-circle success-icon"></i> Item Added!
+                    </h3>
+                    <p class="modal-message"></p>
+                    <div class="modal-buttons">
+                        <button class="modal-button primary-button">View Cart</button>
+                        <button class="modal-button secondary-button">Continue Shopping</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </body>
 </html>

@@ -272,7 +272,8 @@ footer {
 }
 
 .bg-canceled {
-    background-color: #6c757d; /* Grayish color */
+    background-color: #6c757d;
+    /* Grayish color */
     color: white;
 }
 
@@ -312,7 +313,7 @@ footer {
         margin-top: 8px;
         align-items: center;
     }
-    
+
 }
 
 @media (min-width: 769px) {
@@ -327,7 +328,7 @@ footer {
     .card {
         margin-bottom: 30px;
     }
-    
+
 }
 
 /* Pull-to-refresh indicator */
@@ -342,4 +343,31 @@ footer {
     transform-origin: left;
     transition: transform 0.3s ease;
     z-index: 1001;
+}
+
+.alert {
+    transition: opacity 0.3s ease-out;
+}
+
+/* Style the overlay element */
+.overlay {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    /* Ensure it is behind the modal content */
+    z-index: 10;
+}
+
+/* When the modal is visible, fade in the overlay */
+#orderDetailsModal[data-state="visible"] .overlay {
+    opacity: 1;
+}
+
+/* Ensure the modal content is above the overlay */
+#orderDetailsModal[data-state="visible"]>div:not(.overlay) {
+    z-index: 20;
+}
+
+/* Animate modal content sliding up */
+#orderDetailsModal[data-state="visible"]>div:not(.overlay) {
+    transform: translateY(0);
 }

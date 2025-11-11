@@ -1,0 +1,388 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Product Management</title>
+        <link rel="stylesheet" href="{% static 'css/admin_products.css' %}" />
+        <script src="{% static 'js/admin_products.js' %}" defer></script>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              navy: '#1a1f2e',
+              'navy-light': '#232936',
+              'navy-accent': '#2d3342'
+            },
+            fontFamily: {
+              inter: ['Inter', 'sans-serif']
+            },
+            boxShadow: {
+              navy: '0 4px 6px -1px rgba(11, 15, 25, 0.5)'
+            },
+            screens: {
+              xs: '475px',
+              sm: '640px',
+              md: '768px',
+              tablet: '950px',
+              lg: '1024px',
+              xl: '1280px',
+              '2xl': '1536px'
+            }
+          }
+        }
+      }
+        </script>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+              rel="stylesheet" />
+        <link rel="stylesheet"
+              href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    </head>
+    <body class="bg-navy-light text-gray-100 font-inter">
+        <div class="refresh-indicator" id="refreshIndicator"></div>
+        <div class="flex flex-col tablet:flex-row min-h-screen">
+            {% include 'store/admin/partials/_mobile_header_sidebar.html' %}
+            <!-- Main Content -->
+            <main class="flex-1 overflow-x-hidden overflow-y-auto">
+                <div class="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 sm:mb-6">
+                        <h2 class="text-xl sm:text-2xl font-bold">Product Inventory</h2>
+                        <div class="flex items-center">
+                            <span class="bg-navy-accent px-3 py-1 rounded-full text-sm">Total Products: <span id="product-count">{{ products|length }}</span></span>
+                        </div>
+                    </div>
+                    <!-- Search and Filter Bar -->
+                    <div class="bg-navy rounded-lg p-3 sm:p-4 mb-4 sm:mb-6 shadow-lg">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 tablet:grid-cols-3 gap-3 sm:gap-4">
+                            <!-- Search Box -->
+                            <div class="relative">
+                                <input type="text"
+                                       id="search-input"
+                                       placeholder="Search products..."
+                                       class="w-full bg-navy-accent border border-navy-light rounded-lg py-2 pl-10 pr-4 text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-search text-gray-400"></i>
+                                </div>
+                            </div>
+                            <!-- Filter Dropdowns -->
+                            <div class="grid grid-cols-2 gap-3">
+                                <!-- Status Filter -->
+                                <select id="status-filter"
+                                        class="bg-navy-accent border border-navy-light rounded-lg py-2 px-3 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                                    <option value="">All Status</option>
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                    <option value="deleted">Deleted</option>
+                                </select>
+                                <!-- Stock Filter -->
+                                <select id="stock-filter"
+                                        class="bg-navy-accent border border-navy-light rounded-lg py-2 px-3 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                                    <option value="">All Stock</option>
+                                    <option value="in-stock">In Stock (>0)</option>
+                                    <option value="low-stock">Low Stock (≤10)</option>
+                                    <option value="out-of-stock">Out of Stock (0)</option>
+                                </select>
+                            </div>
+                            <!-- Sort & Advanced Filters -->
+                            <div class="flex space-x-2">
+                                <select id="sort-by"
+                                        class="flex-1 bg-navy-accent border border-navy-light rounded-lg py-2 px-3 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                                    <option value="name-asc">Name (A-Z)</option>
+                                    <option value="name-desc">Name (Z-A)</option>
+                                    <option value="price-asc">Price (Low-High)</option>
+                                    <option value="price-desc">Price (High-Low)</option>
+                                    <option value="stock-asc">Stock (Low-High)</option>
+                                    <option value="stock-desc">Stock (High-Low)</option>
+                                </select>
+                                <button id="advanced-filters-btn"
+                                        class="bg-navy-accent hover:bg-navy border border-navy-light rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+                                    <i class="fas fa-sliders-h"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Advanced Filters Section (Hidden by default) -->
+                        <div id="advanced-filters"
+                             class="hidden mt-4 pt-4 border-t border-navy-light grid grid-cols-1 sm:grid-cols-2 tablet:grid-cols-3 gap-4">
+                            <!-- Price Range -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-400 mb-2">Price Range</label>
+                                <div class="flex items-center space-x-2">
+                                    <input type="number"
+                                           id="min-price"
+                                           placeholder="₹ Min"
+                                           class="w-full bg-navy-accent border border-navy-light rounded-lg py-2 px-3 text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                    <span class="text-gray-400">-</span>
+                                    <input type="number"
+                                           id="max-price"
+                                           placeholder="₹ Max"
+                                           class="w-full bg-navy-accent border border-navy-light rounded-lg py-2 px-3 text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                </div>
+                            </div>
+                            <!-- Has Variants Filter -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-400 mb-2">Variants</label>
+                                <select id="variants-filter"
+                                        class="w-full bg-navy-accent border border-navy-light rounded-lg py-2 px-3 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                                    <option value="">All Products</option>
+                                    <option value="with-variants">With Variants</option>
+                                    <option value="no-variants">No Variants</option>
+                                </select>
+                            </div>
+                            <!-- Action Buttons -->
+                            <div class="flex items-end space-x-2">
+                                <button id="apply-filters"
+                                        class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+                                    Apply Filters
+                                </button>
+                                <button id="reset-filters"
+                                        class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors">
+                                    Reset
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- No Results Message -->
+                    <div id="no-results"
+                         class="hidden bg-navy rounded-lg p-4 sm:p-6 text-center mb-4 sm:mb-6">
+                        <i class="fas fa-search text-2xl sm:text-3xl mb-2 text-gray-400"></i>
+                        <p class="text-gray-400">No products match your search criteria</p>
+                        <button id="clear-search"
+                                class="mt-3 sm:mt-4 text-blue-400 hover:text-blue-300">Clear all filters</button>
+                    </div>
+                    <!-- Product Alerts Container -->
+                    <div class="mb-6">
+                        {% for message in messages %}
+                            {% if 'product_messages' in message.tags or 'order_messages' in message.tags %}
+                                <div class="alert p-4 rounded-lg mb-4 {% if message.tags == 'error' %}  bg-red-500 bg-opacity-20 text-red-400  {% elif message.tags == 'success' %}  bg-green-500 bg-opacity-20 text-green-400  {% elif message.tags == 'warning' %}  bg-yellow-500 bg-opacity-20 text-yellow-400  {% else %}  bg-blue-500 bg-opacity-20 text-blue-400  {% endif %} flex items-center justify-between">
+                                    <div class="flex items-center space-x-3">
+                                        <i class="fas fa-{% if message.tags == 'error' %}  exclamation-circle   {% elif message.tags == 'success' %}  check-circle   {% elif message.tags == 'warning' %}  exclamation-triangle   {% else %}  info-circle  {% endif %}">
+                                        </i>
+                                        <span>{{ message }}</span>
+                                    </div>
+                                    <button type="button" class="close-alert text-gray-400 hover:text-white">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <!-- Desktop/Tablet Table (visible on medium screens and up) -->
+                    <div class="hidden tablet:block rounded-lg overflow-hidden shadow-lg">
+                        <table class="w-full">
+                            <thead class="bg-navy-accent">
+                                <tr>
+                                    <th class="py-3 sm:py-4 px-3 sm:px-6 text-left font-medium">Product</th>
+                                    <th class="py-3 sm:py-4 px-3 sm:px-6 text-center font-medium">Discount Price</th>
+                                    <th class="py-3 sm:py-4 px-3 sm:px-6 text-center font-medium">Stock</th>
+                                    <th class="py-3 sm:py-4 px-3 sm:px-6 text-center font-medium">Status</th>
+                                    <th class="py-3 sm:py-4 px-3 sm:px-6 text-center font-medium">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-navy" id="products-table-body">
+                                {% for product in products %}
+                                    <tr class="hover:bg-navy transition-colors cursor-pointer product-row"
+                                        data-original-price="{{ product.original_price }}"
+                                        data-price="{{ product.price }}"
+                                        data-stock="{{ product.stock }}"
+                                        data-status="{% if product.is_deleted %}   deleted   {% elif product.is_active %}   active   {% else %}   inactive   {% endif %}"
+                                        data-variants="{% if product.variants %}   true   {% else %}   false   {% endif %}"
+                                        data-name="{{ product.name|lower }}">
+                                        <td class="py-3 sm:py-4 px-3 sm:px-6">
+                                            <div class="font-medium">{{ product.name }}</div>
+                                            <div class="text-sm text-gray-400 mt-1">
+                                                {% if product.variants %}
+                                                    {{ product.variants.count }} variants
+                                                    <ul class="hidden variant-details">
+                                                        {% for variant in product.variants.all %}
+                                                            <li>{{ variant.color }}, {{ variant.size }}, ₹{{ variant.price }}</li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                {% else %}
+                                                    No variants
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                        <td class="py-3 sm:py-4 px-3 sm:px-6 text-center">₹{{ product.price }}</td>
+                                        <td class="py-3 sm:py-4 px-3 sm:px-6 text-center">
+                                            <span class="inline-block py-1 px-2 sm:px-3 rounded-full {% if product.stock > 10 %}   bg-green-800 text-green-300   {% else %}   bg-yellow-800 text-yellow-300   {% endif %}">
+                                                {{ product.stock }} in stock
+                                            </span>
+                                        </td>
+                                        <td class="py-3 sm:py-4 px-3 sm:px-6 text-center">
+                                            {% if product.is_deleted %}
+                                                <span class="inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium bg-gray-600 text-gray-300"><i class="fas fa-trash-alt mr-1 sm:mr-2"></i> Deleted</span>
+                                            {% else %}
+                                                <span class="inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium {% if product.is_active %}   bg-green-900 text-green-300   {% else %}   bg-red-900 text-red-300   {% endif %}">
+                                                    {% if product.is_active %}
+                                                        <i class="fas fa-check-circle mr-1 sm:mr-2"></i> Active
+                                                    {% else %}
+                                                        <i class="fas fa-times-circle mr-1 sm:mr-2"></i> Inactive
+                                                    {% endif %}
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <!-- Desktop Actions (inside the table row) -->
+                                        <td class="py-3 sm:py-4 px-3 sm:px-6 text-center">
+                                            <div class="flex justify-center space-x-2 sm:space-x-3">
+                                                {% if not product.is_deleted %}
+                                                    <a href="{% url 'admin_update' product.id %}"
+                                                       class="action-button text-blue-400 hover:text-blue-300"
+                                                       title="Edit"><i class="fas fa-edit"></i></a>
+                                                    <a href="{% url 'delete_product' product.id %}"
+                                                       class="action-button text-red-400 hover:text-red-300"
+                                                       title="Delete"><i class="fas fa-trash"></i></a>
+                                                    {% if product.is_active %}
+                                                        <a href="{% url 'toggle_product_status' product.id %}"
+                                                           class="action-button text-yellow-400 hover:text-yellow-300"
+                                                           title="Deactivate"><i class="fas fa-toggle-on"></i></a>
+                                                    {% else %}
+                                                        <a href="{% url 'toggle_product_status' product.id %}"
+                                                           class="action-button text-green-400 hover:text-green-300"
+                                                           title="Activate"><i class="fas fa-toggle-off"></i></a>
+                                                    {% endif %}
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="5" class="py-6 sm:py-8 text-center text-gray-400">
+                                            <i class="fas fa-box-open text-2xl sm:text-3xl mb-2"></i>
+                                            <p class="text-lg">No products found</p>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- Mobile/Small Tablet Cards (visible below tablet breakpoint) -->
+                    <div class="tablet:hidden space-y-3 sm:space-y-4"
+                         id="products-mobile-container">
+                        {% for product in products %}
+                            <div class="bg-navy rounded-lg p-3 sm:p-4 shadow-lg cursor-pointer product-card"
+                                 data-original-price="{{ product.original_price }}"
+                                 data-price="{{ product.price }}"
+                                 data-stock="{{ product.stock }}"
+                                 data-status="{% if product.is_deleted %}   deleted   {% elif product.is_active %}   active   {% else %}   inactive   {% endif %}"
+                                 data-variants="{% if product.variants %}   true   {% else %}   false   {% endif %}"
+                                 data-name="{{ product.name|lower }}">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h3 class="font-medium text-base sm:text-lg">{{ product.name }}</h3>
+                                        <p class="text-xs sm:text-sm text-gray-400 mt-1">₹{{ product.price }}</p>
+                                        <!-- Hidden variant details for modal use -->
+                                        {% if product.variants.exists %}
+                                            <ul class="hidden variant-details">
+                                                {% for variant in product.variants.all %}
+                                                    <li>{{ variant.color }}, {{ variant.size }}, ₹{{ variant.price }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        {% endif %}
+                                    </div>
+                                    <span class="{% if product.is_deleted %}   text-gray-500   {% else %} {% if product.is_active %}   text-green-400   {% else %}   text-red-400   {% endif %} {% endif %}">
+                                        {% if product.is_deleted %}
+                                            Deleted
+                                        {% else %}
+                                            {% if product.is_active %}
+                                                <i class="fas fa-check-circle"></i>
+                                            {% else %}
+                                                <i class="fas fa-times-circle"></i>
+                                            {% endif %}
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                <div class="mt-3 sm:mt-4 space-y-1 sm:space-y-2">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-xs sm:text-sm text-gray-400">Stock</span>
+                                        <span class="text-xs sm:text-sm {% if product.stock > 10 %}   text-green-400   {% else %}   text-yellow-400   {% endif %}">
+                                            {{ product.stock }}
+                                        </span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-xs sm:text-sm text-gray-400">Variants</span>
+                                        <span class="text-xs sm:text-sm text-gray-400">
+                                            {% if product.variants.exists %}
+                                                {{ product.variants.count }}
+                                            {% else %}
+                                                None
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="mt-3 sm:mt-4 pt-2 sm:pt-3 border-t border-navy-light flex justify-around">
+                                    {% if not product.is_deleted %}
+                                        <a href="{% url 'admin_update' product.id %}"
+                                           class="action-button text-blue-400 px-2"
+                                           title="Edit"><i class="fas fa-edit"></i></a>
+                                        <a href="{% url 'delete_product' product.id %}"
+                                           class="action-button text-red-400 px-2"
+                                           title="Delete"><i class="fas fa-trash"></i></a>
+                                        {% if product.is_active %}
+                                            <a href="{% url 'toggle_product_status' product.id %}"
+                                               class="action-button text-yellow-400 px-2"
+                                               title="Deactivate"><i class="fas fa-toggle-on"></i></a>
+                                        {% else %}
+                                            <a href="{% url 'toggle_product_status' product.id %}"
+                                               class="action-button text-red-400 px-2"
+                                               title="Activate"><i class="fas fa-toggle-off"></i></a>
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% empty %}
+                            <div class="bg-navy rounded-lg p-4 sm:p-6 text-center">
+                                <i class="fas fa-box-open text-2xl sm:text-3xl mb-2 text-gray-400"></i>
+                                <p class="text-gray-400">No products available</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </main>
+        </div>
+        <!-- Product Detail Modal -->
+        <div id="productModal"
+             class="fixed inset-0 z-50 hidden bg-black bg-opacity-50">
+            <div class="flex items-center justify-center min-h-screen p-3 sm:p-4">
+                <div class="bg-navy rounded-lg w-full max-w-2xl relative">
+                    <button onclick="closeModal()"
+                            class="absolute top-3 sm:top-4 right-3 sm:right-4 text-gray-400 hover:text-white">
+                        <i class="fas fa-times text-xl sm:text-2xl"></i>
+                    </button>
+                    <div class="p-4 sm:p-6">
+                        <h3 class="text-xl sm:text-2xl font-bold mb-3 sm:mb-4"
+                            id="modalProductName"></h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                            <div>
+                                <p class="text-sm text-gray-400">Price:</p>
+                                <!-- This element will show original price, discount price and percentage -->
+                                <p class="text-base sm:text-lg" id="modalProductPrice"></p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-400">Stock:</p>
+                                <p class="text-base sm:text-lg" id="modalProductStock"></p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-400">Status:</p>
+                                <p class="text-base sm:text-lg" id="modalProductStatus"></p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-400">Variants:</p>
+                                <ul class="list-disc pl-5 text-sm sm:text-base" id="modalProductVariants">
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="mt-4 sm:mt-6 flex justify-end space-x-3">
+                            <button onclick="closeModal()"
+                                    class="px-3 sm:px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg text-sm sm:text-base">
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

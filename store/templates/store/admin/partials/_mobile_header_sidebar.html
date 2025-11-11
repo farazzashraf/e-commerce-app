@@ -1,0 +1,57 @@
+<!-- File: templates/partials/_mobile_header_sidebar.html -->
+<!-- Mobile Header -->
+<header class="md:hidden bg-navy-light p-4 flex justify-between items-center sticky top-0 z-20">
+    <div class="flex items-center space-x-2">
+        <i class="fas fa-store text-xl"></i>
+        <span class="text-lg font-bold">VendorHub</span>
+    </div>
+    <div class="flex items-center space-x-4">
+        <button class="relative">
+            <i class="fas fa-bell text-lg"></i>
+            {% if attention_needed > 0 %}
+                <span class="absolute -top-1 -right-1 bg-red-500 rounded-full w-4 h-4 text-xs flex items-center justify-center">
+                    {{ attention_needed }}
+                </span>
+            {% endif %}
+        </button>
+        <button id="mobileMenuBtn" class="text-lg">
+            <i class="fas fa-bars"></i>
+        </button>
+    </div>
+</header>
+<!-- Sidebar - Hidden on mobile by default -->
+<aside class="mobile-menu fixed md:relative md:block z-30 w-64 bg-navy-light h-full md:h-auto shadow-lg transform -translate-x-full md:translate-x-0 transition-transform duration-200">
+    <div class="p-4">
+        <div class="flex items-center justify-between mb-8">
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-store text-2xl"></i>
+                <span class="text-xl font-bold">VendorHub</span>
+            </div>
+            <button id="closeMobileMenuBtn" class="md:hidden text-gray-400">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <nav class="space-y-2">
+            <a href="{% url 'admin_dashboard' %}"
+               class="flex items-center space-x-3 p-3 rounded-lg {% if active_page == 'dashboard' %}bg-blue-600 bg-opacity-20 text-blue-400{% else %}hover:bg-navy{% endif %}">
+                <i class="fas fa-chart-pie"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="{% url 'admin_products' %}"
+               class="flex items-center space-x-3 p-3 rounded-lg {% if active_page == 'products' %}bg-blue-600 bg-opacity-20 text-blue-400{% else %}hover:bg-navy{% endif %}">
+                <i class="fas fa-box"></i>
+                <span>Products</span>
+            </a>
+            <a href="{% url 'admin_orders' %}"
+               class="flex items-center space-x-3 p-3 rounded-lg {% if active_page == 'orders' %}bg-blue-600 bg-opacity-20 text-blue-400{% else %}hover:bg-navy{% endif %}">
+                <i class="fas fa-shopping-cart"></i>
+                <span>Orders</span>
+            </a>
+            <a href=""
+               class="flex items-center space-x-3 p-3 rounded-lg {% if active_page == 'analytics' %}bg-blue-600 bg-opacity-20 text-blue-400{% else %}hover:bg-navy{% endif %}">
+                <i class="fas fa-chart-line"></i>
+                <span>Analytics</span>
+            </a>
+        </nav>
+    </div>
+</aside>
