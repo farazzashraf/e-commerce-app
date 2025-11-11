@@ -1,50 +1,99 @@
-# Ignore Python bytecode and cache files
-__pycache__/
+# -----------------------
+# Python / Django
+# -----------------------
 *.pyc
 *.pyo
 *.pyd
-
-# Virtual environment
-venv/
-env/
-
-# Django secret keys and settings
+__pycache__/
+.pytest_cache/
 .env
-*.enc
-
-# Database files
-*.sqlite3
+.env.*               # local env overrides (e.g. .env.local, .env.dev)
+local_settings.py    # common local override file
 db.sqlite3
-*.db
+*.sqlite3
 
-# Django and Supabase logs
-logs/
+# Byte-compiled / distribution
+build/
+dist/
+*.egg-info/
+*.egg
+pip-wheel-metadata/
+
+# Django stuff
+/staticfiles/        # collectstatic output (if you use STATIC_ROOT=staticfiles)
+media/               # uploaded user files (keep out of git, store in S3/Supabase/etc)
+uploads/             # if you use custom upload folder
 *.log
 
-# Ignore static and media files (optional, if not using version control)
-staticfiles/
-media/
+# -----------------------
+# Supabase / cloud keys / creds
+# -----------------------
+# don't commit service keys / secret config files
+.supabase/           # local supabase artifacts (if any)
+secrets.yml
+credentials.json
+aws_credentials
+.gcloud/
 
-# Ignore Firebase SDK and credentials
-firebase/firebase-admin-sdk.json
-
-# Ignore system files
-.DS_Store
-Thumbs.db
-
-# Ignore compiled files
-*.egg-info/
-*.dist-info/
-
-# Ignore migrations (optional, if you want fresh migrations on different systems)
-**/migrations/*
-
-# Ignore node_modules (if you use Node.js for frontend assets)
+# -----------------------
+# Node / frontend (if applicable)
+# -----------------------
 node_modules/
+npm-debug.log*
+yarn-error.log*
+yarn-debug.log*
+.next/                # Next.js build output
+dist/
+build/
 
-# Ignore VS Code and JetBrains IDE config files
+# -----------------------
+# IDEs / editors
+# -----------------------
 .vscode/
 .idea/
+*.sublime-workspace
+*.sublime-project
 
-# Ignore cache
-*.cache
+# -----------------------
+# OS generated
+# -----------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# -----------------------
+# Test / coverage / profiling
+# -----------------------
+.coverage
+coverage.xml
+htmlcov/
+coverage/
+nose2-junit.xml
+.junit/
+
+# -----------------------
+# Docker / local runtime / CI
+# -----------------------
+.env.docker
+docker-compose.override.yml
+docker-compose.*.yml
+docker-compose.local.yml
+
+# -----------------------
+# Python tooling caches
+# -----------------------
+.mypy_cache/
+.pyre/
+.dmypy.json
+.cache/
+__pycache__/
+
+# -----------------------
+# Misc
+# -----------------------
+*.pem
+*.key
+*.crt
+.idea/
+*.iml
+*.swp
