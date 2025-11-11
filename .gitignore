@@ -97,4 +97,5 @@ __pycache__/
 .idea/
 *.iml
 *.swp
+firbase
 firebase\firebase-admin-sdk.json
