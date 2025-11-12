@@ -11,7 +11,7 @@ __pycache__/
 local_settings.py    # common local override file
 db.sqlite3
 *.sqlite3
-.firebase/firebase-admin-sdk.json
+firebase/
 # -----------------------
 # Python tooling caches
 # -----------------------
@@ -21,5 +21,7 @@ db.sqlite3
 .cache/
 __pycache__/
 
+debug.log
+django.log
 .debug.log
 .django.log
