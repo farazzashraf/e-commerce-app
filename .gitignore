@@ -11,74 +11,7 @@ __pycache__/
 local_settings.py    # common local override file
 db.sqlite3
 *.sqlite3
-
-# Byte-compiled / distribution
-build/
-dist/
-*.egg-info/
-*.egg
-pip-wheel-metadata/
-
-# Django stuff
-/staticfiles/        # collectstatic output (if you use STATIC_ROOT=staticfiles)
-media/               # uploaded user files (keep out of git, store in S3/Supabase/etc)
-uploads/             # if you use custom upload folder
-*.log
-
-# -----------------------
-# Supabase / cloud keys / creds
-# -----------------------
-# don't commit service keys / secret config files
-.supabase/           # local supabase artifacts (if any)
-secrets.yml
-credentials.json
-aws_credentials
-.gcloud/
-
-# -----------------------
-# Node / frontend (if applicable)
-# -----------------------
-node_modules/
-npm-debug.log*
-yarn-error.log*
-yarn-debug.log*
-.next/                # Next.js build output
-dist/
-build/
-
-# -----------------------
-# IDEs / editors
-# -----------------------
-.vscode/
-.idea/
-*.sublime-workspace
-*.sublime-project
-
-# -----------------------
-# OS generated
-# -----------------------
-.DS_Store
-Thumbs.db
-desktop.ini
-
-# -----------------------
-# Test / coverage / profiling
-# -----------------------
-.coverage
-coverage.xml
-htmlcov/
-coverage/
-nose2-junit.xml
-.junit/
-
-# -----------------------
-# Docker / local runtime / CI
-# -----------------------
-.env.docker
-docker-compose.override.yml
-docker-compose.*.yml
-docker-compose.local.yml
-
+.firebase/firebase-admin-sdk.json
 # -----------------------
 # Python tooling caches
 # -----------------------
@@ -88,14 +21,5 @@ docker-compose.local.yml
 .cache/
 __pycache__/
 
-# -----------------------
-# Misc
-# -----------------------
-*.pem
-*.key
-*.crt
-.idea/
-*.iml
-*.swp
-.firebase
-.firebase\firebase-admin-sdk.json
+.debug.log
+.django.log
