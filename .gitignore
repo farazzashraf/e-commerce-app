@@ -12,6 +12,7 @@ local_settings.py    # common local override file
 db.sqlite3
 *.sqlite3
 firebase/
+store/static/js/firebase-config.js
 # -----------------------
 # Python tooling caches
 # -----------------------
