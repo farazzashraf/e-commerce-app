@@ -77,7 +77,6 @@ except Exception as e:
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-6zrfmb)tfwygexnmgs9zvosx@+d=7!bwea7diberi)ru6#gk(h"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
