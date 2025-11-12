@@ -1,7 +1,10 @@
 Django
-djangorestframework
-djongo 
-pymongo
-six  
 psycopg2-binary
-django-redis
+django-environ 
+firebase-admin
+supabase
+python-dotenv
+djangorestframework
+django-cors-headers
+pymongo
+dnspython
